@@ -380,6 +380,73 @@ function getProgressSnapshot(score, claimedRoadRewards = [], taskPoints = 0) {
     claimedRoadRewards: [...claimed],
   };
 }
+async function getSetting(key) {
+  const [rows] = await pool.execute(
+    "SELECT setting_value FROM settings WHERE setting_key=?",
+    [key]
+  );
+
+  return rows.length ? rows[0].setting_value : null;
+}
+
+async function isReservedUsername(username) {
+
+  const [rows] = await pool.execute(
+    "SELECT 1 FROM reserved_usernames WHERE username=? LIMIT 1",
+    [username.toLowerCase()]
+  );
+
+  return rows.length > 0;
+
+}
+async function getBannedWords(){
+
+    const [rows]=await pool.query(
+        "SELECT word FROM banned_words"
+    );
+
+    return rows.map(x=>x.word.toLowerCase());
+
+}
+async function containsBannedWord(text){
+
+    const words=await getBannedWords();
+
+    const clean=text
+        .toLowerCase()
+        .replace(/[^a-z0-9çğıöşü]/gi,"");
+
+    return words.some(w=>clean.includes(w));
+
+}
+async function getIPRegisterCount(ip){
+
+    const [rows]=await pool.execute(
+
+        "SELECT account_count FROM ip_registers WHERE ip=?",
+
+        [ip]
+
+    );
+
+    return rows.length ? rows[0].account_count : 0;
+
+}
+async function incrementIPRegisterCount(ip){
+
+    await pool.execute(
+
+`INSERT INTO ip_registers(ip,account_count)
+VALUES(?,1)
+ON DUPLICATE KEY UPDATE
+account_count=account_count+1`,
+
+[ip]
+
+);
+
+}
+
 module.exports = {
   initializeDatabase,
 
@@ -399,4 +466,9 @@ module.exports = {
   upgradePasswordHashIfNeeded,
   getScoreTitle,
   getProgressSnapshot,
+  getSetting,
+isReservedUsername,
+ containsBannedWord,
+getIPRegisterCount,
+incrementIPRegisterCount
 };

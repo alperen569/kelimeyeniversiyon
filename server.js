@@ -1,7 +1,10 @@
 require("dotenv").config();
 
 const express = require("express");
-const registerIPs = new Map();
+const validator = require("validator");
+const Filter = require("leo-profanity");
+const { zxcvbn } = require("@zxcvbn-ts/core");
+Filter.loadDictionary("en","tr");
 const helmet = require("helmet");
 const rateLimit = require("express-rate-limit");
 const session = require("express-session");
@@ -89,36 +92,6 @@ function getClientIP(req){
 }
 
 
-function containsBadWord(text){
-
-  const badWords = [
-
-    "amk",
-    "aq",
-    "siktir",
-    "sik",
-    "orospu",
-    "piç",
-    "pic",
-    "yarrak",
-    "ibne",
-    "fuck",
-    "shit"
-
-  ];
-
-
-  const clean =
-    text
-    .toLowerCase()
-    .replace(/[^a-zçğıöşü]/gi,"");
-
-
-  return badWords.some(word =>
-    clean.includes(word)
-  );
-
-}
 
 
 
@@ -127,32 +100,30 @@ function containsBadWord(text){
 
 function validatePassword(sifre){
 
-  if(sifre.length < 8)
+  if (!validator.isLength(sifre,{ min:10, max:64 }))
     return false;
 
-
-  if(sifre.length > 64)
+  if (!/[A-Z]/.test(sifre))
     return false;
 
-
-  if(!/[A-Z]/.test(sifre))
+  if (!/[a-z]/.test(sifre))
     return false;
 
-
-  if(!/[a-z]/.test(sifre))
+  if (!/[0-9]/.test(sifre))
     return false;
 
-
-  if(!/[0-9]/.test(sifre))
+  if (!/[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]/.test(sifre))
     return false;
 
-
-  if(/\s/.test(sifre))
+  if (/\s/.test(sifre))
     return false;
 
+  const result = zxcvbn(sifre);
+
+  if (result.score < 3)
+    return false;
 
   return true;
-
 }
 function requireAuth(req, res, next) {
   if (!req.session.loggedIn || !getCurrentUsername(req)) {
@@ -161,44 +132,6 @@ function requireAuth(req, res, next) {
 
   next();
 }
-function validateUsername(isim) {
-
-  const yasakliIsimler = [
-
-    "admin",
-    "administrator",
-    "root",
-    "moderator",
-    "mod",
-    "test",
-    "null",
-    "undefined",
-    "sistem"
-
-  ];
-
-
-  const temiz =
-    isim.toLowerCase()
-    .replace(/[^a-z0-9çğıöşü]/gi,"");
-
-
-  if (temiz.length < 3)
-    return false;
-
-
-  if (temiz.length > 20)
-    return false;
-
-
-  if (yasakliIsimler.includes(temiz))
-    return false;
-
-
-  return true;
-
-}
-
 
 
 
@@ -266,7 +199,12 @@ if (!validateUsername(isim)) {
 }
 
 
-
+if (containsBadWord(isim)) {
+  return res.json({
+    success: false,
+    message: "Kullanıcı adı uygun değil"
+  });
+}
 if (!validatePassword(sifre)) {
 
  return res.json({
