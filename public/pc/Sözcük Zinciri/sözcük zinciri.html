@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<link rel="stylesheet" href="/shared/ocean-loader.css">
+<script src="/shared/ocean-loader.js"></script>
+
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Kelime Zinciri — Ultra Geliştirilmiş</title>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<style>
+  /* === TEMEL ================================================================= */
+
+  body.fade {
+    opacity:0;
+    transition:opacity .4s ease;
+  }
+
+  :root{
+    --bg-dark:#0f1724; --card-dark:rgba(11,18,32,0.75); --accent:#60a5fa; --text:#e6eef8;
+    --bg-light:#f5f7fb; --card-light:rgba(255,255,255,0.75); --text-light:#0b1220;
+    --green:#16a34a; --red:#ef4444;
+  }
+
+  *{box-sizing:border-box; margin:0; padding:0;}
+  html,body{
+    height:100%; width:100%; font-family:Inter,ui-sans-serif,system-ui,
+    -apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial;
+    display:flex; justify-content:center; padding:18px;
+    backdrop-filter:blur(4px);
+    transition:background .4s ease,color .4s ease;
+  }
+
+  .wrap{width:100%; max-width:1200px; display:flex; flex-direction:column; gap:12px;}
+
+  /* === TEMA SİSTEMİ ========================================================== */
+
+  body.theme-dark{background:var(--bg-dark); color:var(--text);}
+  body.theme-dark .card{background:var(--card-dark); color:var(--text);}
+
+  body.theme-light{background:var(--bg-light); color:var(--text-light);}
+  body.theme-light .card{background:var(--card-light); color:var(--text-light);}
+
+  body.theme-blue{background:linear-gradient(180deg,#07103a,#001a4d); color:#e6f4ff;}
+  body.theme-blue .card{background:rgba(255,255,255,0.18); color:#e6f4ff;}
+
+  body.theme-retro{background:linear-gradient(180deg,#1f2937,#071229); color:#ffdca8;}
+  body.theme-retro .card{background:rgba(183,129,56,0.18); color:#ffdca8;}
+
+  body.theme-forest{background:linear-gradient(180deg,#0f2912,#05220c); color:#d9ffe1;}
+  body.theme-forest .card{background:rgba(0,255,99,0.15); color:#d9ffe1;}
+
+  body.theme-sunset{background:linear-gradient(120deg,#ff6a00,#ff2e63,#2e3192); color:#fff4e6;}
+  body.theme-sunset .card{background:rgba(255,255,255,0.18); color:#fff4e6;}
+
+  body.theme-ocean{background:linear-gradient(120deg,#003973,#00a8ff); color:#e5f7ff;}
+  body.theme-ocean .card{background:rgba(255,255,255,0.18); color:#e5f7ff;}
+
+  body.theme-cyber{background:#000; color:#0aff9d;}
+  body.theme-cyber .card{background:#0a0a0a; color:#0aff9d;}
+
+  body.theme-pastel{background:#ffeefc; color:#513d52;}
+  body.theme-pastel .card{background:#ffffff; color:#513d52;}
+
+  /* === HEADER ================================================================ */
+
+  .header{display:flex; gap:12px; align-items:center; justify-content:space-between;}
+  .title{display:flex; flex-direction:column;}
+  h1{margin:0; font-size:24px; font-weight:700;}
+  .controls{display:flex; gap:8px; flex-wrap:wrap;}
+
+  .btn, .theme-select, #levelSelect{
+    padding:8px 12px; border-radius:8px; border:none; cursor:pointer; font-weight:600;
+    backdrop-filter:blur(4px); transition:all .2s ease;
+  }
+  #levelSelect { display:none; }
+
+  .btn:hover{transform:translateY(-1px); opacity:.9;}
+  .btn:active{transform:scale(.97);}
+
+  .small{padding:6px 8px; font-size:14px;}
+
+  /* === KART ================================================================== */
+
+  .card{
+    padding:18px; border-radius:14px; margin-bottom:8px;
+    box-shadow:0 8px 24px rgba(0,0,0,0.35);
+    transition:background .3s ease,color .3s ease;
+    display:flex; flex-direction:column; gap:10px;
+  }
+
+  #sentence{
+    min-height:64px; padding:10px; border-radius:10px;
+    display:flex; gap:8px; flex-wrap:wrap; align-items:center;
+    background:rgba(255,255,255,0.06);
+  }
+
+  #bank{
+    display:flex; gap:8px; flex-wrap:wrap;
+    max-height:120px; overflow-y:auto; padding-right:6px;
+  }
+  #bank::-webkit-scrollbar{width:6px;}
+  #bank::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.2); border-radius:6px;}
+
+  .chip{
+    background:rgba(96,165,250,0.18); padding:8px 12px; border-radius:999px;
+    display:inline-flex; align-items:center; cursor:pointer; user-select:none;
+    font-weight:600; transition:transform .15s ease,opacity .2s ease;
+  }
+  .chip:hover{transform:translateY(-2px);}
+  .chip.dragging{opacity:.45; transform:scale(.92) rotate(-2deg);}
+
+  .word-box{
+    padding:6px 10px; border-radius:8px; background:rgba(16,185,129,0.2);
+    display:flex; align-items:center; gap:8px; font-weight:600;
+  }
+  .word-box .remove{
+    background:transparent; border:none; cursor:pointer; font-weight:700;
+    padding:2px 6px; font-size:14px;
+  }
+
+  .feedback{padding:10px; border-radius:8px; display:none; font-weight:700; text-align:center;}
+  .correct{background:rgba(22,163,74,0.25); color:var(--green);}
+  .wrong{background:rgba(239,68,68,0.25); color:var(--red);}
+
+  #timer{font-weight:800; font-size:18px;}
+
+  /* === SON EKRAN ============================================================= */
+
+  #finalScreen{
+    display:none; text-align:center; padding:32px 10px; border-radius:14px;
+    font-size:22px; font-weight:700; animation:pop .35s ease;
+  }
+  @keyframes pop{0%{transform:scale(.8); opacity:0;}100%{transform:scale(1); opacity:1;}}
+
+  /* === KONFETİ =============================================================== */
+
+  .confetti{
+    width:12px; height:12px; position:fixed; top:-20px; animation:fall 2.2s linear forwards;
+    border-radius:2px;
+  }
+  @keyframes fall{
+    to{transform:translateY(100vh) rotate(720deg);}
+  }
+
+  /* === RESPONSIVE ============================================================ */
+
+  @media (max-width:640px){
+    body{padding:12px;}
+    .header{flex-direction:column; align-items:flex-start;}
+  }
+</style>
+</head>
+
+<body class="theme-dark">
+<div class="wrap">
+
+  <div class="header">
+    <div class="title">
+      <h1>Kelime Zinciri — Ultra Geliştirilmiş</h1>
+      <div style="opacity:0.7; font-size:13px">Sürükle-bırak, temalar, animasyonlar, sesler, zorluk seviyeleri</div>
+    </div>
+    <div class="controls">
+      <select id="levelSelect" class="theme-select small">
+        <option value="0">Kolay</option>
+        <option value="1">Orta</option>
+        <option value="2">Zor</option>
+        <option value="3">Çok Zor</option>
+      </select>
+
+      <select id="theme" class="theme-select small">
+        <option value="dark">Karanlık</option>
+        <option value="light">Aydınlık</option>
+        <option value="blue">Mavi</option>
+        <option value="retro">Retro</option>
+        <option value="forest">Forest</option>
+        <option value="sunset">Sunset</option>
+        <option value="ocean">Ocean</option>
+        <option value="cyber">Cyber</option>
+        <option value="pastel">Pastel</option>
+      </select>
+
+      <button id="fullscreen" class="btn small" style="background:var(--accent);color:#02203a;">Tam Ekran</button>
+      <button id="mute" class="btn small" style="background:var(--accent);color:#02203a;">🔊 Ses Aç</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <div id="instruction"></div>
+    <div id="sentence"></div>
+    <div style="display:flex; gap:12px; flex-wrap:wrap;">
+      <div id="levelBadge">Seviye 1</div>
+      <div id="levelName">Kolay</div>
+      <div id="timer">30 s</div>
+    </div>
+    <div id="bank"></div>
+    <div id="feedback" class="feedback"></div>
+
+    <div id="finalScreen"></div>
+
+    <div style="display:flex; gap:8px; margin-top:6px;">
+      <button id="submit" class="btn" style="background:var(--accent);color:#02203a;">Cümleyi Gönder</button>
+      <button id="restart" class="btn" disabled style="background:rgba(255,255,255,0.1);">Tekrar Başlat</button>
+      <button id="clear" class="btn" style="background:rgba(255,255,255,0.08);">Cümleyi Temizle</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ====================== VERİLER ============================= */
+
+const levels = [
+  {
+    name:"Kolay",
+    sentences:[
+      {text:"Ahmet sınıfta hızlıca kitap okuyor.", type:"zarf"},
+      {text:"Kırmızı elma ağacın dalında duruyor.", type:"isim"},
+      {text:"Büyük köpek bahçede uyuyor.", type:"sıfat"},
+      {text:"Öğrenciler bahçede gürültüsüz oynuyor.", type:"zarf"},
+      {text:"Top masanın üzerinde duruyor.", type:"isim"},
+      {text:"Küçük kuş ağaçta ötüyor.", type:"sıfat"}
+    ]
+  },
+  {
+    name:"Orta",
+    sentences:[
+      {text:"Ahmet dün akşam ödevini dikkatlice yaptı.", type:"zarf"},
+      {text:"Büyük beyaz kedi çatıya tırmandı.", type:"isim"},
+      {text:"Küçük mavi araba yolda durdu.", type:"sıfat"},
+      {text:"Ayşe sabah erkenden okula gitti.", type:"zarf"},
+      {text:"Eski kitap rafın üzerinde duruyor.", type:"isim"},
+      {text:"Uzun ince kalem masanın kenarında duruyor.", type:"sıfat"}
+    ]
+  },
+  {
+    name:"Zor",
+    sentences:[
+      {text:"Öğrenciler kütüphanede sessizce kitap okuyor.", type:"zarf"},
+      {text:"Eski ve büyük ev sokak köşesinde duruyor.", type:"sıfat"},
+      {text:"Yeşil ve kırmızı elmalar bahçede duruyor.", type:"isim"},
+      {text:"Çocuklar parkta neşeyle koşuşturuyor.", type:"zarf"},
+      {text:"Geniş camlı modern bina şehrin merkezinde bulunuyor.", type:"sıfat"},
+      {text:"Taze ekmekler fırında sergileniyor.", type:"isim"}
+    ]
+  },
+  {
+    name:"Çok Zor",
+    sentences:[
+      {text:"Öğrenciler kütüphanede sessizce ve dikkatlice çalışıyor.", type:"zarf"},
+      {text:"Büyük kırmızı ve yeşil elmalar bahçede duruyor.", type:"isim"},
+      {text:"Ahmet dün sabah erken kalkarak sınavını dikkatle yaptı.", type:"zarf"},
+      {text:"Küçük çocuklar parka sabahın erken saatlerinde giderek birlikte oynadı.", type:"zarf"},
+      {text:"Uzun ince metal merdiven duvara yaslanmış duruyor.", type:"isim"},
+      {text:"Geniş yapraklı yüksek ağaçlar şiddetli rüzgârda sallanıyordu.", type:"sıfat"}
+    ]
+  }
+];
+
+
+/* ====================== STATE ============================= */
+
+let state={level:0,score:0,sentenceIndex:0,retry:3,time:30};
+let sentenceWords=[];
+let timer=null;
+let dragging=null;
+let sound=true;
+
+/* ====================== ELEMENTLER ========================= */
+
+const bank=document.getElementById('bank');
+const sentence=document.getElementById('sentence');
+const feedback=document.getElementById('feedback');
+const levelBadge=document.getElementById('levelBadge');
+const levelName=document.getElementById('levelName');
+const instruction=document.getElementById('instruction');
+const restart=document.getElementById('restart');
+const submit=document.getElementById('submit');
+const clearBtn=document.getElementById('clear');
+const timerEl=document.getElementById('timer');
+const themeSelect=document.getElementById('theme');
+const fullscreenBtn=document.getElementById('fullscreen');
+const levelSelect=document.getElementById('levelSelect');
+const muteBtn=document.getElementById('mute');
+const finalScreen=document.getElementById('finalScreen');
+
+/* ====================== SESLER ============================= */
+
+const sfx={
+  correct:new Audio("https://assets.mixkit.co/active_storage/sfx/2206/2206-preview.mp3"),
+  wrong:new Audio("https://assets.mixkit.co/active_storage/sfx/2018/2018-preview.mp3"),
+  time:new Audio("https://assets.mixkit.co/active_storage/sfx/2589/2589-preview.mp3"),
+  click:new Audio("https://assets.mixkit.co/active_storage/sfx/2448/2448-preview.mp3")
+};
+Object.values(sfx).forEach(a=>a.volume=0.45);
+
+/* ====================== CONFETTI =========================== */
+
+function confetti(){
+  for(let i=0;i<25;i++){
+    const c=document.createElement('div');
+    c.className='confetti';
+    c.style.left=Math.random()*100+"vw";
+    c.style.background=`hsl(${Math.random()*360},80%,60%)`;
+    document.body.appendChild(c);
+    setTimeout(()=>c.remove(),2200);
+  }
+}
+
+/* ====================== OYUN İŞLEYİŞİ ======================= */
+
+function loadSentence(){
+  clearInterval(timer);
+  sentence.innerHTML="";
+  bank.innerHTML="";
+  feedback.style.display="none";
+  finalScreen.style.display="none";
+  sentenceWords=[];
+
+  const lvl=levels[state.level];
+  const s=lvl.sentences[state.sentenceIndex];
+
+  instruction.textContent=`Talimat: ${s.type} cümlesi oluştur`;
+
+  const words=s.text.replace(/[.,!?]/g,'').split(' ').sort(()=>Math.random()-0.5);
+  words.forEach(w=>{
+    const chip=document.createElement('div');
+    chip.className='chip';
+    chip.textContent=w;
+    chip.draggable=true;
+
+    chip.addEventListener('dragstart',()=>{dragging=w; chip.classList.add('dragging');});
+    chip.addEventListener('dragend',()=>{dragging=null; chip.classList.remove('dragging');});
+    chip.addEventListener('click',()=>{if(sound)sfx.click.play(); addWord(w);});
+
+    bank.appendChild(chip);
+  });
+
+  state.time=30;
+  timerEl.textContent=state.time+" s";
+  startTimer();
+}
+
+function addWord(w){
+  if(sentenceWords.includes(w)) return;
+  sentenceWords.push(w);
+
+  const box=document.createElement('div');
+  box.className='word-box';
+  box.innerHTML=`${w} <button class="remove">✕</button>`;
+  box.querySelector(".remove").onclick=()=>{
+    sentenceWords=sentenceWords.filter(x=>x!==w);
+    box.remove();
+  }
+  sentence.appendChild(box);
+}
+
+sentence.addEventListener("dragover",e=>e.preventDefault());
+sentence.addEventListener("drop",()=>{if(dragging)addWord(dragging);});
+
+submit.onclick=()=>{
+  const original=levels[state.level].sentences[state.sentenceIndex].text.replace(/[.,!?]/g,'');
+  const user=sentenceWords.join(' ');
+  if(user===original.split(' ').join(' ')){
+    feedback.textContent='Doğru!';
+    feedback.className='feedback correct';
+    feedback.style.display='block';
+
+    if(sound)sfx.correct.play();
+    confetti();
+    randomTheme();
+
+    state.score+=10;
+    next();
+  } else {
+    feedback.textContent='Yanlış!';
+    feedback.className='feedback wrong';
+    feedback.style.display='block';
+
+    if(sound)sfx.wrong.play();
+    state.retry--;
+    if(state.retry<=0) end();
+  }
+};
+
+clearBtn.onclick=()=>{sentenceWords=[]; sentence.innerHTML=""; feedback.style.display="none";}
+
+function next(){
+  state.sentenceIndex++;
+if(state.sentenceIndex>=levels[state.level].sentences.length){
+  state.sentenceIndex=0;
+  if(state.level<levels.length-1){
+    state.level++; state.retry=3;
+    levelBadge.textContent=`Seviye ${state.level+1}`;
+    levelName.textContent=levels[state.level].name;
+  } else return end();
+}
+
+  loadSentence();
+}
+
+function startTimer(){
+  clearInterval(timer);
+  timer=setInterval(()=>{
+    state.time--;
+    timerEl.textContent=state.time+" s";
+    if(state.time<=0){
+      clearInterval(timer);
+      if(sound)sfx.time.play();
+      state.retry--;
+      if(state.retry<=0) end();
+      else loadSentence();
+    }
+  },1000);
+}
+
+function end(){
+  clearInterval(timer);
+  submit.disabled=true;
+  restart.disabled=false;
+
+  finalScreen.textContent=`Oyun Bitti! Skor: ${state.score}`;
+  finalScreen.style.display='block';
+}
+restart.onclick=()=>{
+  state={level:0,score:0,sentenceIndex:0,retry:3,time:30};
+  submit.disabled=false;
+  restart.disabled=true;
+  levelBadge.textContent="Seviye 1";
+  levelName.textContent="Kolay";
+  loadSentence();
+};
+
+
+/* ====================== TEMA & TAM EKRAN =================== */
+
+const themes=["dark","light","blue","retro","forest","sunset","ocean","cyber","pastel"];
+function randomTheme(){
+  const current=document.body.className.replace('theme-','');
+  let t;
+  do{t=themes[Math.floor(Math.random()*themes.length)];}while(t===current);
+  fadeTransition(()=>document.body.className=`theme-${t}`);
+  themeSelect.value=t;
+}
+
+function fadeTransition(cb){
+  document.body.classList.add("fade");
+  setTimeout(()=>{cb(); document.body.classList.remove("fade");},200);
+}
+
+themeSelect.onchange=()=>fadeTransition(()=>document.body.className=`theme-${themeSelect.value}`);
+
+fullscreenBtn.onclick=()=>!document.fullscreenElement?document.documentElement.requestFullscreen():document.exitFullscreen();
+muteBtn.onclick=()=>{sound=!sound; muteBtn.textContent=sound?'🔊 Ses Aç':'🔇 Ses Kapalı';}
+
+
+
+/* =========================================================== */
+loadSentence();
+</script>
+</body>
+</html>

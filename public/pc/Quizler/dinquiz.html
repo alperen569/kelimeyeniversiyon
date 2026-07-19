@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<link rel="stylesheet" href="/shared/ocean-loader.css">
+<script src="/shared/ocean-loader.js"></script>
+ 
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Kelime Okyanusu — Din Dersi Quiz</title>
+<style>
+  :root{
+    --bg-1: #002200;      /* Koyu yeşil arka plan */
+    --bg-2: #004400;      /* Açık yeşil gradyan */
+    --neon: #00ff66;      /* Neon yeşil vurgular */
+    --accent: #33cc33;    /* Buton ve hover rengi */
+    --card: rgba(2,40,20,0.6); /* Kart arka planı */
+    --glass: rgba(255,255,255,0.04); /* Cam efekti */
+    --ok: #39d98a;        /* Doğru cevabın rengi */
+    --nok: #ff6666;       /* Yanlış cevabın rengi */
+    --glass-border: rgba(0,204,102,0.14);
+    --glass-glow: 0 8px 30px rgba(0,204,102,0.08);
+    font-size: 16px;
+  }
+  
+  *{box-sizing:border-box}
+  html,body{  background-size: 100000px 80000px;height:100%;margin:0;font-family:Inter, "Segoe UI", system-ui, Roboto, "Helvetica Neue", Arial; background: radial-gradient(circle at 10% 10%, var(--bg-1), var(--bg-2) 50%, #001a00 100%); color:#eaffee; -webkit-font-smoothing:antialiased}
+  .wrap{min-height:100%;display:flex;align-items:center;justify-content:center;padding:48px}
+  .card{
+    width:100%;
+    max-width:980px;
+    background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+    border-radius:18px;
+    padding:22px;
+    border:1px solid var(--glass-border);
+    box-shadow: var(--glass-glow);
+    display:grid;
+    grid-template-columns: 360px 1fr;
+    gap:20px;
+    position:relative;
+    overflow:hidden;
+  }
+
+  /* LEFT HUD / NAVBAR */
+  .hud{
+    padding:18px;
+    border-radius:12px;
+    background: linear-gradient(180deg, rgba(0,40,20,0.12), rgba(0,40,20,0.06));
+    border: 1px solid rgba(255,255,255,0.03);
+    display:flex;
+    flex-direction:column;
+    gap:14px;
+    align-items:stretch;
+  }
+  .logo{
+    display:flex;
+    gap:12px;
+    align-items:center;
+  }
+  .logo img{width:110px;height:110px;border-radius:12px;box-shadow:0 6px 18px rgba(0,204,102,0.16)}
+  .logo h1{font-size:18px;margin:0;color:var(--neon);text-shadow:0 0 10px rgba(0,255,102,0.12)}
+  .stats{
+    display:flex;
+    gap:12px;
+    flex-wrap:wrap;
+  }
+  .stat{
+    flex:1 1 45%;
+    background:var(--card);
+    padding:10px;border-radius:10px;border:1px solid rgba(255,255,255,0.02);
+    text-align:center;
+  }
+  .stat .num{font-weight:700;font-size:20px;color:var(--neon)}
+  .controls{display:flex;gap:10px;flex-wrap:wrap;}
+  .btn{
+    background:linear-gradient(180deg,var(--accent),var(--neon));
+    color:#001020;font-weight:700;padding:8px 12px;border-radius:10px;border:none;cursor:pointer;box-shadow:0 6px 18px rgba(0,204,102,0.14);
+  }
+  .btn.ghost{background:transparent;border:1px solid rgba(255,255,255,0.04);color:inherit;box-shadow:none}
+
+  /* MAIN QUIZ */
+  .main{
+    padding:10px;
+    display:flex;
+    flex-direction:column;
+    gap:18px;
+  }
+  .topbar{display:flex;justify-content:space-between;align-items:center;gap:12px}
+  .progress-wrap{display:flex;align-items:center;gap:12px;}
+  .timer{
+    width:72px;height:72px;border-radius:50%;
+    display:grid;place-items:center;
+    background:conic-gradient(var(--accent) 0deg, rgba(255,255,255,0.06) 0deg);
+    box-shadow: inset 0 -6px 20px rgba(0,0,0,0.25), 0 8px 20px rgba(0,204,102,0.06);
+    border:1px solid rgba(255,255,255,0.02);
+  }
+  .timer .time{font-weight:700;color:var(--neon);font-size:18px}
+  .question-card{
+    background: linear-gradient(180deg, rgba(0,40,20,0.18), rgba(0,40,20,0.10));
+    padding:18px;border-radius:12px;border:1px solid rgba(255,255,255,0.02);
+    box-shadow: 0 10px 40px rgba(0,0,0,0.35);
+  }
+  .q-title{font-size:20px;margin:0 0 8px 0;color:#dfffe6}
+  .q-meta{font-size:13px;color:rgba(255,255,255,0.6);margin-bottom:12px}
+  .answers{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+  .answer{
+    background:var(--glass);
+    padding:12px;border-radius:10px;border:1px solid rgba(255,255,255,0.03);
+    cursor:pointer;transition:all 220ms ease;min-height:56px;display:flex;align-items:center;
+  }
+  .answer div { color: #ffffff; }
+  .answer:hover{transform:translateY(-4px);box-shadow:0 8px 20px rgba(0,0,0,0.25)}
+  .answer .letter{font-weight:800;color:var(--neon);width:36px;height:36px;border-radius:8px;background:rgba(0,0,0,0.18);display:grid;place-items:center;margin-right:10px}
+  .answer.correct{background:linear-gradient(90deg, rgba(42, 250, 146, 0.562), rgba(40, 245, 143, 0.671));border-color:rgba(57,217,138,0.22);box-shadow:0 8px 26px rgba(36, 223, 129, 0.692)}
+  .answer.wrong{background:linear-gradient(90deg, rgba(255, 45, 45, 0.445), rgba(250, 60, 60, 0.363));border-color:rgba(243, 59, 59, 0.507);box-shadow:0 8px 26px rgba(250, 55, 55, 0.596)}
+  .answer.dim{opacity:0.45;transform:none}
+  .foot{display:flex;justify-content:space-between;align-items:center;gap:10px}
+  .small{font-size:13px;color:rgba(255,255,255,0.6)}
+  .streak{font-weight:800;color:var(--neon)}
+
+  /* result modal */
+  .result{
+    position:absolute;inset:0;display:grid;place-items:center;background:linear-gradient(180deg, rgba(0,0,0,0.6), rgba(0,0,0,0.7));
+    padding:40px;backdrop-filter: blur(4px);opacity:0;pointer-events:none;transition:opacity 300ms ease;
+  }
+  .result.show{opacity:1;pointer-events:auto}
+  .result .box{background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));padding:28px;border-radius:16px;text-align:center;border:1px solid rgba(255,255,255,0.03)}
+  .big{font-size:36px;color:var(--neon);margin:6px 0 16px 0}
+  .muted{color:rgba(255,255,255,0.6)}
+
+  /* badges */
+  .badges{display:flex;gap:10px;flex-wrap:wrap}
+  .badge{padding:8px 10px;border-radius:10px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.02);font-weight:700;color:var(--neon)}
+
+  /* responsive */
+@media (max-width:768px){
+  .wrap{padding:20px;}
+  .card{grid-template-columns:1fr;max-width:95%;padding:16px;}
+  .hud{order:1;margin-bottom:20px;padding:12px;}
+  .main{order:2;}
+  .answers{grid-template-columns:1fr;gap:10px;}
+  .answer{min-height:50px;font-size:14px;padding:10px;}
+  .timer{width:50px;height:50px;}
+  .q-title{font-size:18px;}
+  .q-meta{font-size:12px;}
+  .small{font-size:11px;}
+  .btn{padding:8px 10px;font-size:14px;}
+  .logo img{width:90px;height:90px;}
+  .stat .num{font-size:18px;}
+}
+
+
+  .hint{font-size:12px;color:rgba(255,255,255,0.55)}
+  .pop{animation:pop 420ms ease forwards}
+  @keyframes pop{0%{transform:scale(0.88);opacity:0}100%{transform:none;opacity:1}}
+
+  .small-muted{
+    font-weight: 20px;
+    font-style:oblique;
+  }
+</style>
+
+</head>
+<body>
+<div class="wrap">
+  <div class="card pop" id="app">
+    <div class="hud">
+      <div class="logo">
+        <img src="logo of okyanus.png" alt="Logo" id="logoImg" aria-hidden="false"/>
+        <div>
+          <h1>Kelime Okyanusu</h1>
+          <div class="small">Din Dersi Quiz — 10 Soru</div>
+        </div>
+      </div>
+
+      <div class="stats" aria-hidden="true">
+        <div class="stat"><div class="small">PUAN</div><div class="num" id="score">0</div></div>
+        <div class="stat"><div class="small">SIRA</div><div class="num" id="qIndex">0/20</div></div>
+        <div class="stat"><div class="small">STREAK</div><div class="num" id="streak">0</div></div>
+        <div class="stat"><div class="small">EN YÜKSEK</div><div class="num" id="high">0</div></div>
+      </div>
+
+      <div>
+        <div class="small" style="margin-bottom:8px">Kategoriler</div>
+        <div class="badges" id="categoryList"></div>
+      </div>
+      <div style="margin-top:auto"><div class="small hint">Klavye ile 1-4 tuşlarını kullanabilirsin. Hızlı cevap -> daha çok puan.</div></div>
+    </div>
+
+    <div class="main" role="main" aria-live="polite">
+      <div class="topbar">
+        <div class="progress-wrap"><div id="categoryTag" class="small-muted">Kategori: Genel</div></div>
+        <div style="display:flex;align-items:center;gap:12px"><div class="timer" id="timer" aria-hidden="true"><div class="time" id="timeText">20</div></div></div>
+      </div>
+<div class="question-card" id="qCard">
+  <h2 class="q-title" id="questionText">Ekran hazır — başlatmak için Başlat'a bas.</h2>
+  <div class="q-meta" id="meta">Hazır olduğunda 10 soruluk seri başlayacak.</div>
+  <div class="answers" id="answers"></div>
+  <div class="foot" style="margin-top:14px"><div class="small">Sıradaki: <span id="nextLabel">—</span></div></div>
+  <div class="controls" style="margin-top:10px; justify-content:flex-start">
+    <button class="btn" id="startBtn">Başlat</button>
+    <button class="btn" onclick="document.getElementById('bg-music').play()">🎵 Müziği Başlat</button>
+            <audio id="bg-music" src="\kelime okyanusu\müzik\Din Müzik.mp3" loop preload="auto"></audio>
+    <button class="btn ghost" id="resetBtn">Sıfırla</button>
+    <button class="btn ghost" id="shareBtn">Skoru Kopyala</button>
+  </div>
+</div> 
+
+    <div class="result" id="result">
+      <div class="box">
+        <div class="big" id="finalScore">0</div>
+        <div class="muted" id="finalText">Tebrikler! Puanın kaydedildi.</div>
+        <div style="margin-top:12px">
+          <button class="btn" id="playAgain">Tekrar Oyna</button>
+          <button class="btn ghost" id="closeRes">Kapat</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+const QUESTIONS = [
+{q:"Allah'ın birliğine inanç hangi iman esasıdır?",cat:"İman",opts:["İhlas","Tevhid","Salat","Zekat"],a:1},
+{q:"Namazın farz sayısı kaçtır?",cat:"İbadet",opts:["3","5","7","4"],a:1},
+{q:"Oruç hangi ayda tutulur?",cat:"İbadet",opts:["Ramazan","Şaban","Recep","Muharrem"],a:0},
+{q:"Kuran-ı Kerim hangi dilde indirilmiştir?",cat:"Kuran",opts:["Arapça","Farsça","Türkçe","Alemanca"],a:0},
+{q:"Peygamberimizin (s.a.v) doğum yeri neresidir?",cat:"Peygamber",opts:["Medine","Mekke","Kudüs","Taif"],a:1},
+{q:"Hac ibadeti hangi şehre yapılır?",cat:"İbadet",opts:["Mekke","Medine","Kudüs","İstanbul"],a:0},
+{q:"Zekat vermek hangi ibadettir?",cat:"İbadet",opts:["Maddi","İman","Salat","Oruç"],a:0},
+{q:"Hac farzı kaç defa yapılabilir?",cat:"İbadet",opts:["Sınırsız","Sadece bir kez","Maddi imkana bağlı","2 kez"],a:2},
+{q:"İslamın beş şartından biri olan inanç ifadesi nedir?",cat:"İman",opts:["Kelime-i Şehadet","Namaz","Oruç","Zekat"],a:0},
+{q:"Kur'an-ı Kerim'i hangi melek indirmiştir?",cat:"Kuran",opts:["İsrafil","Cebrail","Azrail","Mikail"],a:1}
+];
+
+// JS kodu quiz mantığı aynı kalacak, sadece sorular ve kategoriler değişti
+const startBtn = document.getElementById('startBtn');
+const resetBtn = document.getElementById('resetBtn');
+const shareBtn = document.getElementById('shareBtn');
+const scoreEl = document.getElementById('score');
+const qIndexEl = document.getElementById('qIndex');
+const streakEl = document.getElementById('streak');
+const highEl = document.getElementById('high');
+const timerEl = document.getElementById('timer');
+const timeText = document.getElementById('timeText');
+const questionText = document.getElementById('questionText');
+const metaText = document.getElementById('meta');
+const answersWrap = document.getElementById('answers');
+const categoryTag = document.getElementById('categoryTag');
+const resultOverlay = document.getElementById('result');
+const finalScore = document.getElementById('finalScore');
+const finalText = document.getElementById('finalText');
+const playAgain = document.getElementById('playAgain');
+const closeRes = document.getElementById('closeRes');
+const nextLabel = document.getElementById('nextLabel');
+const categoryList = document.getElementById('categoryList');
+
+let QUESTIONS_POOL = [];
+let currentIndex = 0;
+let score = 0;
+let streak = 0;
+let timer = null;
+let timeLeft = 20;
+let running = false;
+let highscore = Number(localStorage.getItem('kk_high')) || 0;
+
+highEl.textContent = highscore;
+qIndexEl.textContent = `0/10`;
+scoreEl.textContent = score;
+streakEl.textContent = streak;
+populateCategories();
+
+function populateCategories(){
+  const cats = [...new Set(QUESTIONS.map(s=>s.cat))];
+  categoryList.innerHTML = '';
+  cats.forEach(c=>{
+    const el = document.createElement('div');
+    el.className='badge'; el.textContent=c;
+    categoryList.appendChild(el);
+  });
+}
+document.addEventListener('click', () => {
+    const audio = document.getElementById('bg-music');
+    if (audio.muted) audio.muted = false;
+    audio.volume = 0.7; // %20 ses seviyesinde başlat
+    audio.play().catch(()=>{});
+});
+function shuffle(arr){ return arr.map(v=>[Math.random(),v]).sort((a,b)=>a[0]-b[0]).map(a=>a[1]); }
+function pickQuestions(){ return shuffle(QUESTIONS).slice(0,10); }
+function startGame(){ QUESTIONS_POOL = pickQuestions(); currentIndex = 0; score = 0; streak = 0; running = true; updateHUD(); showQuestion(); startBtn.textContent='Devam'; }
+function endGame(){ running=false; clearTimer(); resultOverlay.classList.add('show'); finalScore.textContent=score; finalText.textContent=`Seriyi bitirdin — ${score} puan!`; if(score>highscore){ highscore=score; localStorage.setItem('kk_high',highscore); highEl.textContent=highscore; finalText.textContent+=" Yeni rekor! 🎉"; } }
+function updateHUD(){ scoreEl.textContent=score; qIndexEl.textContent=`${currentIndex}/${QUESTIONS_POOL.length||10}`; streakEl.textContent=streak; nextLabel.textContent=QUESTIONS_POOL[currentIndex]?QUESTIONS_POOL[currentIndex].cat:'—'; }
+function showQuestion(){ if(currentIndex>=QUESTIONS_POOL.length){endGame(); return;} const q=QUESTIONS_POOL[currentIndex]; categoryTag.textContent=`Kategori: ${q.cat}`; questionText.textContent=q.q; metaText.textContent=`Soru ${currentIndex+1}/${QUESTIONS_POOL.length}`; answersWrap.innerHTML=''; q.opts.forEach((opt,i)=>{ const btn=document.createElement('button'); btn.className='answer'; btn.innerHTML=`<div class="letter">${['A','B','C','D'][i]}</div><div>${opt}</div>`; btn.addEventListener('click',()=>selectAnswer(i)); answersWrap.appendChild(btn); }); timeLeft=20; startTimer(); }
+function selectAnswer(i){ const q=QUESTIONS_POOL[currentIndex]; clearTimer(); const buttons = answersWrap.querySelectorAll('.answer'); buttons.forEach(b=>b.classList.add('dim')); if(i===q.a){ buttons[i].classList.add('correct'); score+=100; streak++; } else{ buttons[i].classList.add('wrong'); buttons[q.a].classList.add('correct'); streak=0;} currentIndex++; updateHUD(); setTimeout(()=>{if(running) showQuestion();},800); }
+function startTimer(){ clearTimer(); timer = setInterval(()=>{timeLeft--; timeText.textContent=timeLeft; if(timeLeft<=0){selectAnswer(-1);}},1000);}
+function clearTimer(){if(timer){clearInterval(timer); timer=null;}}
+
+startBtn.addEventListener('click',()=>{if(!running) startGame(); else showQuestion();});
+resetBtn.addEventListener('click',()=>{location.reload();});
+playAgain.addEventListener('click',()=>{resultOverlay.classList.remove('show'); startGame();});
+closeRes.addEventListener('click',()=>{resultOverlay.classList.remove('show');});
+shareBtn.addEventListener('click',()=>{navigator.clipboard.writeText(`Kelime Okyanusu Din Quiz Skoru: ${score} /10`); alert('Skor kopyalandı!');});
+</script>
+</body>
+</html>

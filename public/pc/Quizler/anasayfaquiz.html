@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<link rel="stylesheet" href="/shared/ocean-loader.css">
+<script src="/shared/ocean-loader.js"></script>
+
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Quiz Oyunları - Ana Sayfa</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', sans-serif;
+      color: #fff;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      overflow: hidden;
+      background: #001f3f;
+        background-size: 10000px 80000px;
+
+    }
+
+    /* Dalgalar */
+    .wave {
+      position: absolute;
+      bottom: 0;
+      width: 200%;
+      height: 200px;
+      background: rgba(0, 174, 239, 0.4);
+      border-radius: 43% 57% 47% 53% / 50% 45% 55% 50%;
+      animation: waveAnim 10s linear infinite;
+      opacity: 0.5;
+    }
+
+    .wave:nth-child(1) {
+      animation-duration: 10s;
+      opacity: 0.5;
+    }
+    .wave:nth-child(2) {
+      background: rgba(0, 174, 239, 0.3);
+      animation-duration: 15s;
+      bottom: 20px;
+      opacity: 0.4;
+    }
+    .wave:nth-child(3) {
+      background: rgba(0, 174, 239, 0.2);
+      animation-duration: 20s;
+      bottom: 40px;
+      opacity: 0.3;
+    }
+
+    @keyframes waveAnim {
+      0% { transform: translateX(0) translateY(0) rotate(0deg); }
+      50% { transform: translateX(-25%) translateY(10px) rotate(1deg); }
+      100% { transform: translateX(0) translateY(0) rotate(0deg); }
+    }
+
+    .container {
+      position: relative;
+      z-index: 10;
+      background: rgba(255, 255, 255, 0.05);
+      backdrop-filter: blur(15px);
+      padding: 40px;
+      border-radius: 20px;
+      box-shadow: 0 8px 25px rgba(0,0,0,0.5);
+      text-align: center;
+      width: 320px;
+    }
+
+    h1 {
+      font-size: 1.6rem;
+      margin-bottom: 20px;
+      color: #00eaff;
+    }
+
+    a {
+      text-decoration: none;
+    }
+
+    .game-btn {
+      display: block;
+      width: 100%;
+      padding: 12px;
+      margin: 10px 0;
+      font-size: 1rem;
+      font-weight: bold;
+      border: 2px solid #00eaff;
+      border-radius: 12px;
+      background: transparent;
+      color: #fff;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+
+    .game-btn:hover {
+      background: #00eaff;
+      color: #001933;
+      transform: scale(1.05);
+    }
+  </style>
+</head>
+<body>
+  <!-- CSS Dalgalar -->
+  <div class="wave"></div>
+  <div class="wave"></div>
+  <div class="wave"></div>
+
+  <!-- Quiz kutusu -->
+  <div class="container">
+    <h1>Quiz Oyunları</h1>
+    <a href="dinquiz.html"><button class="game-btn">Din Dersi Quiz</button></a>
+    <a href="türkçequiz.html"><button class="game-btn">Türkçe Quiz</button></a>
+    <a href="tarihquiz.html"><button class="game-btn">Tarih Quiz</button></a>
+    <a href="oyun4.html"><button class="game-btn">Fen Bilimleri Quiz</button></a>
+  </div>
+</body>
+</html>

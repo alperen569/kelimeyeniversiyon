@@ -1,0 +1,1084 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<link rel="stylesheet" href="/shared/ocean-loader.css">
+<script src="/shared/ocean-loader.js"></script>
+
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Kelime Okyanusu - Big Boss - ORTAOKUL</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Comic Sans MS', 'Arial Rounded MT Bold', cursive, sans-serif;
+      background: linear-gradient(135deg, #1b304d 0%, #163a58 52%, #0d1c2f 100%);
+      overflow: hidden;
+      color: white;
+      height: 100vh;
+      transition: opacity 0.45s ease, transform 0.45s ease;
+    }
+
+    .game-container {
+      position: relative;
+      width: 100vw;
+      height: 100vh;
+      overflow: hidden;
+      transition: opacity 0.35s ease, transform 0.35s ease;
+    }
+
+    /* Kelimeler - Haraketsiz Kartlar */
+    .word {
+      position: absolute;
+      background: linear-gradient(135deg, #e9f2ff, #c8d7ef);
+      color: #102b4e;
+      padding: 12px 18px;
+      border-radius: 15px;
+      font-weight: 700;
+      font-size: 15px;
+      white-space: nowrap;
+      cursor: pointer;
+      box-shadow: 0 5px 12px rgba(0, 0, 0, 0.15);
+      border: 2px solid rgba(255,255,255,0.5);
+      transition: transform 0.25s ease, box-shadow 0.25s ease, filter 0.25s ease;
+      user-select: none;
+      touch-action: manipulation;
+      will-change: left, top;
+      animation: wordPopIn 0.45s ease both;
+    }
+
+    .word:hover {
+      transform: translateY(-3px) scale(1.05);
+      box-shadow: 0 10px 18px rgba(0, 0, 0, 0.22);
+      filter: brightness(1.04);
+    }
+
+    /* Dekoratif Bubbles */
+    .bubble {
+      position: absolute;
+      border-radius: 50%;
+      background: radial-gradient(circle at 30% 30%, rgba(255, 255, 255, 0.38), rgba(255, 255, 255, 0.02));
+      animation: float 18s infinite ease-in-out;
+      pointer-events: none;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+    }
+
+    @keyframes float {
+      0% { transform: translate3d(0, 0, 0) scale(0.82); opacity: 0.18; }
+      50% { transform: translate3d(0, -22px, 0) scale(1); opacity: 0.35; }
+      100% { transform: translate3d(0, 0, 0) scale(0.82); opacity: 0.18; }
+    }
+
+    body.is-transitioning {
+      opacity: 0;
+      transform: scale(0.985);
+    }
+
+    .game-container.round-soft-enter {
+      animation: softRoundIn 0.45s ease both;
+    }
+
+    @keyframes wordPopIn {
+      from {
+        opacity: 0;
+        transform: translateY(8px) scale(0.96);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+    }
+
+    @keyframes softRoundIn {
+      from {
+        opacity: 0.6;
+        transform: translateY(6px) scale(0.99);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+    }
+
+    /* Toplanan Kelimeler */
+    #collected-words {
+      position: absolute;
+      bottom: 140px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(255, 255, 255, 0.95);
+      color: #102b4e;
+      padding: 12px 25px;
+      border-radius: 20px;
+      font-size: 15px;
+      font-weight: 700;
+      max-width: 600px;
+      text-align: center;
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+      border: 2px solid rgba(255,255,255,0.5);
+    }
+
+    /* Score ve Timer - Top Panel */
+    #score, #timer {
+      position: static;
+      font-size: 16px;
+      font-weight: 700;
+      background: linear-gradient(135deg, #d3e5ff, #b8d4f4);
+      color: #102b4e;
+      padding: 8px 16px;
+      border-radius: 12px;
+      border: 2px solid rgba(255,255,255,0.7);
+      box-shadow: 0 3px 8px rgba(0, 0, 0, 0.2);
+    }
+
+    /* Buton Container */
+    .button-container {
+      position: absolute;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 12px;
+      width: calc(100% - 40px);
+      max-width: 800px;
+      padding: 0 10px;
+    }
+
+    .game-button {
+      padding: 12px 18px;
+      font-size: 14px;
+      font-weight: 700;
+      border: none;
+      border-radius: 20px;
+      background: linear-gradient(135deg, #4d79d1, #355fa6);
+      color: white;
+      cursor: pointer;
+      flex: 1 1 110px;
+      min-width: 110px;
+      transition: all 0.2s ease;
+      box-shadow: 0 5px 12px rgba(0, 0, 0, 0.25);
+      border: 2px solid rgba(255,255,255,0.35);
+    }
+
+    .game-button:hover {
+      background: linear-gradient(135deg, #355fa6, #2b4e8a);
+      transform: translateY(-2px);
+      box-shadow: 0 8px 18px rgba(0, 0, 0, 0.32);
+    }
+
+    .game-button:active {
+      transform: translateY(0);
+    }
+
+    /* Bildirim Toast */
+    #notificationToast {
+      position: fixed;
+      left: 50%;
+      bottom: 100px;
+      transform: translateX(-50%) translateY(30px);
+      padding: 14px 28px;
+      background: linear-gradient(135deg, #4d79d1, #355fa6);
+      border: 2px solid rgba(255,255,255,0.65);
+      color: white;
+      border-radius: 20px;
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+      opacity: 0;
+      pointer-events: none;
+      transition: all 0.3s ease;
+      z-index: 10000;
+      width: min(90%, 420px);
+      text-align: center;
+      font-weight: 700;
+      font-size: 15px;
+    }
+
+    #notificationToast.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+      pointer-events: auto;
+    }
+
+    /* Countdown */
+    #countdown-screen {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.6);
+      z-index: 9999;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 120px;
+      font-weight: 700;
+      color: white;
+      text-shadow: 0 0 20px rgba(74, 144, 226, 0.6);
+      opacity: 1;
+      transition: opacity 1s ease;
+    }
+
+    /* Görevler Panel */
+    #missions-panel {
+      position: absolute;
+      top: 20px;
+      left: 20px;
+      padding: 16px;
+      background: rgba(255, 255, 255, 0.95);
+      border: 2px solid rgba(255,255,255,0.65);
+      border-radius: 20px;
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+      max-width: 380px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    #missions-panel h3 {
+      text-align: center;
+      color: #102b4e;
+      font-size: 16px;
+      margin: 0;
+      text-shadow: none;
+    }
+
+    .score-timer-row {
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+    }
+
+    .score-timer-row > div {
+      flex: 1;
+      text-align: center;
+    }
+
+    .missions-row {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .mission-box {
+      background: linear-gradient(135deg, #d3e5ff, #b8d4f4);
+      border: 2px solid rgba(255,255,255,0.7);
+      border-radius: 12px;
+      padding: 8px 12px;
+      font-size: 12px;
+      color: #102b4e;
+      font-weight: 700;
+      transition: all 0.2s ease;
+      box-shadow: 0 3px 8px rgba(0, 0, 0, 0.2);
+      flex: 1 1 auto;
+      min-width: 90px;
+      text-align: center;
+    }
+
+    .mission-box:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 5px 12px rgba(0, 0, 0, 0.25);
+    }
+
+    .mission-box.completed {
+      background: linear-gradient(135deg, #b7decf, #8ed0b2);
+      border-color: rgba(102, 186, 141, 0.75);
+      color: #102b4e;
+      box-shadow: 0 3px 8px rgba(44, 120, 82, 0.3);
+    }
+
+    .mission-progress {
+      display: block;
+      font-weight: 700;
+      color: #3f6fae;
+      margin-top: 3px;
+      font-size: 11px;
+    }
+
+    .mission-box.completed .mission-progress {
+      color: #102b4e;
+    }
+
+    /* Market Panel */
+    #overlay {
+      position: absolute;
+      width: 100vw;
+      height: 100vh;
+      background-color: rgba(0, 0, 0, 0.5);
+      z-index: 90;
+      display: none;
+    }
+
+    #market-panel {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 310px;
+      height: 100vh;
+      background: linear-gradient(180deg, #1a3653 0%, #173c5f 100%);
+      box-shadow: 3px 0 15px rgba(0, 0, 0, 0.2);
+      transform: translateX(-100%);
+      transition: transform 0.3s ease;
+      z-index: 99;
+      padding: 20px;
+      color: white;
+      overflow-y: auto;
+    }
+
+    #market-panel.open {
+      transform: translateX(0);
+    }
+
+    #market-panel h2 {
+      margin-top: 0;
+      font-size: 24px;
+      text-align: center;
+      margin-bottom: 20px;
+      text-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+    }
+
+    .market-items {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .market-item {
+      background: rgba(255, 255, 255, 0.95);
+      border: 2px solid rgba(255, 255, 255, 0.5);
+      padding: 14px;
+      border-radius: 15px;
+      text-align: center;
+      font-size: 14px;
+      font-weight: 700;
+      color: #102b4e;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+    }
+
+    .market-item:hover {
+      transform: translateX(-5px);
+      background: rgba(255, 255, 255, 1);
+      box-shadow: 0 6px 15px rgba(0, 0, 0, 0.2);
+    }
+
+    .market-item span {
+      display: block;
+      margin-top: 6px;
+      font-weight: 700;
+      color: #3f6fae;
+      font-size: 13px;
+    }
+
+    /* Combo Text */
+    #combo-text {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%) scale(0.4);
+      font-size: 68px;
+      color: white;
+      text-shadow:
+        0 0 8px #4d79d1,
+        0 0 16px #4d79d1,
+        0 0 24px rgba(83, 127, 203, 0.55);
+      font-weight: 700;
+      z-index: 9999;
+      pointer-events: none;
+      opacity: 0;
+      padding: 15px 30px;
+      border-radius: 20px;
+      border: 3px solid rgba(255,255,255,0.7);
+      transition: all 0.45s ease;
+      animation: comboBounce 0.8s ease;
+    }
+
+    @keyframes comboBounce {
+      0% { transform: translate(-50%, -50%) scale(0.2); opacity: 0; }
+      50% { transform: translate(-50%, -50%) scale(1.1); opacity: 1; }
+      100% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+    }
+    
+    /* Responsive */
+    @media (max-width: 720px) {
+      .word {
+        font-size: 14px;
+        padding: 10px 14px;
+      }
+      
+      .button-container {
+        bottom: 14px;
+        gap: 8px;
+      }
+
+      .game-button {
+        min-width: 110px;
+        padding: 12px 14px;
+        font-size: 13px;
+      }
+
+      #score, #timer {
+        top: 14px;
+        font-size: 14px;
+        padding: 8px 12px;
+      }
+
+      #missions-panel {
+        max-width: 90%;
+        left: 5%;
+        top: 10px;
+        padding: 12px;
+        gap: 10px;
+      }
+
+      #market-panel {
+        width: 85%;
+      }
+
+      #collected-words {
+        font-size: 14px;
+        padding: 12px 20px;
+        bottom: 130px;
+      }
+    }
+
+    audio {
+      display: none;
+    }
+
+    @keyframes scaleBounce {
+      0% { transform: scale(0); opacity: 0; }
+      50% { transform: scale(1.5); opacity: 1; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+
+    .exit-button {
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      background: linear-gradient(135deg, #4d79d1, #355fa6);
+      border: 2px solid white;
+      color: white;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      font-size: 18px;
+    }
+
+    .exit-button:hover {
+      transform: scale(1.1);
+    }
+
+</style>
+
+  </style>
+</head>
+<body>
+  <div class="game-container" id="game-container">
+    <div id="overlay"></div>
+    <div id="notificationToast"></div>
+    <div id="countdown-screen"></div>
+    <div id="collected-words">Toplanan Kelimeler: </div>
+<div id="missions-panel">
+  <h3>🎯 Görevler</h3>
+  <div class="score-timer-row">
+    <div id="score">Puan: 1000</div>
+    <div id="timer">01:15</div>
+  </div>
+
+  <div class="missions-row">
+    <div class="mission-box" data-id="streak1">
+      1 doğru
+      <span class="mission-progress">0/1</span>
+    </div>
+
+    <div class="mission-box" data-id="streak2">
+      Üst Üste 2 Doğru
+      <span class="mission-progress">0/2</span>
+    </div>
+
+    <div class="mission-box" data-id="streak3">
+      COMBO - Üst Üste 3 Defa Doğru
+      <span class="mission-progress">0/3</span>
+    </div>
+  </div>
+</div>
+
+    <div class="button-container">
+      <button class="game-button" id="check-button">Kontrol Et</button>
+      <button class="game-button" id="reset-button">Sil</button>
+      <button onclick="skoruKaydet(score)" class="game-button">Skoru Kaydet</button>
+      <button class="game-button" id="market-button">Market</button>
+      
+    </div>
+  </div>
+
+    <div id="market-panel">
+     <h2>🎁 Market</h2>
+     <div class="market-items">
+      <div class="market-item">🧠 İpucu Al <br><span>150 Puan</span></div>
+      <div class="market-item">🍀 Büyük Şans<br><span>200 Puan</span></div>
+      <div class="market-item" data-action="auto-correct">
+      🎯 Doğru Kelimeyi Topla
+      <span>200 Puan</span>
+    </div>
+    
+    <div class="market-item" data-action="freeze-wrong">
+      🧊 Yanlışları Dondur (10 sn)
+      <span>120 Puan</span>
+    </div>
+    
+    <div class="market-item" data-action="clean-half">
+      🧹 Yanlışları Azalt
+      <span>180 Puan</span>
+    </div>
+    
+    <div class="market-item" data-action="order-hint">
+      📌 Sıradaki Kelime
+      <span>100 Puan</span>
+    </div>
+    </div>
+   
+    </div>
+   
+    </div>
+  
+
+  <script>
+    const gameContainer = document.getElementById("game-container");
+    const collectedWordsDiv = document.getElementById("collected-words");
+    const scoreDiv = document.getElementById("score");
+    const timerDiv = document.getElementById("timer");
+    const countdownScreen = document.getElementById("countdown-screen");
+    const checkButton = document.getElementById("check-button");
+    const resetButton = document.getElementById("reset-button");
+    const marketButton = document.getElementById('market-button');
+    const marketPanel = document.getElementById('market-panel');
+
+    let selectedProverb = "";
+    let collectedWords = [];
+    let score = 1000;
+    let usedWords = [];
+let missionData = {
+  streak1: { progress: 0, goal: 1, done: false },
+  streak2: { progress: 0, goal: 2, done: false },
+  streak3: { progress: 0, goal: 3, done: false }
+};
+
+let correctStreak = 0;
+let lastSkipped = false;
+
+window.addEventListener('load', () => {
+  const levelScore = localStorage.getItem('levelScore');
+  if (levelScore) {
+    score = parseInt(levelScore);
+    updateScore();
+    localStorage.removeItem('levelScore');
+  }
+});
+
+
+    function cleanText(text) {
+      return text.replace(/[.,!?;]/g, '');
+    }
+
+    function selectNewProverb() {
+      let newProverb;
+      do {
+        newProverb = proverbs[Math.floor(Math.random() * proverbs.length)];
+      } while (usedWords.some(word => newProverb.includes(word)));
+      selectedProverb = newProverb;
+      usedWords = [...usedWords, ...cleanText(newProverb).split(" ")];
+    }
+
+    function shuffleArray(arr) {
+      return arr.sort(() => Math.random() - 0.5);
+    }
+
+    function displayWords(words) {
+      const columns = Math.max(3, Math.floor(window.innerWidth / 180));
+      const rows = Math.max(3, Math.floor(window.innerHeight / 90));
+      const cellWidth = window.innerWidth / columns;
+      const cellHeight = window.innerHeight / rows;
+      const usedPositions = [];
+      
+      words.forEach((word) => {
+        const wordEl = document.createElement("div");
+        wordEl.classList.add("word");
+        wordEl.textContent = word;
+        
+        let randomCol, randomRow;
+        let attempts = 0;
+        do {
+          randomCol = Math.floor(Math.random() * columns);
+          randomRow = Math.floor(Math.random() * rows);
+          attempts++;
+        } while (usedPositions.some(pos => pos.col === randomCol && pos.row === randomRow) && attempts < 20);
+        
+        if (attempts < 20) {
+          usedPositions.push({ col: randomCol, row: randomRow });
+        }
+
+        gameContainer.appendChild(wordEl);
+
+        const padding = 12;
+        const maxX = Math.max(0, gameContainer.clientWidth - wordEl.offsetWidth - padding);
+        const maxY = Math.max(0, gameContainer.clientHeight - wordEl.offsetHeight - padding);
+
+        const posX = randomCol * cellWidth + Math.random() * (cellWidth - wordEl.offsetWidth - padding);
+        const posY = randomRow * cellHeight + Math.random() * (cellHeight - wordEl.offsetHeight - padding);
+
+        wordEl.style.left = Math.max(padding, Math.min(posX, maxX)) + "px";
+        wordEl.style.top = Math.max(padding, Math.min(posY, maxY)) + "px";
+
+        const speedX = (Math.random() * 0.8 + 0.4) * (Math.random() > 0.5 ? 1 : -1);
+        const speedY = (Math.random() * 0.8 + 0.4) * (Math.random() > 0.5 ? 1 : -1);
+
+        let x = wordEl.offsetLeft;
+        let y = wordEl.offsetTop;
+        let dx = speedX;
+        let dy = speedY;
+
+        const moveWord = () => {
+          const width = gameContainer.clientWidth;
+          const height = gameContainer.clientHeight;
+          const wordWidth = wordEl.offsetWidth;
+          const wordHeight = wordEl.offsetHeight;
+
+          if (x <= 8 || x >= width - wordWidth - 8) dx *= -1;
+          if (y <= 8 || y >= height - wordHeight - 8) dy *= -1;
+
+          x += dx;
+          y += dy;
+          wordEl.style.left = `${Math.max(8, Math.min(x, width - wordWidth - 8))}px`;
+          wordEl.style.top = `${Math.max(8, Math.min(y, height - wordHeight - 8))}px`;
+        };
+
+        setInterval(moveWord, 40);
+
+        wordEl.addEventListener("click", () => {
+          if (!collectedWords.includes(word)) {
+            collectedWords.push(word);
+            updateCollectedWords();
+            wordEl.remove();
+          }
+        });
+      });
+    }
+
+    function updateCollectedWords() {
+      collectedWordsDiv.textContent = "Toplanan Kelimeler: " + collectedWords.join(" ");
+    }
+
+    function startGame() {
+      collectedWords = [];
+      updateCollectedWords();
+      gameContainer.querySelectorAll(".word").forEach(el => el.remove());
+      gameContainer.classList.remove('round-soft-enter');
+      void gameContainer.offsetWidth;
+      gameContainer.classList.add('round-soft-enter');
+      selectNewProverb();
+      const selectedWords = cleanText(selectedProverb).split(" ");
+      let additionalWords = [];
+      while (additionalWords.length < 8) {
+        let wrongProverb;
+        do {
+          wrongProverb = proverbs[Math.floor(Math.random() * proverbs.length)];
+        } while (wrongProverb === selectedProverb);
+        const wrongWords = cleanText(wrongProverb).split(" ");
+        additionalWords.push(wrongWords[Math.floor(Math.random() * wrongWords.length)]);
+      }
+      const scrambledWords = shuffleArray([...selectedWords, ...additionalWords]);
+      displayWords(scrambledWords);
+      createBubbles();
+      startTimer();
+    }
+
+    function createBubbles() {
+      gameContainer.querySelectorAll(".bubble").forEach(el => el.remove());
+      for (let i = 0; i < 20; i++) {
+        const bubble = document.createElement("div");
+        const size = Math.random() * 100 + 30;
+        bubble.classList.add("bubble");
+        bubble.style.width = size + "px";
+        bubble.style.height = size + "px";
+        bubble.style.left = Math.random() * 100 + "vw";
+        bubble.style.top = Math.random() * 100 + "vh";
+        bubble.style.animationDuration = (8 + Math.random() * 8) + "s";
+        gameContainer.appendChild(bubble);
+      }
+    }
+
+    function checkProverb() {
+  if (!selectedProverb) {
+    showToast('Önce oyunu başlatmalısın!');
+    return;
+  }
+
+const targetWords = cleanText(selectedProverb).split(/\s+/);
+  const gotWords = collectedWords;
+
+  lastSkipped = false; 
+
+ 
+  let correct = gotWords.length === targetWords.length;
+  if (correct) {
+    for (let i = 0; i < targetWords.length; i++) {
+      if (gotWords[i] !== targetWords[i]) {
+        correct = false;
+        break;
+      }
+    }
+  }
+
+  if (correct) {
+    score += 100;
+    correctStreak++;
+    updateScore();
+    showToast('Doğru! +100 Puan');
+
+    updateMissions(); 
+   
+  } else {
+    showToast('Yanlış! Doğru cümleyi oluşturmadın.');
+    correctStreak = 0;
+    updateMissions();
+  }
+}
+
+function updateMissions() {
+  const streak1Mission = missionData.streak1;
+  if (!streak1Mission.done && correctStreak >= 1) {
+    streak1Mission.progress = 1;
+    streak1Mission.done = true;
+    const el = document.querySelector('.mission-box[data-id="streak1"] .mission-progress');
+    el.textContent = '✔';
+    document.querySelector('.mission-box[data-id="streak1"]').classList.add('completed');
+    score += 25; 
+    updateScore();
+    showToast('Görev tamamlandı: 1 doğru!');
+  }
+
+  const streak2Mission = missionData.streak2;
+  if (!streak2Mission.done) {
+    streak2Mission.progress = Math.min(correctStreak, streak2Mission.goal);
+    const el = document.querySelector('.mission-box[data-id="streak2"] .mission-progress');
+    el.textContent = `${streak2Mission.progress}/${streak2Mission.goal}`;
+    if (correctStreak >= streak2Mission.goal) {
+      streak2Mission.done = true;
+      el.textContent = '✔';
+      document.querySelector('.mission-box[data-id="streak2"]').classList.add('completed');
+      score += 50;
+      updateScore();
+      showToast('Görev tamamlandı: Üst üste 2 doğru!');
+    }
+  }
+
+const streak3Mission = missionData.streak3;
+if (!streak3Mission.done) {
+  streak3Mission.progress = Math.min(correctStreak, streak3Mission.goal);
+  const el = document.querySelector('.mission-box[data-id="streak3"] .mission-progress');
+  el.textContent = `${streak3Mission.progress}/${streak3Mission.goal}`;
+  
+  if (correctStreak >= streak3Mission.goal) {
+    streak3Mission.done = true;
+    el.textContent = '✔';
+    document.querySelector('.mission-box[data-id="streak3"]').classList.add('completed');
+    score += 100;
+    updateScore();
+    showToast('Görev tamamlandı: COMBO - Üst üste 3 doğru!');
+
+    showComboText();
+  }
+}
+
+}
+
+function showComboText() {
+  const combo = document.createElement('div');
+  combo.id = 'combo-text';
+  combo.textContent = 'COMBOO!';
+  document.body.appendChild(combo);
+
+  setTimeout(() => {
+    combo.style.opacity = 1;
+    combo.style.transform = 'translate(-50%, -50%) scale(1.2)'; 
+  }, 50);
+
+  setTimeout(() => {
+    combo.style.opacity = 0;
+    setTimeout(() => combo.remove(), 1000); 
+  }, 5000);
+}
+
+
+
+    function updateScore() {
+      scoreDiv.textContent = `Puan: ${score}`;
+    }
+
+    let timerSeconds = 75;
+    let timerInterval = null;
+    let scoreSaved = false;
+
+    function formatTime(seconds) {
+      const mins = String(Math.floor(seconds / 60)).padStart(2, '0');
+      const secs = String(seconds % 60).padStart(2, '0');
+      return `${mins}:${secs}`;
+    }
+
+    function updateTimerDisplay() {
+      timerDiv.textContent = formatTime(timerSeconds);
+    }
+
+    function startTimer() {
+      stopTimer();
+      timerSeconds = 75;
+      scoreSaved = false;
+      updateTimerDisplay();
+      timerInterval = setInterval(() => {
+        timerSeconds -= 1;
+        updateTimerDisplay();
+        if (timerSeconds <= 0) {
+          stopTimer();
+          timerDiv.textContent = '00:00';
+          saveScoreAndReturnHome();
+        }
+      }, 1000);
+    }
+
+    function stopTimer() {
+      if (timerInterval) {
+        clearInterval(timerInterval);
+        timerInterval = null;
+      }
+    }
+
+    function showToast(message) {
+      const toast = document.getElementById('notificationToast');
+      toast.textContent = message;
+      toast.classList.add('show');
+      clearTimeout(toast.hideTimeout);
+      toast.hideTimeout = setTimeout(() => {
+        toast.classList.remove('show');
+      }, 2800);
+    }
+
+    function getScoreTitle(points) {
+      const tiers = [
+        { min: 0, max: 99, title: 'Acemi Kaptan' },
+        { min: 100, max: 249, title: 'Dalga Öğrencisi' },
+        { min: 250, max: 499, title: 'Kelime Çırağı' },
+        { min: 500, max: 799, title: 'Söz Avcısı' },
+        { min: 800, max: 1199, title: 'Mavi Ufuk Yolcusu' },
+        { min: 1200, max: 1599, title: 'Deniz Rehberi' },
+        { min: 1600, max: 2199, title: 'Bilge Denizci' },
+        { min: 2200, max: 2999, title: 'Lügat Ustası' },
+        { min: 3000, max: 4499, title: 'Okyanus Kahramanı' },
+        { min: 4500, max: Infinity, title: 'Kelime Okyanusu Efsanesi' }
+      ];
+      return (tiers.find(t => points >= t.min && points <= t.max) || tiers[0]).title;
+    }
+
+    function buildLevel3Summary() {
+      const completedMissions = [missionData.streak1, missionData.streak2, missionData.streak3]
+        .filter(mission => mission.done).length;
+      return {
+        score,
+        correctStreak,
+        timeLeft: timerSeconds,
+        completedMissions,
+        totalMissions: 3,
+        collectedWords: collectedWords.length,
+        tier: getScoreTitle(score),
+        finishedAt: new Date().toISOString()
+      };
+    }
+
+    function saveScoreAndReturnHome() {
+      if (scoreSaved) return;
+      scoreSaved = true;
+      showToast('Zaman doldu. Skor kaydediliyor...');
+      try {
+        localStorage.setItem('level3Summary', JSON.stringify(buildLevel3Summary()));
+      } catch (e) {}
+
+      fetch('/save-score', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ score, ...buildLevel3Summary() })
+      })
+        .then(res => res.json())
+        .then(data => {
+          if (data && data.success) {
+            showToast('Skor kaydedildi. Anasayfaya yönlendiriliyorsunuz...');
+            document.body.classList.add('is-transitioning');
+            setTimeout(() => {
+              window.location.href = '/pc/anasayfa.html';
+            }, 1200);
+          } else {
+            showToast('Skor kaydedilemedi. Lütfen tekrar deneyin.');
+          }
+        })
+        .catch(() => {
+          showToast('Sunucu hatası. Skor kaydedilemedi.');
+        });
+    }
+
+    function removeLastWord() {
+  if (collectedWords.length === 0) return;
+  const lastWord = collectedWords.pop();
+  updateCollectedWords();
+  
+  const wordEl = document.createElement("div");
+  wordEl.classList.add("word");
+  wordEl.style.left = Math.random() * 25 + "vw";
+  wordEl.textContent = lastWord;
+
+  wordEl.addEventListener("click", () => {
+    if (!collectedWords.includes(lastWord)) {
+      collectedWords.push(lastWord);
+      updateCollectedWords();
+      wordEl.remove();
+    }
+  });
+
+  gameContainer.appendChild(wordEl);
+}
+
+    function startCountdownAnimation() {
+  const sequence = ["3", "2", "1", "BAŞLA!"];
+  let index = 0;
+
+  const showCountdown = () => {
+    countdownScreen.textContent = sequence[index];
+     countdownScreen.style.fontSize = "80px"; 
+    countdownScreen.style.animation = "scaleBounce 0.8s ease";
+    countdownScreen.style.opacity = "1";
+
+    setTimeout(() => {
+      countdownScreen.style.opacity = "0";
+      index++;
+      if (index < sequence.length) {
+        setTimeout(showCountdown, 300);
+      } else {
+        setTimeout(() => {
+          countdownScreen.remove();
+          startGame();
+        }, 800);
+      }
+    }, 700);
+  };
+
+  showCountdown();
+}
+
+
+
+function skoruKaydet(scoreValue) {
+  showToast('Skor kaydediliyor...');
+  try {
+    localStorage.setItem('level3Summary', JSON.stringify(buildLevel3Summary()));
+  } catch (e) {}
+  fetch('/save-score', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ score: scoreValue, ...buildLevel3Summary() })
+  })
+  .then(res => res.json())
+  .then(data => {
+    if (data && data.success) {
+      showToast('Skor kaydedildi.');
+    } else {
+      showToast('Skor kaydedilemedi.');
+    }
+  })
+  .catch(() => {
+    showToast('Sunucu hatası. Skor kaydedilemedi.');
+  });
+}
+
+    checkButton.addEventListener("click", checkProverb);
+    resetButton.addEventListener("click", removeLastWord);
+  
+
+const proverbs = [
+  "Güvenme varlığa, düşer oturur başına",
+  "İki karpuz bir koltuğa sığmaz",
+  "Atı alan Üsküdar'ı geçti",
+  "Bir elin nesi var, iki elin sesi var",
+  "Söz gümüşse sükût altındır",
+  "Dost acı söyleyen değil, gerçek söyleyendir",
+  "Ak akçe kara gün içindir",
+  "Sakla samanı, gelir zamanı",
+  "Damlaya damlaya göl olur",
+  "Bakarsan bağ olur, bakmazsan dağ olur",
+  "Vakit nakittir",
+  "Her işin başı sağlık",
+  "Ayağını yorganına göre uzat",
+  "İşleyen demir ışıldar",
+  "Gözden ırak olan gönülden de ırak olur"
+];
+
+
+
+    window.onload = () => {
+      startCountdownAnimation();
+    };
+  document.querySelectorAll(".market-item").forEach(item => {
+    item.addEventListener("click", () => {
+      const itemText = item.textContent;
+
+      if (itemText.includes("İpucu Al") && score >= 150) {
+    score -= 150;
+    updateScore();
+
+    
+    const correctWords = cleanText(selectedProverb).split(" ").filter(w => !collectedWords.includes(w));
+    if (correctWords.length > 0) {
+      const hintWord = correctWords[Math.floor(Math.random() * correctWords.length)];
+
+      const wordElements = document.querySelectorAll(".word");
+      wordElements.forEach(el => {
+        if (el.textContent === hintWord) {
+          el.style.border = "3px solid #00ff00";
+          el.style.backgroundColor = "#00e207";
+        }
+      });
+    }
+  }
+
+  if (itemText.includes("Büyük Şans") && score >= 400) {
+    score -= 400;
+    updateScore();
+    
+
+    const correctWords = cleanText(selectedProverb).split(" ").filter(w => !collectedWords.includes(w));
+
+  if (correctWords.length > 0) {
+    const hintWords = correctWords.join(", ");
+    showToast(`İpucu: Henüz bulamadığın kelimeler: ${hintWords}`);
+  } else {
+    showToast("Zaten tüm kelimeleri buldun! Helal!");
+  }
+
+  }
+      
+    });
+    
+  });
+
+marketButton.addEventListener("click", () => {
+  marketPanel.classList.toggle("open");
+});
+
+
+  </script>
+</body>
+</html>

@@ -1,0 +1,3014 @@
+<!doctype html>
+<html lang="tr">
+  <head>
+    <link rel="stylesheet" href="/shared/ocean-loader.css" />
+    <script src="/shared/ocean-loader.js"></script>
+
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>KELİME OKYANUSU</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+      :root {
+        --bg: #020617;
+        --card: #0f172a;
+        --card2: #1e293b;
+        --text: #f8fafc;
+        --accent: #2563eb;
+      }
+      .glass {
+        background: var(--card);
+        color: var(--text);
+        backdrop-filter: blur(16px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+      }
+
+      body {
+        background: var(--bg);
+        color: var(--text);
+        font-family: "Inter", sans-serif;
+        transition:
+          background 0.3s,
+          color 0.3s;
+      }
+
+      body.summary-open {
+        overflow: hidden;
+      }
+
+      body.road-open {
+        overflow: hidden;
+      }
+
+      .dropdown-shadow {
+        box-shadow:
+          0 10px 25px -5px rgba(0, 0, 0, 0.3),
+          0 8px 10px -6px rgba(0, 0, 0, 0.3);
+      }
+      .active-tab {
+        border-bottom: 2px solid var(--accent);
+        color: var(--accent);
+      }
+
+      ::-webkit-scrollbar {
+        width: 8px;
+      }
+      ::-webkit-scrollbar-track {
+        background: #0f172a;
+      }
+      ::-webkit-scrollbar-thumb {
+        background: #334155;
+        border-radius: 4px;
+      }
+
+      #profileDropdown {
+        background: rgb(8, 18, 77);
+      }
+
+      #level3SummaryModal {
+        backdrop-filter: blur(16px);
+      }
+
+      #roadModal {
+        backdrop-filter: blur(18px);
+      }
+
+      .road-track {
+        position: relative;
+        min-height: 300px;
+        overflow: hidden;
+      }
+
+      .road-ocean {
+        position: absolute;
+        inset: 0;
+        background:
+          radial-gradient(
+            circle at 20% 20%,
+            rgba(56, 189, 248, 0.35),
+            transparent 35%
+          ),
+          radial-gradient(
+            circle at 80% 30%,
+            rgba(59, 130, 246, 0.35),
+            transparent 28%
+          ),
+          linear-gradient(180deg, rgba(3, 105, 161, 0.9), rgba(8, 47, 73, 0.98));
+        overflow: hidden;
+      }
+
+      .road-ocean::before,
+      .road-ocean::after {
+        content: "";
+        position: absolute;
+        left: -20%;
+        right: -20%;
+        height: 180px;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.07);
+        filter: blur(2px);
+        animation: waveDrift 10s linear infinite;
+      }
+
+      .road-ocean::before {
+        top: 10%;
+        opacity: 0.6;
+      }
+
+      .road-ocean::after {
+        bottom: 0;
+        animation-duration: 14s;
+        opacity: 0.45;
+      }
+
+      @keyframes waveDrift {
+        from {
+          transform: translateX(0) rotate(0deg);
+        }
+        to {
+          transform: translateX(18%) rotate(2deg);
+        }
+      }
+
+      .road-bubble {
+        position: absolute;
+        bottom: -40px;
+        border-radius: 999px;
+        background: radial-gradient(
+          circle at 35% 35%,
+          rgba(255, 255, 255, 0.7),
+          rgba(255, 255, 255, 0.08)
+        );
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        animation: bubbleRise linear infinite;
+        opacity: 0.65;
+      }
+
+      @keyframes bubbleRise {
+        0% {
+          transform: translateY(0) scale(0.8);
+          opacity: 0;
+        }
+        15% {
+          opacity: 0.7;
+        }
+        100% {
+          transform: translateY(-260px) scale(1.05);
+          opacity: 0;
+        }
+      }
+
+      .road-path {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        pointer-events: none;
+      }
+
+      .road-step-label {
+        position: absolute;
+        top: 12px;
+        left: 16px;
+        font-size: 10px;
+        text-transform: uppercase;
+        letter-spacing: 0.22em;
+        color: rgba(224, 242, 254, 0.72);
+        pointer-events: none;
+      }
+
+      #roadPathGlow {
+        opacity: 0.85;
+      }
+
+      #roadPathDashes {
+        animation: dashFlow 12s linear infinite;
+      }
+
+      .road-node {
+        position: absolute;
+        width: 132px;
+        text-align: center;
+        transform: translate(-50%, -50%);
+        transition:
+          transform 220ms ease,
+          filter 220ms ease,
+          opacity 220ms ease;
+        will-change: transform, left, top;
+      }
+
+      .road-node-inner {
+        position: relative;
+        padding: 12px 10px 10px;
+        border-radius: 20px;
+        background: rgba(15, 23, 42, 0.78);
+        border: 1px solid rgba(148, 163, 184, 0.18);
+        box-shadow: 0 10px 24px rgba(2, 6, 23, 0.28);
+        backdrop-filter: blur(10px);
+      }
+
+      .road-node:hover {
+        filter: brightness(1.06);
+        transform: translate(-50%, -50%) scale(1.03);
+      }
+
+      .road-node-dot {
+        width: 22px;
+        height: 22px;
+        margin: 0 auto 8px auto;
+        border-radius: 999px;
+        background: #0f172a;
+        border: 4px solid #64748b;
+        box-shadow: 0 0 0 8px rgba(15, 23, 42, 0.35);
+        transition:
+          transform 220ms ease,
+          box-shadow 220ms ease;
+      }
+
+      .road-node.unlocked .road-node-dot {
+        background: linear-gradient(135deg, #22c55e, #4ade80);
+        border-color: #dcfce7;
+        transform: scale(1.04);
+      }
+
+      .road-node.claimed .road-node-dot {
+        background: linear-gradient(135deg, #38bdf8, #22d3ee);
+        border-color: #f0f9ff;
+      }
+
+      .road-node.active .road-node-dot {
+        animation: pulseDot 1.3s ease-in-out infinite;
+      }
+
+      .road-node.active .road-node-inner {
+        animation: nodeFloat 2.8s ease-in-out infinite;
+        box-shadow:
+          0 12px 28px rgba(2, 6, 23, 0.28),
+          0 0 0 1px rgba(56, 189, 248, 0.18),
+          0 0 28px rgba(56, 189, 248, 0.12);
+      }
+
+      .road-progress-marker {
+        position: absolute;
+        width: 28px;
+        height: 28px;
+        border-radius: 999px;
+        background: radial-gradient(
+          circle at 35% 35%,
+          #ffffff,
+          #38bdf8 45%,
+          rgba(56, 189, 248, 0.18) 72%
+        );
+        border: 2px solid rgba(255, 255, 255, 0.82);
+        box-shadow:
+          0 0 0 10px rgba(56, 189, 248, 0.12),
+          0 0 34px rgba(56, 189, 248, 0.55);
+        transform: translate(-50%, -50%);
+        pointer-events: none;
+        z-index: 18;
+        transition:
+          left 320ms cubic-bezier(0.2, 0.8, 0.2, 1),
+          top 320ms cubic-bezier(0.2, 0.8, 0.2, 1);
+      }
+
+      .road-progress-marker::after {
+        content: "";
+        position: absolute;
+        inset: 5px;
+        border-radius: 999px;
+        border: 1px solid rgba(255, 255, 255, 0.65);
+      }
+
+      .road-path-text {
+        position: absolute;
+        left: 18px;
+        top: 16px;
+        z-index: 5;
+        pointer-events: none;
+        color: rgba(219, 234, 254, 0.7);
+        font-size: 11px;
+        letter-spacing: 0.2em;
+        text-transform: uppercase;
+      }
+
+      .road-rotation-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 10px 14px;
+        border-radius: 999px;
+        border: 1px solid rgba(34, 211, 238, 0.24);
+        background: linear-gradient(
+          135deg,
+          rgba(8, 47, 73, 0.92),
+          rgba(15, 23, 42, 0.92)
+        );
+        box-shadow: 0 12px 28px rgba(2, 6, 23, 0.24);
+        color: #e0f2fe;
+      }
+
+      .road-rotation-pill strong {
+        font-size: 1rem;
+        font-weight: 900;
+        color: #7dd3fc;
+      }
+
+      .road-rotation-pill.is-new {
+        animation: rotationPop 900ms ease-out;
+      }
+
+      .road-completion-banner {
+        position: absolute;
+        inset: auto 20px 20px auto;
+        z-index: 70;
+        padding: 12px 14px;
+        border-radius: 16px;
+        border: 1px solid rgba(250, 204, 21, 0.3);
+        background: linear-gradient(
+          135deg,
+          rgba(15, 118, 110, 0.95),
+          rgba(2, 132, 199, 0.95)
+        );
+        box-shadow: 0 16px 38px rgba(2, 6, 23, 0.35);
+        color: white;
+        animation: completionRise 1200ms ease-out;
+      }
+
+      .road-completion-banner.hidden {
+        display: none;
+      }
+
+      .road-completion-banner small {
+        display: block;
+        font-size: 10px;
+        letter-spacing: 0.24em;
+        text-transform: uppercase;
+        opacity: 0.85;
+      }
+
+      .road-completion-banner strong {
+        display: block;
+        margin-top: 4px;
+        font-size: 1rem;
+        font-weight: 900;
+      }
+
+      .reward-burst-layer {
+        position: fixed;
+        inset: 0;
+        pointer-events: none;
+        overflow: hidden;
+        z-index: 60;
+      }
+
+      .reward-spark {
+        position: absolute;
+        width: 12px;
+        height: 12px;
+        border-radius: 999px;
+        background: radial-gradient(
+          circle,
+          rgba(255, 255, 255, 0.95),
+          rgba(255, 255, 255, 0.2)
+        );
+        box-shadow: 0 0 18px rgba(255, 255, 255, 0.6);
+        animation: sparkFly 900ms ease-out forwards;
+      }
+
+      @keyframes sparkFly {
+        0% {
+          transform: translate(0, 0) scale(0.6);
+          opacity: 0;
+        }
+        15% {
+          opacity: 1;
+        }
+        100% {
+          transform: translate(var(--dx), var(--dy)) scale(1.4);
+          opacity: 0;
+        }
+      }
+
+      .profile-badge-list {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+
+      .profile-badge {
+        padding: 6px 10px;
+        border-radius: 999px;
+        font-size: 11px;
+        font-weight: 800;
+        color: #dbeafe;
+        border: 1px solid rgba(96, 165, 250, 0.35);
+        background: linear-gradient(
+          135deg,
+          rgba(56, 189, 248, 0.16),
+          rgba(34, 197, 94, 0.16)
+        );
+      }
+
+      .profile-badge[data-rarity="common"] {
+        background: linear-gradient(
+          135deg,
+          rgba(59, 130, 246, 0.2),
+          rgba(96, 165, 250, 0.16)
+        );
+        border-color: rgba(96, 165, 250, 0.34);
+      }
+
+      .profile-badge[data-rarity="rare"] {
+        background: linear-gradient(
+          135deg,
+          rgba(34, 197, 94, 0.22),
+          rgba(45, 212, 191, 0.16)
+        );
+        border-color: rgba(45, 212, 191, 0.36);
+      }
+
+      .profile-badge[data-rarity="epic"] {
+        background: linear-gradient(
+          135deg,
+          rgba(168, 85, 247, 0.24),
+          rgba(244, 114, 182, 0.16)
+        );
+        border-color: rgba(192, 132, 252, 0.36);
+      }
+
+      .profile-badge[data-rarity="legendary"] {
+        background: linear-gradient(
+          135deg,
+          rgba(250, 204, 21, 0.24),
+          rgba(249, 115, 22, 0.18)
+        );
+        border-color: rgba(251, 191, 36, 0.38);
+        color: #fff7ed;
+      }
+
+      .profile-badge.locked {
+        opacity: 0.35;
+        filter: grayscale(0.7);
+      }
+
+      @keyframes pulseDot {
+        0%,
+        100% {
+          transform: scale(1);
+          box-shadow: 0 0 0 8px rgba(15, 23, 42, 0.35);
+        }
+        50% {
+          transform: scale(1.15);
+          box-shadow: 0 0 0 14px rgba(56, 189, 248, 0.18);
+        }
+      }
+
+      @keyframes dashFlow {
+        from {
+          stroke-dashoffset: 0;
+        }
+        to {
+          stroke-dashoffset: -260;
+        }
+      }
+
+      @keyframes nodeFloat {
+        0%,
+        100% {
+          transform: translateY(0);
+        }
+        50% {
+          transform: translateY(-4px);
+        }
+      }
+
+      @keyframes rotationPop {
+        0% {
+          transform: scale(0.82);
+          opacity: 0.4;
+        }
+        60% {
+          transform: scale(1.04);
+          opacity: 1;
+        }
+        100% {
+          transform: scale(1);
+        }
+      }
+
+      @keyframes completionRise {
+        0% {
+          transform: translateY(12px) scale(0.94);
+          opacity: 0;
+        }
+        20% {
+          opacity: 1;
+        }
+        100% {
+          transform: translateY(0) scale(1);
+          opacity: 1;
+        }
+      }
+
+      .kid-missions {
+        position: relative;
+        overflow: hidden;
+        border-radius: 24px;
+        border: 1px solid rgba(14, 165, 233, 0.25);
+        background:
+          radial-gradient(
+            circle at 12% 15%,
+            rgba(125, 211, 252, 0.25),
+            transparent 26%
+          ),
+          radial-gradient(
+            circle at 85% 18%,
+            rgba(52, 211, 153, 0.16),
+            transparent 24%
+          ),
+          linear-gradient(135deg, rgba(8, 47, 73, 0.92), rgba(15, 23, 42, 0.94));
+      }
+
+      .kid-missions::before {
+        content: "";
+        position: absolute;
+        inset: auto -10% -45px -10%;
+        height: 120px;
+        border-radius: 50%;
+        background: rgba(56, 189, 248, 0.14);
+        animation: softWave 7s ease-in-out infinite;
+      }
+
+      .kid-mission-card {
+        position: relative;
+        overflow: hidden;
+        min-height: 150px;
+        border-radius: 18px;
+        border: 1px solid rgba(56, 189, 248, 0.22);
+        background: linear-gradient(
+          135deg,
+          rgba(15, 23, 42, 0.9),
+          rgba(8, 47, 73, 0.84)
+        );
+        box-shadow:
+          inset 0 1px 0 rgba(255, 255, 255, 0.05),
+          0 18px 34px rgba(2, 6, 23, 0.22);
+        transition:
+          transform 220ms ease,
+          border-color 220ms ease,
+          box-shadow 220ms ease;
+      }
+
+      .kid-mission-card:hover {
+        transform: translateY(-2px);
+        border-color: rgba(34, 211, 238, 0.42);
+        box-shadow:
+          inset 0 1px 0 rgba(255, 255, 255, 0.06),
+          0 22px 36px rgba(2, 6, 23, 0.28);
+      }
+
+      .kid-mission-card::after {
+        content: "";
+        position: absolute;
+        width: 54px;
+        height: 54px;
+        right: 18px;
+        bottom: 18px;
+        border-radius: 999px;
+        background: radial-gradient(
+          circle at 34% 30%,
+          rgba(255, 255, 255, 0.85),
+          rgba(125, 211, 252, 0.28) 46%,
+          rgba(14, 165, 233, 0.08) 72%
+        );
+        border: 1px solid rgba(255, 255, 255, 0.24);
+        animation: missionBubble 3.8s ease-in-out infinite;
+      }
+
+      .mission-icon {
+        width: 44px;
+        height: 44px;
+        border-radius: 16px;
+        display: grid;
+        place-items: center;
+        background: linear-gradient(
+          135deg,
+          rgba(45, 212, 191, 0.22),
+          rgba(59, 130, 246, 0.28)
+        );
+        border: 1px solid rgba(125, 211, 252, 0.28);
+        color: #bfdbfe;
+        font-weight: 900;
+        animation: iconFloat 3.2s ease-in-out infinite;
+      }
+
+      .mission-progress {
+        height: 8px;
+        border-radius: 999px;
+        background: rgba(15, 23, 42, 0.9);
+        overflow: hidden;
+      }
+
+      .mission-progress span {
+        display: block;
+        height: 100%;
+        border-radius: inherit;
+        background: linear-gradient(90deg, #22c55e, #38bdf8, #facc15);
+        animation: progressShine 2.8s ease-in-out infinite;
+      }
+
+      .ocean-assistant {
+        position: fixed;
+        right: 20px;
+        bottom: 20px;
+        z-index: 45;
+        display: flex;
+        align-items: flex-end;
+        gap: 12px;
+        max-width: min(410px, calc(100vw - 28px));
+      }
+
+      .assistant-bubble {
+        width: min(290px, calc(100vw - 118px));
+        padding: 14px 16px;
+        border-radius: 18px 18px 6px 18px;
+        border: 1px solid rgba(125, 211, 252, 0.34);
+        background: rgba(8, 47, 73, 0.94);
+        box-shadow: 0 18px 36px rgba(2, 6, 23, 0.38);
+        color: #e0f2fe;
+        transform-origin: right bottom;
+        animation: assistantPop 420ms ease-out;
+      }
+
+      .assistant-bubble.is-collapsed {
+        display: none;
+      }
+
+      .assistant-title {
+        color: #7dd3fc;
+        font-size: 12px;
+        font-weight: 900;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        margin-bottom: 5px;
+      }
+
+      .assistant-text {
+        font-size: 13px;
+        line-height: 1.45;
+        color: #dbeafe;
+      }
+
+      .assistant-actions {
+        display: flex;
+        gap: 8px;
+        margin-top: 10px;
+      }
+
+      .assistant-action {
+        padding: 7px 10px;
+        border-radius: 999px;
+        background: rgba(14, 165, 233, 0.18);
+        border: 1px solid rgba(125, 211, 252, 0.26);
+        color: #e0f2fe;
+        font-size: 12px;
+        font-weight: 800;
+      }
+
+      .assistant-close {
+        margin-left: auto;
+        color: #bae6fd;
+        font-size: 12px;
+        font-weight: 900;
+      }
+
+      .assistant-character {
+        position: relative;
+        width: 82px;
+        height: 88px;
+        flex: 0 0 auto;
+        border: 0;
+        background: transparent;
+        cursor: pointer;
+        animation: assistantFloat 4s ease-in-out infinite;
+      }
+
+      .assistant-body {
+        position: absolute;
+        inset: 15px 7px 7px;
+        border-radius: 42% 42% 48% 48%;
+        background: linear-gradient(160deg, #38bdf8, #0f766e 70%);
+        border: 3px solid rgba(224, 242, 254, 0.9);
+        box-shadow: 0 14px 30px rgba(14, 165, 233, 0.26);
+      }
+
+      .assistant-body::before,
+      .assistant-body::after {
+        content: "";
+        position: absolute;
+        top: 31px;
+        width: 20px;
+        height: 18px;
+        border-radius: 70% 18% 70% 18%;
+        background: #22c55e;
+        border: 2px solid rgba(224, 242, 254, 0.72);
+      }
+
+      .assistant-body::before {
+        left: -14px;
+        transform: rotate(-24deg);
+      }
+
+      .assistant-body::after {
+        right: -14px;
+        transform: scaleX(-1) rotate(-24deg);
+      }
+
+      .assistant-face {
+        position: absolute;
+        left: 18px;
+        top: 28px;
+        width: 46px;
+        height: 32px;
+        border-radius: 18px;
+        background: rgba(255, 255, 255, 0.24);
+        border: 2px solid rgba(224, 242, 254, 0.88);
+      }
+
+      .assistant-eye {
+        position: absolute;
+        top: 10px;
+        width: 7px;
+        height: 7px;
+        border-radius: 999px;
+        background: #082f49;
+      }
+
+      .assistant-eye.left {
+        left: 12px;
+      }
+      .assistant-eye.right {
+        right: 12px;
+      }
+
+      .assistant-smile {
+        position: absolute;
+        left: 16px;
+        top: 18px;
+        width: 14px;
+        height: 7px;
+        border-bottom: 2px solid #082f49;
+        border-radius: 0 0 999px 999px;
+      }
+
+      .assistant-pearl {
+        position: absolute;
+        left: 30px;
+        top: 0;
+        width: 22px;
+        height: 22px;
+        border-radius: 999px;
+        background: radial-gradient(
+          circle at 32% 30%,
+          #ffffff,
+          #fde68a 58%,
+          #f59e0b
+        );
+        border: 2px solid rgba(255, 255, 255, 0.88);
+      }
+
+      @keyframes softWave {
+        0%,
+        100% {
+          transform: translateX(-2%) translateY(0);
+        }
+        50% {
+          transform: translateX(3%) translateY(-8px);
+        }
+      }
+
+      @keyframes missionBubble {
+        0%,
+        100% {
+          transform: translateY(0) scale(1);
+          opacity: 0.75;
+        }
+        50% {
+          transform: translateY(-12px) scale(1.06);
+          opacity: 1;
+        }
+      }
+
+      @keyframes iconFloat {
+        0%,
+        100% {
+          transform: translateY(0) rotate(0deg);
+        }
+        50% {
+          transform: translateY(-5px) rotate(3deg);
+        }
+      }
+
+      @keyframes progressShine {
+        0%,
+        100% {
+          filter: brightness(1);
+        }
+        50% {
+          filter: brightness(1.22);
+        }
+      }
+
+      @keyframes assistantFloat {
+        0%,
+        100% {
+          transform: translateY(0);
+        }
+        50% {
+          transform: translateY(-8px);
+        }
+      }
+
+      @keyframes assistantPop {
+        from {
+          transform: scale(0.88);
+          opacity: 0;
+        }
+        to {
+          transform: scale(1);
+          opacity: 1;
+        }
+      }
+
+      @media (max-width: 640px) {
+        .ocean-assistant {
+          right: 12px;
+          bottom: 12px;
+          gap: 8px;
+        }
+
+        .assistant-character {
+          width: 70px;
+          height: 76px;
+        }
+
+        .assistant-bubble {
+          width: calc(100vw - 100px);
+          padding: 12px;
+        }
+
+        .assistant-text {
+          font-size: 12px;
+        }
+      }
+    </style>
+  </head>
+  <body class="bg-slate-950 text-slate-100 min-h-screen relative">
+    <!-- Navigasyon Barı -->
+    <nav
+      class="fixed w-full z-40 px-6 py-4 flex items-center justify-between glass border-b border-slate-800"
+    >
+      <div class="flex items-center gap-3">
+        <span class="text-xl font-black tracking-wider text-blue-500"
+          >🌊 KELİME OKYANUSU</span
+        >
+      </div>
+
+      <div
+        class="hidden md:flex items-center gap-8 text-sm font-medium text-slate-400"
+      >
+        <a href="#" class="hover:text-blue-400 transition">Ana Sayfa</a>
+        <a href="#" class="hover:text-blue-400 transition">Oyunlar</a>
+        <a href="#" class="hover:text-blue-400 transition">Liderlik Tablosu</a>
+      </div>
+
+      <div class="relative">
+        <button
+          id="profileTrigger"
+          class="flex items-center gap-3 p-1 pl-3 pr-2 rounded-full bg-slate-900 border border-slate-700 hover:border-blue-500 transition-all focus:outline-none"
+        >
+          <span id="userInitials" class="text-xs font-semibold">...</span>
+          <div
+            id="userAvatar"
+            class="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center font-bold text-white shadow-lg shadow-blue-900/50"
+          >
+            ...
+          </div>
+        </button>
+
+        <!-- Profil Açılır Pencere -->
+        <div
+          id="profileDropdown"
+          class="hidden absolute right-0 top-14 w-80 glass rounded-2xl border border-slate-700 p-4 dropdown-shadow z-50"
+        >
+          <div
+            class="flex items-center gap-3 mb-4 pb-4 border-b border-slate-700"
+          >
+            <div
+              id="dropdownAvatar"
+              class="w-12 h-12 rounded-full bg-blue-600 flex items-center justify-center font-bold text-lg text-white"
+            >
+              ...
+            </div>
+            <div>
+              <h4 id="userName" class="font-bold text-sm">Yükleniyor...</h4>
+              <p id="userScore" class="text-xs text-blue-400 font-medium">
+                Puan yükleniyor...
+              </p>
+            </div>
+          </div>
+
+          <div class="flex border-b border-slate-700 mb-4">
+            <button
+              id="accountTabBtn"
+              class="px-4 py-2 text-xs font-bold active-tab"
+            >
+              Hesap
+            </button>
+            <button
+              id="settingsTabBtn"
+              class="px-4 py-2 text-xs font-bold text-slate-500 hover:text-white transition"
+            >
+              Ayarlar
+            </button>
+          </div>
+
+          <!-- Hesap İçeriği -->
+          <div id="accountContent">
+            <div class="mb-4">
+              <div class="flex justify-between text-xs text-slate-400 mb-1">
+                <span>Toplam Puan</span>
+                <span id="totalPoints" class="text-blue-400 font-bold">0</span>
+              </div>
+              <div class="w-full h-2 bg-slate-800 rounded-full overflow-hidden">
+                <div class="w-3/4 h-full bg-blue-600 rounded-full"></div>
+              </div>
+            </div>
+            <div class="mb-4">
+              <div class="flex justify-between text-xs text-slate-400 mb-1">
+                <span>Başarı Oranı</span>
+                <span id="profileSuccessRate" class="text-blue-400 font-bold"
+                  >0%</span
+                >
+              </div>
+              <div class="w-full h-2 bg-slate-800 rounded-full overflow-hidden">
+                <div class="w-2/5 h-full bg-emerald-500 rounded-full"></div>
+              </div>
+            </div>
+            <div
+              class="grid grid-cols-2 gap-2 text-center text-xs text-slate-400"
+            >
+              <div class="bg-slate-900 p-2 rounded-lg">Seviye: 14</div>
+              <div id="profileRank" class="bg-slate-900 p-2 rounded-lg">
+                Rank: #--
+              </div>
+            </div>
+            <div class="mt-4">
+              <div class="flex justify-between text-xs text-slate-400 mb-2">
+                <span>Rozetler</span>
+                <span id="profileBadgeCount" class="text-cyan-400 font-bold"
+                  >0</span
+                >
+              </div>
+              <div id="profileBadgeList" class="profile-badge-list"></div>
+            </div>
+          </div>
+
+          <!-- Ayarlar İçeriği -->
+          <div id="settingsContent" class="hidden space-y-3">
+            <label
+              class="flex items-center justify-between text-xs text-slate-300"
+            >
+              <span>Ses Efektleri</span>
+              <input type="checkbox" checked class="accent-blue-600" />
+            </label>
+            <label
+              class="flex items-center justify-between text-xs text-slate-300"
+            >
+              <span>Karanlık Mod</span>
+              <input type="checkbox" checked class="accent-blue-600" />
+            </label>
+            <label
+              class="flex items-center justify-between text-xs text-slate-300"
+            >
+              <span>E-posta Bildirimleri</span>
+              <input type="checkbox" class="accent-blue-600" />
+            </label>
+          </div>
+
+          <button
+            id="logoutBtn"
+            class="w-full mt-4 px-3 py-2 text-sm text-red-400 hover:bg-red-900/20 text-left rounded-lg transition"
+          >
+            Çıkış Yap
+          </button>
+        </div>
+      </div>
+    </nav>
+
+    <!-- Level 3 Sonuç Ekranı -->
+    <div
+      id="level3SummaryModal"
+      class="hidden fixed inset-0 z-50 flex items-center justify-center px-4 py-6 bg-slate-950/85"
+    >
+      <div
+        class="w-full max-w-2xl glass rounded-3xl border border-blue-500/30 shadow-2xl overflow-hidden"
+      >
+        <div
+          class="p-6 md:p-8 bg-gradient-to-br from-blue-950/80 to-slate-900/90"
+        >
+          <div class="flex items-center justify-between gap-4 mb-6">
+            <div>
+              <p
+                class="text-blue-400 text-xs uppercase tracking-[0.35em] font-bold mb-2"
+              >
+                Sonuç Ekranı
+              </p>
+              <h2 class="text-2xl md:text-3xl font-black text-white">
+                Level 3 tamamlandı
+              </h2>
+            </div>
+            <div
+              class="w-14 h-14 rounded-2xl bg-blue-600/20 border border-blue-500/30 flex items-center justify-center text-2xl"
+            >
+              🏁
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+            <div
+              class="rounded-2xl bg-slate-900/70 border border-slate-700 p-4"
+            >
+              <p class="text-slate-400 text-xs uppercase tracking-widest mb-1">
+                Kazandığın Puan
+              </p>
+              <p
+                id="level3FinalScore"
+                class="text-4xl font-black text-blue-400"
+              >
+                0
+              </p>
+            </div>
+            <div
+              class="rounded-2xl bg-slate-900/70 border border-slate-700 p-4"
+            >
+              <p class="text-slate-400 text-xs uppercase tracking-widest mb-1">
+                Başarı Özeti
+              </p>
+              <p id="level3StatsLine" class="text-lg font-bold text-white">-</p>
+            </div>
+            <div
+              class="rounded-2xl bg-slate-900/70 border border-slate-700 p-4"
+            >
+              <p class="text-slate-400 text-xs uppercase tracking-widest mb-1">
+                Tamamlanan Görev
+              </p>
+              <p
+                id="level3MissionCount"
+                class="text-2xl font-bold text-emerald-400"
+              >
+                0 / 3
+              </p>
+            </div>
+            <div
+              class="rounded-2xl bg-slate-900/70 border border-slate-700 p-4"
+            >
+              <p class="text-slate-400 text-xs uppercase tracking-widest mb-1">
+                Kaptan Unvanı
+              </p>
+              <p id="level3Title" class="text-xl font-bold text-amber-300">-</p>
+            </div>
+          </div>
+
+          <div
+            class="rounded-2xl bg-slate-900/70 border border-slate-700 p-4 mb-6"
+          >
+            <div class="flex flex-wrap gap-3 text-sm text-slate-300">
+              <span
+                id="level3TimeLeft"
+                class="px-3 py-2 rounded-full bg-slate-800"
+                >Kalan süre: -</span
+              >
+              <span
+                id="level3CollectedWords"
+                class="px-3 py-2 rounded-full bg-slate-800"
+                >Toplanan kelime: -</span
+              >
+            </div>
+          </div>
+
+          <button
+            id="continueFromLevel3Btn"
+            class="w-full py-3 md:py-4 bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-500 hover:to-cyan-400 rounded-2xl font-bold text-base tracking-wide transition active:scale-95"
+          >
+            Devam Et
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- İlerleme Yolu -->
+    <div
+      id="roadModal"
+      class="hidden fixed inset-0 z-50 flex items-center justify-center px-4 py-6 bg-slate-950/85"
+    >
+      <div
+        class="w-full max-w-6xl glass rounded-3xl border border-emerald-500/20 shadow-2xl overflow-hidden"
+      >
+        <div class="p-6 md:p-8 bg-gradient-to-br from-slate-950 to-slate-900">
+          <div class="flex flex-wrap items-center justify-between gap-4 mb-6">
+            <div>
+              <p
+                class="text-emerald-400 text-xs uppercase tracking-[0.35em] font-bold mb-2"
+              >
+                İlerleme Yolu
+              </p>
+              <h2 class="text-2xl md:text-3xl font-black text-white">
+                Okyanus Rotası
+              </h2>
+            </div>
+            <div class="flex items-center gap-3">
+              <div id="roadRotationPill" class="road-rotation-pill">
+                <span class="text-[10px] uppercase tracking-[0.24em]"
+                  >Rotasyon</span
+                >
+                <strong id="roadRotationValue">1</strong>
+              </div>
+              <button
+                id="closeRoadBtn"
+                class="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-sm font-bold"
+              >
+                Kapat
+              </button>
+            </div>
+          </div>
+
+          <div
+            class="road-track rounded-3xl bg-slate-950/70 border border-slate-800 p-4 md:p-6 mb-6"
+          >
+            <div class="road-ocean"></div>
+            <div id="rewardBurstLayer" class="reward-burst-layer"></div>
+            <div
+              id="roadCompletionBanner"
+              class="road-completion-banner hidden"
+            >
+              <small>Yeni yol</small>
+              <strong id="roadCompletionTitle">Rotasyon 1</strong>
+            </div>
+            <div class="road-path-text">Görev yolu</div>
+            <div class="road-step-label">Görev puanı ile ilerler</div>
+            <svg
+              id="roadPathSvg"
+              class="road-path"
+              viewBox="0 0 1000 300"
+              preserveAspectRatio="none"
+              aria-hidden="true"
+            >
+              <defs>
+                <linearGradient
+                  id="roadPathGradient"
+                  x1="0%"
+                  y1="0%"
+                  x2="100%"
+                  y2="0%"
+                >
+                  <stop offset="0%" stop-color="#0ea5e9" />
+                  <stop offset="50%" stop-color="#38bdf8" />
+                  <stop offset="100%" stop-color="#22c55e" />
+                </linearGradient>
+                <filter id="roadGlow">
+                  <feGaussianBlur stdDeviation="4" result="blur" />
+                  <feMerge>
+                    <feMergeNode in="blur" />
+                    <feMergeNode in="SourceGraphic" />
+                  </feMerge>
+                </filter>
+              </defs>
+              <path
+                id="roadPathGlow"
+                d=""
+                fill="none"
+                stroke="rgba(56,189,248,0.18)"
+                stroke-width="24"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                filter="url(#roadGlow)"
+              ></path>
+              <path
+                id="roadPathLine"
+                d=""
+                fill="none"
+                stroke="url(#roadPathGradient)"
+                stroke-width="10"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              ></path>
+              <path
+                id="roadPathDashes"
+                d=""
+                fill="none"
+                stroke="rgba(255,255,255,0.44)"
+                stroke-width="3"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-dasharray="10 16"
+              ></path>
+            </svg>
+            <div id="roadProgressMarker" class="road-progress-marker"></div>
+            <div
+              id="roadNodesLayer"
+              class="relative h-full min-h-[260px]"
+            ></div>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div
+              class="rounded-2xl bg-slate-900/80 border border-slate-800 p-4"
+            >
+              <p class="text-slate-400 text-xs uppercase tracking-widest mb-1">
+                Görev Puanı
+              </p>
+              <p id="roadCurrentTitle" class="text-xl font-black text-blue-400">
+                0
+              </p>
+            </div>
+            <div
+              class="rounded-2xl bg-slate-900/80 border border-slate-800 p-4"
+            >
+              <p class="text-slate-400 text-xs uppercase tracking-widest mb-1">
+                Yol İlerlemesi
+              </p>
+              <p
+                id="roadProgressText"
+                class="text-xl font-black text-emerald-400"
+              >
+                0%
+              </p>
+            </div>
+            <div
+              class="rounded-2xl bg-slate-900/80 border border-slate-800 p-4"
+            >
+              <p class="text-slate-400 text-xs uppercase tracking-widest mb-1">
+                Sonraki Durak
+              </p>
+              <p id="roadNextTarget" class="text-xl font-black text-amber-300">
+                -
+              </p>
+            </div>
+          </div>
+
+          <div
+            class="mt-6 rounded-2xl bg-slate-900/80 border border-slate-800 p-4"
+          >
+            <div class="flex items-center justify-between mb-3">
+              <p class="text-slate-300 text-sm font-bold">Görev Adımı</p>
+              <p
+                id="roadRotationLabel"
+                class="text-cyan-400 text-sm font-black"
+              >
+                Adım 1
+              </p>
+            </div>
+            <p id="roadRotationNote" class="text-slate-400 text-sm">
+              Görev puanların arttıkça yolun sonraki durağı açılır.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Çevrim İçi Mücadele -->
+
+    <!-- Ana İçerik -->
+    <main class="pt-32 px-6 max-w-7xl mx-auto pb-16">
+      <header class="mb-12">
+        <h2 class="text-4xl font-bold mb-4 tracking-tight">
+          Okyanusu Keşfet, <span class="text-blue-500">Kaptan!</span>
+        </h2>
+        <p class="text-slate-400 text-lg">
+          Bugün senin günün. Yeni seviyelerin kilidini aç ve zirveye ulaş.
+        </p>
+        <div class="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center">
+          <span class="text-slate-400 text-sm"
+            >Atasözleri, deyimler ve Türkçe kelime soruları için konuş.</span
+          >
+        </div>
+      </header>
+
+      <section
+        class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12"
+      >
+        <div
+          class="p-6 rounded-2xl bg-gradient-to-br from-blue-900/50 to-slate-900 border border-blue-500/20"
+        >
+          <h3 class="text-slate-400 text-xs uppercase tracking-widest mb-2">
+            Günlük Hedef
+          </h3>
+          <p id="dailySuccessRate" class="text-2xl font-bold">85%</p>
+        </div>
+        <div class="p-6 rounded-2xl glass border border-slate-800">
+          <h3 class="text-slate-400 text-xs uppercase tracking-widest mb-2">
+            Sıralama
+          </h3>
+          <p id="summaryRank" class="text-2xl font-bold">#--</p>
+        </div>
+        <div class="p-6 rounded-2xl glass border border-slate-800">
+          <h3 class="text-slate-400 text-xs uppercase tracking-widest mb-2">
+            Ünvan
+          </h3>
+          <p id="currentTitle" class="text-2xl font-bold text-emerald-400">
+            Acemi Kaptan
+          </p>
+        </div>
+        <div class="p-6 rounded-2xl glass border border-slate-800">
+          <h3 class="text-slate-400 text-xs uppercase tracking-widest mb-2">
+            İlerleme
+          </h3>
+          <p id="roadMiniProgress" class="text-2xl font-bold text-cyan-400">
+            0%
+          </p>
+        </div>
+      </section>
+
+      <section class="mb-12 flex flex-wrap gap-3">
+        <button
+          id="openRoadBtn"
+          class="px-5 py-3 rounded-2xl bg-gradient-to-r from-emerald-600 to-cyan-600 font-bold"
+        >
+          İlerleme Yolunu Aç
+        </button>
+      </section>
+      <!-- Sadeleştirilmiş Günlük Görevler Bölümü -->
+      <section
+        class="p-5 md:p-7 mb-12 glass rounded-2xl border border-slate-800"
+      >
+        <div
+          class="flex flex-col md:flex-row md:items-end md:justify-between gap-4 mb-5"
+        >
+          <div>
+            <h3 class="text-xl font-bold text-white tracking-wide">
+              🌊 Günlük Görevler
+            </h3>
+            <p class="text-slate-400 text-sm mt-1">
+              Bugün tamamlaman gereken hedefler.
+            </p>
+          </div>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+          <!-- Görev 1 -->
+          <div
+            class="p-3 rounded-xl bg-slate-900/60 border border-slate-800 flex items-center justify-between hover:border-blue-500/50 transition"
+          >
+            <div class="flex items-center gap-3">
+              <div
+                class="w-8 h-8 rounded-lg bg-blue-500/20 text-blue-400 flex items-center justify-center font-bold"
+              >
+                1
+              </div>
+              <div>
+                <h4 class="text-sm font-bold text-white">Köpükleri Topla</h4>
+                <p class="text-xs text-slate-400">3 doğru cevap ver.</p>
+              </div>
+            </div>
+            <span class="text-xs font-bold text-blue-400">55%</span>
+          </div>
+          <!-- Görev 2 -->
+          <div
+            class="p-3 rounded-xl bg-slate-900/60 border border-slate-800 flex items-center justify-between hover:border-emerald-500/50 transition"
+          >
+            <div class="flex items-center gap-3">
+              <div
+                class="w-8 h-8 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center font-bold"
+              >
+                2
+              </div>
+              <div>
+                <h4 class="text-sm font-bold text-white">Hazine Kelime</h4>
+                <p class="text-xs text-slate-400">Yeni bir deyim öğren.</p>
+              </div>
+            </div>
+            <span class="text-xs font-bold text-emerald-400">35%</span>
+          </div>
+          <!-- Görev 3 -->
+          <div
+            class="p-3 rounded-xl bg-slate-900/60 border border-slate-800 flex items-center justify-between hover:border-amber-500/50 transition"
+          >
+            <div class="flex items-center gap-3">
+              <div
+                class="w-8 h-8 rounded-lg bg-amber-500/20 text-amber-400 flex items-center justify-center font-bold"
+              >
+                3
+              </div>
+              <div>
+                <h4 class="text-sm font-bold text-white">Parlayan Rota</h4>
+                <p class="text-xs text-slate-400">Bir macerayı bitir.</p>
+              </div>
+            </div>
+            <span class="text-xs font-bold text-amber-400">70%</span>
+          </div>
+        </div>
+      </section>
+
+      <h3 class="text-xl font-bold mb-6">Mevcut Maceralar</h3>
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <!-- Oyun Kartı 1 -->
+        <div
+          class="group relative rounded-2xl overflow-hidden glass hover:border-blue-500/50 transition-all duration-300"
+        >
+          <img
+            src="resimler/logo of okyanus.png"
+            onerror="
+              this.src =
+                'https://images.unsplash.com/photo-1518156677180-95a2893f3e9f?w=500&auto=format&fit=crop&q=60'
+            "
+            alt="Kelime Okyanusu"
+            class="h-40 w-full object-cover"
+          />
+          <div class="p-5">
+            <h3 class="font-bold mb-1">Kelime Okyanusu</h3>
+            <p class="text-slate-400 text-xs mb-4">
+              Ana macera modunda ilerle.
+            </p>
+            <a href="Kelime-Okyanusu-Seviye-Seçimi.html"
+              ><button
+                class="w-full py-2 bg-blue-600 hover:bg-blue-500 rounded-lg text-xs font-bold transition"
+              >
+                Başlat
+              </button></a
+            >
+          </div>
+        </div>
+
+        <!-- Oyun Kartı 2 -->
+        <div
+          class="group relative rounded-2xl overflow-hidden glass hover:border-blue-500/50 transition-all duration-300"
+        >
+          <img
+            src="resimler/SÖZCÜK.png"
+            onerror="
+              this.src =
+                'https://images.unsplash.com/photo-1546776310-eef45dd6d63c?w=500&auto=format&fit=crop&q=60'
+            "
+            alt="Sözcük Zinciri"
+            class="h-40 w-full object-cover"
+          />
+          <div class="p-5">
+            <h3 class="font-bold mb-1">Sözcük Zinciri</h3>
+            <p class="text-slate-400 text-xs mb-4">
+              Zinciri kırmadan kelimeleri üret.
+            </p>
+            <a href="Sözcük Zinciri/sözcük zinciri.html"
+              ><button
+                class="w-full py-2 bg-blue-600 hover:bg-blue-500 rounded-lg text-xs font-bold transition"
+              >
+                Başlat
+              </button></a
+            >
+          </div>
+        </div>
+
+        <!-- Oyun Kartı 3 -->
+        <div
+          class="group relative rounded-2xl overflow-hidden glass hover:border-blue-500/50 transition-all duration-300"
+        >
+          <img
+            src="resimler/Quiz.png"
+            onerror="
+              this.src =
+                'https://images.unsplash.com/photo-1606326608606-aa0b62935f2b?w=500&auto=format&fit=crop&q=60'
+            "
+            alt="Quiz"
+            class="h-40 w-full object-cover"
+          />
+          <div class="p-5">
+            <h3 class="font-bold mb-1">Quiz</h3>
+            <p class="text-slate-400 text-xs mb-4">Bilgini test et.</p>
+            <a href="Quizler/anasayfaquiz.html"
+              ><button
+                class="w-full py-2 bg-blue-600 hover:bg-blue-500 rounded-lg text-xs font-bold transition"
+              >
+                Başlat
+              </button></a
+            >
+          </div>
+        </div>
+
+        <!-- Oyun Kartı 4 -->
+        <div
+          class="group relative rounded-2xl overflow-hidden glass hover:border-blue-500/50 transition-all duration-300"
+        >
+          <img
+            src="resimler/Kelime Avı (500 x 500 piksel).png"
+            onerror="
+              this.src =
+                'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=500&auto=format&fit=crop&q=60'
+            "
+            alt="Kelime Avı"
+            class="h-40 w-full object-cover"
+          />
+          <div class="p-5">
+            <h3 class="font-bold mb-1">Kelime Avı</h3>
+            <p class="text-slate-400 text-xs mb-4">
+              Harflerin içinde kaybolma.
+            </p>
+            <a href="Kelime Avı/kelime_avı.html"
+              ><button
+                class="w-full py-2 bg-blue-600 hover:bg-blue-500 rounded-lg text-xs font-bold transition"
+              >
+                Başlat
+              </button></a
+            >
+          </div>
+        </div>
+      </div>
+    </main>
+    <div id="oceanAssistant" class="ocean-assistant" aria-live="polite">
+      <div id="assistantBubble" class="assistant-bubble">
+        <div class="assistant-title">Kelime Kaptanı</div>
+        <p id="assistantText" class="assistant-text">
+          Merhaba Kaptan! Ben Kelime Kaptanı. Kelime Okyanusu'nda görevleri
+          tamamla, puan kazan ve okyanus rotanda yeni adımlar at.
+        </p>
+        <div class="assistant-actions">
+          <div class="assistant-actions flex-wrap mt-3">
+            <button
+              id="assistantStartBtn"
+              class="assistant-action hover:bg-blue-600 transition"
+              type="button"
+            >
+              Maceraya Başla
+            </button>
+            <button
+              id="assistantTipBtn"
+              class="assistant-action hover:bg-emerald-600 transition"
+              type="button"
+            >
+              Günün İpucu
+            </button>
+            <button
+              id="assistantStatsBtn"
+              class="assistant-action hover:bg-amber-600 transition"
+              type="button"
+            >
+              Durumum
+            </button>
+            <button
+              id="assistantCloseBtn"
+              class="assistant-close w-full text-right mt-1 hover:text-white transition"
+              type="button"
+            >
+              Kapat
+            </button>
+          </div>
+        </div>
+      </div>
+      <button
+        id="assistantCharacter"
+        class="assistant-character"
+        type="button"
+        aria-label="Kelime Okyanusu asistanini ac"
+      >
+        <span class="assistant-pearl"></span>
+        <span class="assistant-body"></span>
+        <span class="assistant-face">
+          <span class="assistant-eye left"></span>
+          <span class="assistant-eye right"></span>
+          <span class="assistant-smile"></span>
+        </span>
+      </button>
+    </div>
+    <!-- ÖN TEST MODALI (Tam Ortada Açılır) -->
+    <div
+      id="preTestModal"
+      class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md"
+    >
+      <div
+        class="w-full max-w-xl glass rounded-3xl p-6 md:p-8 shadow-2xl border border-slate-700/80 flex flex-col relative overflow-hidden"
+      >
+        <!-- Arka plan efekt süslemesi -->
+        <div
+          class="absolute -top-10 -right-10 w-40 h-40 bg-blue-500/20 rounded-full blur-3xl pointer-events-none"
+        ></div>
+
+        <!-- Adım 1: Karşılama Ekranı -->
+        <div id="preTestStartScreen" class="text-center space-y-6">
+          <div
+            class="w-20 h-20 mx-auto rounded-2xl bg-blue-600/20 flex items-center justify-center text-4xl border border-blue-500/30"
+          >
+            🧭
+          </div>
+          <div>
+            <h2 class="text-2xl md:text-3xl font-black text-white mb-2">
+              Okyanusa Hoş Geldin, Kaptan!
+            </h2>
+            <p class="text-slate-300 text-sm md:text-base leading-relaxed">
+              Seni aramızda görmek harika! Kelime Okyanusu'ndaki rütbeni
+              belirlemek ve sana en uygun zorluğu sunabilmek için küçük bir ön
+              teste hazır mısın?
+            </p>
+          </div>
+          <div
+            class="bg-slate-900/60 p-4 rounded-xl text-xs text-left border border-slate-800 space-y-2"
+          >
+            <p class="font-semibold text-blue-400">
+              📝 Test Hakkında Bilgiler:
+            </p>
+            <ul class="list-disc list-inside text-slate-400 space-y-1">
+              <li>
+                Toplamda
+                <span class="font-bold text-white" id="totalQuestionsCount"
+                  >5</span
+                >
+                kelime ve genel kültür sorusu bulunur.
+              </li>
+              <li>Cevapların başlangıç seviyeni ve rütbeni belirler.</li>
+              <li>Süre sınırı yoktur, dilediğin kadar düşünebilirsin.</li>
+            </ul>
+          </div>
+          <button
+            id="startPreTestBtn"
+            class="w-full py-3 md:py-4 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 rounded-xl font-bold text-sm tracking-wider transition transform active:scale-95 shadow-lg shadow-blue-500/20"
+          >
+            TESTE BAŞLA 🚀
+          </button>
+        </div>
+
+        <!-- Adım 2: Soru Ekranı (Dinamik) -->
+        <div id="preTestQuestionScreen" class="hidden space-y-6">
+          <!-- Üst kısım: İlerleme Çubuğu ve Sayıcı -->
+          <div class="flex items-center justify-between text-xs text-slate-400">
+            <span class="font-semibold text-blue-400 uppercase tracking-widest"
+              >Ön Seviye Tespiti</span
+            >
+            <span id="questionCounter">Soru 1 / 5</span>
+          </div>
+          <div class="w-full h-1.5 bg-slate-800 rounded-full overflow-hidden">
+            <div
+              id="preTestProgressBar"
+              class="h-full bg-blue-500 transition-all duration-300"
+              style="width: 20%"
+            ></div>
+          </div>
+
+          <!-- Soru Metni -->
+          <div>
+            <h3
+              id="preTestQuestionText"
+              class="text-lg md:text-xl font-bold leading-snug text-white"
+            >
+              Soru yükleniyor...
+            </h3>
+          </div>
+
+          <!-- Seçenekler Kutusu -->
+          <div id="preTestOptions" class="grid grid-cols-1 gap-3">
+            <!-- Dinamik olarak butonlar buraya gelecek -->
+          </div>
+        </div>
+
+        <!-- Adım 3: Sonuç ve Unvan Ekranı -->
+        <div id="preTestResultScreen" class="hidden text-center space-y-6">
+          <div
+            class="w-24 h-24 mx-auto rounded-full bg-gradient-to-tr from-yellow-500 to-amber-300 flex items-center justify-center text-5xl shadow-lg shadow-yellow-500/20 animate-bounce"
+          >
+            🏆
+          </div>
+          <div>
+            <h2 class="text-2xl md:text-3xl font-black text-white mb-1">
+              Test Tamamlandı!
+            </h2>
+            <p class="text-slate-400 text-sm">
+              Harika bir performans sergiledin.
+            </p>
+          </div>
+
+          <div
+            class="bg-slate-900/80 border border-slate-800 p-5 rounded-2xl space-y-4"
+          >
+            <div>
+              <p
+                class="text-xs text-slate-500 uppercase tracking-widest font-semibold"
+              >
+                Ön Test Başarı Skoru
+              </p>
+              <p
+                id="preTestFinalScore"
+                class="text-4xl font-extrabold text-blue-400"
+              >
+                0 / 50
+              </p>
+            </div>
+            <div class="border-t border-slate-800 pt-3">
+              <p
+                class="text-xs text-slate-500 uppercase tracking-widest font-semibold mb-1"
+              >
+                Kazanılan Unvan
+              </p>
+              <span
+                id="preTestTier"
+                class="px-3 py-1 bg-blue-500/20 border border-blue-500/40 text-blue-300 rounded-full text-xs font-bold uppercase tracking-wider"
+              >
+                Kelime Avcısı 🎯
+              </span>
+            </div>
+          </div>
+
+          <p
+            id="preTestClosingMsg"
+            class="text-xs md:text-sm text-slate-400 italic"
+          >
+            "Tebrikler kaptan, başlangıç seviyen ayarlandı. Şimdi okyanusa
+            açılma vakti!"
+          </p>
+
+          <button
+            id="finishPreTestBtn"
+            class="w-full py-3 md:py-4 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 rounded-xl font-bold text-sm tracking-wider transition transform active:scale-95 shadow-lg shadow-emerald-500/20"
+          >
+            MACERAYA BAŞLA 🌊
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      // === SORU ŞABLONU VE PARAMETRELERİ ===
+      // Her soru 10 puan değerinde olacak şekilde güncellendi.
+      const preTestQuestions = [
+        {
+          id: 1,
+          question:
+            "Aşağıdaki cümlelerin hangisinde 'göz' sözcüğü bir deyim içinde kullanılmamıştır?",
+          options: [
+            "Yaptığı son hata yüzünden öğretmeninin gözünden düştü.",
+            "Sınavdan yüksek not alınca annesinin gözüne girdi.",
+            "Toz kaçtığı için sol gözü sabahtan beri durmadan sulanıyor.",
+            "Kütüphanedeki eski kitaplara şöyle bir göz gezdirdi.",
+          ],
+          correct: 2,
+          points: 10,
+        },
+        {
+          id: 2,
+          question:
+            "'Abanın kadri yağmurda bilinir' atasözüyle anlatılmak istenen temel düşünce aşağıdakilerden hangisidir?",
+          options: [
+            "Her şeyin değeri, ona en çok ihtiyaç duyulduğu zaman anlaşılır.",
+            "Kışlık kıyafetleri yaz mevsiminde satın almak daha ekonomiktir.",
+            "Tedbirli insanlar her zaman hazırlıklı gezmelidir.",
+            "İyi dostlar kötü günlerde kendilerini belli ederler.",
+          ],
+          correct: 0,
+          points: 10,
+        },
+        {
+          id: 3,
+          question:
+            "Bir kimsenin gizli yönlerini, kusurlarını ve hilelerini ortaya dökerek onu toplum içinde küçük düşürmek anlamına gelen deyim hangisidir?",
+          options: [
+            "İpliğini pazara çıkarmak",
+            "Ağzından baklayı çıkarmak",
+            "Etekleri zil çalmak",
+            "Baltayı taşa vurmak",
+          ],
+          correct: 0,
+          points: 10,
+        },
+        {
+          id: 4,
+          question:
+            "Aşağıdaki sözcüklerden hangisinin yazımı Türk Dil Kurumu (TDK) güncel sözlüğüne göre DOĞRUDUR?",
+          options: ["Şarz", "Orijinal", "Herkez", "Süpriz"],
+          correct: 1,
+          points: 10,
+        },
+        {
+          id: 5,
+          question:
+            "'Bir işi yapmakta acele etmeyen, yavaş davranan ve fırsatları kaçıran' kişileri tanımlamak için hangi deyim kullanılır?",
+          options: [
+            "Eli ayağına dolaşmak",
+            "Ağır canlı olmak",
+            "Gözü yükseklerde olmak",
+            "Ununu elemiş eleğini asmış",
+          ],
+          correct: 1,
+          points: 10,
+        },
+        {
+          id: 6,
+          question:
+            "'Öfkeyle kalkan zararla oturur' atasözü insanları aşağıdaki davranışlardan hangisinden kaçınmaya yönlendirir?",
+          options: [
+            "Aceleci ve plansız çalışmaktan",
+            "Başkalarının fikirlerini önemsememekten",
+            "Öfke anında kontrolsüz kararlar almaktan",
+            "Yalan söylemekten ve dürüst davranmamaktan",
+          ],
+          correct: 2,
+          points: 10,
+        },
+        {
+          id: 7,
+          question:
+            "Aşağıdaki seçeneklerin hangisinde kelimeler arasında 'Eş Anlamlılık' ilişkisi yoktur?",
+          options: [
+            "Sonbahar - Güz",
+            "Tutsak - Esir",
+            "Cevap - Yanıt",
+            "Taze - Bayat",
+          ],
+          correct: 3,
+          points: 10,
+        },
+        {
+          id: 8,
+          question:
+            "Büyük bir dikkatle, hiçbir şeyi kaçırmayacak şekilde dinlemek anlamına gelen deyim hangisidir?",
+          options: [
+            "Kulak kabartmak",
+            "Kulak kesilmek",
+            "Kulağına küpe olmak",
+            "Kulak ardı etmek",
+          ],
+          correct: 1,
+          points: 10,
+        },
+        {
+          id: 9,
+          question:
+            "'Ağaç yaşken eğilir' atasözünün eğitim dünyasındaki karşılığı nedir?",
+          options: [
+            "İnsanların genç yaşlarda daha kolay eğitilebileceği ve şekillendirilebileceği",
+            "Doğayı korumanın insan gelişimindeki büyük rolü",
+            "Eğitimcilerin sabırlı ve esnek olmaları gerektiği",
+            "Her insan her yaşta aynı hızda öğrenebileceği",
+          ],
+          correct: 0,
+          points: 10,
+        },
+        {
+          id: 10,
+          question:
+            "Aşağıdaki cümlelerde geçen altı çizili kelimelerden hangisi 'gerçek anlamının dışında (mecaz)' kullanılmıştır?",
+          options: [
+            "Masadaki bardak yere düşüp kırıldı.",
+            "Yeni taşındığımız evin odaları çok genişti.",
+            "Bize karşı oldukça soğuk bir tavır sergiledi.",
+            "Yaralı kuşu dikkatlice kutunun içine koydu.",
+          ],
+          correct: 2,
+          points: 10,
+        },
+        {
+          id: 11,
+          question:
+            "Türk Dil Kurumu'na göre aşağıda verilen kelimelerden hangisinin yazımı doğrudur?",
+          options: [
+            "Mütevazi (Alçakgönüllü anlamında)",
+            "Mütevazı (Alçakgönüllü anlamında)",
+            "Mütavazi (Alçakgönüllü anlamında)",
+            "Mütevazih (Alçakgönüllü anlamında)",
+          ],
+          correct: 1,
+          points: 10,
+        },
+        {
+          id: 12,
+          question:
+            "Çok emek vererek, sabırla ve küçük adımlarla büyük bir işi başarmaya çalışmayı ifade eden deyim hangisidir?",
+          options: [
+            "İğneyle kuyu kazmak",
+            "Saman altından su yürütmek",
+            "Devede kulak kalmak",
+            "Arı kovanına çomak sokmak",
+          ],
+          correct: 0,
+          points: 10,
+        },
+        {
+          id: 13,
+          question:
+            "'Başkalarının başına gelen kötü durumlara sevinenler, aynı durumla kendileri de karşılaşabilirler' anlamına gelen atasözü hangisidir?",
+          options: [
+            "Gülme komşuna, gelir başına",
+            "Ateş düştüğü yeri yakar",
+            "Öfke baldan tatlıdır",
+            "Akıl yaşta değil baştadır",
+          ],
+          correct: 0,
+          points: 10,
+        },
+        {
+          id: 14,
+          question:
+            "Aşağıdaki birleşik kelimelerden hangisinin yazımı YANLIŞTIR?",
+          options: [
+            "Bilinçaltı",
+            "Yanı sıra",
+            "Gözaltı (gözetim anlamında)",
+            "Bir kaç",
+          ],
+          correct: 3,
+          points: 10,
+        },
+        {
+          id: 15,
+          question:
+            "Bir durumu ya da gerçeği fark ettirmeden, sinsice iş çeviren insanlar için hangi deyim kullanılır?",
+          options: [
+            "Saman altından su yürütmek",
+            "Ağzı kulaklarına varmak",
+            "İnce eleyip sık dokumak",
+            "Sinek avlamak",
+          ],
+          correct: 0,
+          points: 10,
+        },
+        {
+          id: 16,
+          question:
+            "'Kişinin yapacağı kötülüklerin ve hataların en nihayetinde kendisine büyük zararlar vereceğini' anlatan atasözü hangisidir?",
+          options: [
+            "Rüzgar eken fırtına biçer",
+            "Keskin sirke küpüne zarar",
+            "Damlaya damlaya göl olur",
+            "İşleyen demir pas tutmaz",
+          ],
+          correct: 1,
+          points: 10,
+        },
+        {
+          id: 17,
+          question:
+            "Aşağıdaki cümlelerin hangisinde 'ki' bağlacının yazımı ile ilgili bir hata yapılmıştır?",
+          options: [
+            "Duydum ki unutmuşsun gözlerimin rengini.",
+            "Oysaki her şey çok güzel başlamıştı.",
+            "Sanki her şeyi biliyormuş gibi konuşuyor.",
+            "Madem ki gelmeyecektin, neden haber vermedin?",
+          ],
+          correct: 3,
+          points: 10,
+        },
+        {
+          id: 18,
+          question:
+            "Bir kimseye karşı içten içe öfke duyup, intikam almak için uygun zaman kollamak anlamına gelen deyim hangisidir?",
+          options: [
+            "Diş bilemek",
+            "Göz yummak",
+            "Kulak asmamak",
+            "Burun kıvırmak",
+          ],
+          correct: 0,
+          points: 10,
+        },
+        {
+          id: 19,
+          question:
+            "'Çalışan, çabalayan insanın körelmeyeceğini, yeteneklerini koruyup geliştireceğini' savunan atasözü hangisidir?",
+          options: [
+            "İşleyen demir pas tutmaz",
+            "Sakla samanı, gelir zamanı",
+            "Darı unundan baklava olmaz",
+            "Körle yatan şaşı kalkar",
+          ],
+          correct: 0,
+          points: 10,
+        },
+        {
+          id: 20,
+          question:
+            "Aşağıdaki kelimelerden hangisi sesteş (eş sesli) bir kelime değildir?",
+          options: ["Gül", "Yüz", "Çay", "Kitap"],
+          correct: 3,
+          points: 10,
+        },
+        {
+          id: 21,
+          question:
+            "Aşırı serbestlik kazanarak veya sonradan görme bir şekilde görgüsüzce davranmaya başlamak durumunu anlatan deyim hangisidir?",
+          options: [
+            "Kabak çiçeği gibi açılmak",
+            "Etekleri zil çalmak",
+            "Hapı yutmak",
+            "Göze gelmek",
+          ],
+          correct: 0,
+          points: 10,
+        },
+        {
+          id: 22,
+          question:
+            "Aşağıdaki kelimelerden hangisinin yazımı Türk Dil Kurumu (TDK)'na göre doğrudur?",
+          options: ["Egzos", "Eksoz", "Egzoz", "Egzost"],
+          correct: 2,
+          points: 10,
+        },
+        {
+          id: 23,
+          question:
+            "Hafife almak, küçümsemek veya beğenmemek durumunu ifade etmek için hangi deyim kullanılır?",
+          options: [
+            "Burun kıvırmak",
+            "El açmak",
+            "Dil dökmek",
+            "Göz gezdirmek",
+          ],
+          correct: 0,
+          points: 10,
+        },
+        {
+          id: 24,
+          question:
+            "Farkında olmadan karşısındakini kıracak, incitecek veya dokunacak söz söylemek anlamına gelen deyim hangisidir?",
+          options: [
+            "Baltayı taşa vurmak",
+            "Çam devirmek",
+            "İçi kan ağlamak",
+            "Hapı yutmak",
+          ],
+          correct: 0,
+          points: 10,
+        },
+        {
+          id: 25,
+          question:
+            "Aşağıdakilerden hangisinde kısaltmaya getirilen ek yanlış yazılmıştır?",
+          options: ["TDK'nin", "TDK'nın", "THY'de", "TRT'den"],
+          correct: 1,
+          points: 10,
+        },
+        {
+          id: 26,
+          question:
+            "Bir iş yerinde hiç müşteri olmaması, işlerin tamamen durması durumunu anlatan deyim hangisidir?",
+          options: [
+            "Sinek avlamak",
+            "Kulak kesilmek",
+            "Suya sabuna dokunmamak",
+            "Başına çorap örmek",
+          ],
+          correct: 0,
+          points: 10,
+        },
+        {
+          id: 27,
+          question:
+            "Aşağıdaki cümlelerin hangisinde terim anlamlı bir sözcük kullanılmamıştır?",
+          options: [
+            "Oyunun ikinci perdesini izleyemeden salondan ayrılmak zorunda kaldık.",
+            "Öğretmenimiz bugün derste üçgenin iç açılarını hesaplamayı öğretti.",
+            "Müzik dersinde sol anahtarını çizerken oldukça zorlandım.",
+            "Penceredeki perdeleri yıkamak için sabah erkenden uyandı.",
+          ],
+          correct: 3,
+          points: 10,
+        },
+        {
+          id: 28,
+          question:
+            "Aşağıdaki cümlelerde geçen altı çizili kelimelerden hangisinde ünlü düşmesi (ses düşmesi) gerçekleşmiştir?",
+          options: [
+            "Bu kutunun içindeki oyuncaklar oldukça eski görünüyor.",
+            "Yolun karşısına geçerken çok dikkatli olmalısın.",
+            "Sınav heyecanından dolayı karnı ağrımaya başladı.",
+            "Odasındaki masanın üstünü güzelce temizledi.",
+          ],
+          correct: 2,
+          points: 10,
+        },
+        {
+          id: 29,
+          question:
+            "Kararsız kalmak, ne yapacağını bilememek durumunu anlatan deyim hangisidir?",
+          options: [
+            "İki arada bir derede kalmak",
+            "Ağzı açık kalmak",
+            "Yaka silkmek",
+            "Burnundan kıl aldırmamak",
+          ],
+          correct: 0,
+          points: 10,
+        },
+        {
+          id: 30,
+          question:
+            "'Kötü ve olumsuz bir çevre içindeki insanların zamanla o çevrenin kötü alışkanlıklarını edineceğini' belirten atasözü hangisidir?",
+          options: [
+            "Körle yatan şaşı kalkar",
+            "Dost acı söyler",
+            "Ak akçe kara gün içindir",
+            "Yalancının mumu yatsıya kadar yanar",
+          ],
+          correct: 0,
+          points: 10,
+        },
+      ];
+      // DOM Element Tanımlamaları
+      const trigger = document.getElementById("profileTrigger");
+      const dropdown = document.getElementById("profileDropdown");
+      const accountTabBtn = document.getElementById("accountTabBtn");
+      const settingsTabBtn = document.getElementById("settingsTabBtn");
+      const accountContent = document.getElementById("accountContent");
+      const settingsContent = document.getElementById("settingsContent");
+      const level3SummaryModal = document.getElementById("level3SummaryModal");
+      const continueFromLevel3Btn = document.getElementById(
+        "continueFromLevel3Btn",
+      );
+      const roadModal = document.getElementById("roadModal");
+      const openRoadBtn = document.getElementById("openRoadBtn");
+      const closeRoadBtn = document.getElementById("closeRoadBtn");
+      const roadNodesLayer = document.getElementById("roadNodesLayer");
+      const roadCurrentTitle = document.getElementById("roadCurrentTitle");
+      const roadProgressText = document.getElementById("roadProgressText");
+      const roadNextTarget = document.getElementById("roadNextTarget");
+      const roadRotationLabel = document.getElementById("roadRotationLabel");
+      const roadRotationNote = document.getElementById("roadRotationNote");
+      const roadRotationPill = document.getElementById("roadRotationPill");
+      const roadRotationValue = document.getElementById("roadRotationValue");
+      const roadCompletionBanner = document.getElementById(
+        "roadCompletionBanner",
+      );
+      const roadCompletionTitle = document.getElementById(
+        "roadCompletionTitle",
+      );
+      const rewardBurstLayer = document.getElementById("rewardBurstLayer");
+      const roadPathSvg = document.getElementById("roadPathSvg");
+      const roadPathLine = document.getElementById("roadPathLine");
+      const roadPathGlow = document.getElementById("roadPathGlow");
+      const roadPathDashes = document.getElementById("roadPathDashes");
+      const roadProgressMarker = document.getElementById("roadProgressMarker");
+      const roadMiniProgress = document.getElementById("roadMiniProgress");
+      const currentTitle = document.getElementById("currentTitle");
+      const profileBadgeList = document.getElementById("profileBadgeList");
+      const profileBadgeCount = document.getElementById("profileBadgeCount");
+      let pendingLevel3Summary = null;
+      let currentRoadState = null;
+      let currentBadgeCatalog = [];
+      let previousRoadCompletionState = false;
+      const badgeCatalogFallback = [];
+
+      function formatLevel3Summary(summary) {
+        if (!summary) return;
+        document.getElementById("level3FinalScore").textContent =
+          `${summary.score ?? 0}`;
+        document.getElementById("level3MissionCount").textContent =
+          `${summary.completedMissions ?? 0} / ${summary.totalMissions ?? 3}`;
+        document.getElementById("level3Title").textContent =
+          summary.tier || "-";
+        document.getElementById("level3TimeLeft").textContent =
+          `Kalan süre: ${summary.timeLeft ?? 0} sn`;
+        document.getElementById("level3CollectedWords").textContent =
+          `Toplanan kelime: ${summary.collectedWords ?? 0}`;
+        document.getElementById("level3StatsLine").textContent =
+          `Doğru seri: ${summary.correctStreak ?? 0} | Tamamlanan görev: ${summary.completedMissions ?? 0}`;
+      }
+
+      function showLevel3Summary(summary) {
+        pendingLevel3Summary = summary;
+        formatLevel3Summary(summary);
+        level3SummaryModal.classList.remove("hidden");
+        document.body.classList.add("summary-open");
+      }
+
+      function hideLevel3Summary() {
+        level3SummaryModal.classList.add("hidden");
+        document.body.classList.remove("summary-open");
+        try {
+          localStorage.removeItem("level3Summary");
+        } catch (e) {}
+        pendingLevel3Summary = null;
+      }
+
+      continueFromLevel3Btn.addEventListener("click", () => {
+        hideLevel3Summary();
+      });
+
+      function openRoadModal() {
+        roadModal.classList.remove("hidden");
+        document.body.classList.add("road-open");
+        loadRoadState();
+        createOceanBubbles();
+      }
+
+      function closeRoadModal() {
+        roadModal.classList.add("hidden");
+        document.body.classList.remove("road-open");
+      }
+      openRoadBtn.addEventListener("click", openRoadModal);
+      closeRoadBtn.addEventListener("click", closeRoadModal);
+
+      window.addEventListener("resize", () => {
+        if (
+          roadModal &&
+          !roadModal.classList.contains("hidden") &&
+          currentRoadState
+        ) {
+          renderRoadNodes(currentRoadState.milestones || []);
+        }
+      });
+
+      function createOceanBubbles() {
+        if (!rewardBurstLayer) return;
+        rewardBurstLayer.innerHTML = "";
+        for (let i = 0; i < 16; i++) {
+          const bubble = document.createElement("span");
+          bubble.className = "road-bubble";
+          const size = 14 + Math.random() * 40;
+          bubble.style.width = `${size}px`;
+          bubble.style.height = `${size}px`;
+          bubble.style.left = `${Math.random() * 100}%`;
+          bubble.style.animationDuration = `${8 + Math.random() * 10}s`;
+          bubble.style.animationDelay = `${Math.random() * 4}s`;
+          rewardBurstLayer.appendChild(bubble);
+        }
+      }
+
+      function clamp(value, min, max) {
+        return Math.max(min, Math.min(max, value));
+      }
+
+      function buildRoadPathPoints(milestones, width, height) {
+        const safeWidth = Math.max(420, width || 0);
+        const safeHeight = Math.max(240, height || 0);
+        const count = Math.max(1, milestones.length);
+        const leftMargin = 70;
+        const rightMargin = 70;
+        const usableWidth = safeWidth - leftMargin - rightMargin;
+        const midY = safeHeight * 0.5;
+        const waveAmplitude = clamp(safeHeight * 0.18, 28, 56);
+
+        return milestones.map((_, index) => {
+          const t = count === 1 ? 0.5 : index / (count - 1);
+          const x = leftMargin + usableWidth * t;
+          const wave =
+            Math.sin(t * Math.PI * 2.15 - Math.PI / 2) * waveAmplitude;
+          const offset = index % 2 === 0 ? -18 : 18;
+          const y = clamp(midY + wave + offset, 46, safeHeight - 46);
+          return { x, y };
+        });
+      }
+
+      function buildRoadPathD(points) {
+        if (!points.length) return "";
+        if (points.length === 1) {
+          return `M ${points[0].x} ${points[0].y}`;
+        }
+
+        let d = `M ${points[0].x} ${points[0].y}`;
+        for (let i = 0; i < points.length - 1; i++) {
+          const current = points[i];
+          const next = points[i + 1];
+          const cp1x = current.x + (next.x - current.x) * 0.35;
+          const cp2x = current.x + (next.x - current.x) * 0.65;
+          const cp1y = current.y + Math.sin(i * 1.7) * 16;
+          const cp2y = next.y - Math.cos((i + 1) * 1.45) * 16;
+          d += ` C ${cp1x} ${cp1y}, ${cp2x} ${cp2y}, ${next.x} ${next.y}`;
+        }
+        return d;
+      }
+
+      function updateRoadPath(milestones) {
+        if (!roadPathLine || !roadPathGlow || !roadPathDashes || !roadPathSvg)
+          return [];
+        const trackRect = roadNodesLayer.getBoundingClientRect();
+        const svgWidth = Math.max(420, trackRect.width || 0);
+        const svgHeight = Math.max(240, trackRect.height || 0);
+        roadPathSvg.setAttribute("viewBox", `0 0 ${svgWidth} ${svgHeight}`);
+        const points = buildRoadPathPoints(milestones, svgWidth, svgHeight);
+        const d = buildRoadPathD(points);
+        roadPathLine.setAttribute("d", d);
+        roadPathGlow.setAttribute("d", d);
+        roadPathDashes.setAttribute("d", d);
+        return points;
+      }
+
+      function setProgressMarker(points, progressPercent) {
+        if (!roadProgressMarker || !points.length) {
+          return;
+        }
+
+        if (points.length === 1) {
+          roadProgressMarker.style.left = `${points[0].x}px`;
+          roadProgressMarker.style.top = `${points[0].y}px`;
+          return;
+        }
+
+        const progress = clamp((progressPercent || 0) / 100, 0, 1);
+        const lastIndex = points.length - 1;
+        const exact = progress * lastIndex;
+        const index = Math.floor(exact);
+        const nextIndex = Math.min(lastIndex, index + 1);
+        const localT = exact - index;
+        const start = points[index];
+        const end = points[nextIndex];
+        const x = start.x + (end.x - start.x) * localT;
+        const y = start.y + (end.y - start.y) * localT;
+        roadProgressMarker.style.left = `${x}px`;
+        roadProgressMarker.style.top = `${y}px`;
+      }
+
+      function showRewardBurst(label) {
+        if (!rewardBurstLayer) return;
+        for (let i = 0; i < 18; i++) {
+          const spark = document.createElement("span");
+          spark.className = "reward-spark";
+          const startX = 45 + Math.random() * 10;
+          const startY = 40 + Math.random() * 10;
+          const dx = (Math.random() * 260 - 130).toFixed(0) + "px";
+          const dy = (Math.random() * -220 - 60).toFixed(0) + "px";
+          spark.style.left = `${startX}%`;
+          spark.style.top = `${startY}%`;
+          spark.style.setProperty("--dx", dx);
+          spark.style.setProperty("--dy", dy);
+          rewardBurstLayer.appendChild(spark);
+          setTimeout(() => spark.remove(), 1000);
+        }
+        if (label) {
+          const badge = document.createElement("div");
+          badge.className =
+            "fixed left-1/2 top-24 -translate-x-1/2 px-4 py-2 rounded-full bg-cyan-500 text-slate-950 font-black shadow-2xl z-[70]";
+          badge.textContent = `${label} kazanıldı`;
+          document.body.appendChild(badge);
+          badge.animate(
+            [
+              {
+                transform: "translateX(-50%) translateY(8px) scale(0.9)",
+                opacity: 0,
+              },
+              {
+                transform: "translateX(-50%) translateY(0) scale(1)",
+                opacity: 1,
+              },
+              {
+                transform: "translateX(-50%) translateY(-8px) scale(1)",
+                opacity: 0,
+              },
+            ],
+            { duration: 1400, easing: "ease-out" },
+          );
+          setTimeout(() => badge.remove(), 1500);
+        }
+      }
+
+      function renderProfileBadges(claimedRoadRewards, badgeCatalog = []) {
+        if (!profileBadgeList) return;
+        profileBadgeList.innerHTML = "";
+        const claimedSet = new Set(claimedRoadRewards || []);
+        const totalClaimed = claimedSet.size;
+        if (profileBadgeCount)
+          profileBadgeCount.textContent = String(totalClaimed);
+        const badges = badgeCatalog.length
+          ? badgeCatalog
+          : badgeCatalogFallback;
+        if (badges.length === 0) {
+          profileBadgeList.innerHTML =
+            '<span class="text-xs text-slate-500">Henüz rozet yok</span>';
+          return;
+        }
+
+        const rarityIcons = {
+          common: "💧",
+          rare: "🌊",
+          epic: "⛵",
+          legendary: "🌅",
+        };
+        badges.forEach((badge) => {
+          const keyVariants = Array.from(
+            { length: 10 },
+            (_, i) => `r${i + 1}:${badge.id}`,
+          );
+          const unlocked =
+            keyVariants.some((key) => claimedSet.has(key)) ||
+            claimedSet.has(badge.id);
+          const pill = document.createElement("span");
+          pill.className = `profile-badge ${unlocked ? "" : "locked"}`;
+          pill.dataset.rarity = badge.rarity || "common";
+          pill.textContent = unlocked
+            ? `${rarityIcons[badge.rarity] || "✨"} ${badge.name}`
+            : `🔒 ${badge.name}`;
+          profileBadgeList.appendChild(pill);
+        });
+      }
+      function showRoadRotationTransition(stepIndex, label) {
+        if (
+          !roadRotationPill ||
+          !roadRotationValue ||
+          !roadCompletionBanner ||
+          !roadCompletionTitle
+        )
+          return;
+        roadRotationValue.textContent = String(stepIndex || 1);
+        roadRotationPill.classList.remove("is-new");
+        void roadRotationPill.offsetWidth;
+        roadRotationPill.classList.add("is-new");
+        roadCompletionTitle.textContent = label || `Adım ${stepIndex || 1}`;
+        roadCompletionBanner.classList.remove("hidden");
+        window.clearTimeout(showRoadRotationTransition.timeoutId);
+        showRoadRotationTransition.timeoutId = window.setTimeout(() => {
+          roadCompletionBanner.classList.add("hidden");
+        }, 1600);
+      }
+
+      async function loadRoadState() {
+        try {
+          const res = await fetch("/road-state");
+          const data = await res.json();
+          if (!data.loggedIn) return;
+          currentRoadState = data;
+          currentBadgeCatalog =
+            data.currentMilestones || data.milestones || currentBadgeCatalog;
+          const taskPoints = Number(data.taskPoints ?? 0);
+          roadCurrentTitle.textContent = `${taskPoints}`;
+          roadProgressText.textContent = `${data.progressPercent ?? 0}%`;
+          roadMiniProgress.textContent = `${data.progressPercent ?? 0}%`;
+          roadNextTarget.textContent = data.nextMilestone
+            ? `${data.nextMilestone.score} görev puanı - ${data.nextMilestone.reward}`
+            : "Tüm adımlar tamamlandı";
+          const rotationLabel =
+            data.rotationLabel || `Adım ${data.rotationIndex || 1}`;
+          roadRotationLabel.textContent = rotationLabel;
+          if (roadRotationValue)
+            roadRotationValue.textContent = String(data.rotationIndex || 1);
+          if (roadRotationNote) {
+            roadRotationNote.textContent = data.nextMilestone
+              ? `${data.nextMilestone.score} görev puanına ulaşıldığında bir sonraki adım açılır.`
+              : "Tüm adımlar tamamlandı.";
+          }
+          const completedNow = (data.progressPercent ?? 0) >= 100;
+          if (!previousRoadCompletionState && completedNow) {
+            showRoadRotationTransition(data.rotationIndex || 1, rotationLabel);
+          }
+          previousRoadCompletionState = completedNow;
+          if (currentTitle)
+            currentTitle.textContent = data.title || "Acemi Kaptan";
+          renderRoadNodes(data.milestones || []);
+          renderProfileBadges(
+            data.claimedRoadRewards || [],
+            currentBadgeCatalog,
+          );
+        } catch (err) {
+          console.warn("Yol verisi alinamadi:", err);
+        }
+      }
+
+      function renderRoadNodes(milestones) {
+        roadNodesLayer.innerHTML = "";
+        const points = updateRoadPath(milestones);
+        milestones.forEach((milestone, index) => {
+          const node = document.createElement("div");
+          const point = points[index] || { x: 100, y: 100 };
+          const isActive = milestone.unlocked && !milestone.claimed;
+          node.className = `road-node ${milestone.unlocked ? "unlocked" : ""} ${milestone.claimed ? "claimed" : ""} ${isActive ? "active" : ""}`;
+          node.style.left = `${point.x}px`;
+          node.style.top = `${point.y}px`;
+          node.style.zIndex = String(10 + index);
+          node.style.setProperty(
+            "--node-accent",
+            isActive ? "rgba(56,189,248,0.42)" : "rgba(148,163,184,0.18)",
+          );
+          node.innerHTML = `
+                    <div class="road-node-inner">
+                        <div class="road-node-dot"></div>
+                        <div class="text-xs font-bold text-white">${milestone.score}</div>
+                        <div class="text-[11px] text-slate-300 leading-tight mt-1">${milestone.title}</div>
+                        <div class="text-[10px] text-slate-400 mt-1">${milestone.reward}</div>
+                    </div>
+                `;
+          if (isActive) {
+            node.style.cursor = "pointer";
+            node.addEventListener("click", () => claimRoadReward(milestone.id));
+          }
+          roadNodesLayer.appendChild(node);
+        });
+        setProgressMarker(points, currentRoadState?.progressPercent ?? 0);
+      }
+
+      async function claimRoadReward(milestoneId) {
+        if (!milestoneId) return;
+        try {
+          const res = await fetch("/road-claim", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ milestoneId }),
+          });
+          const data = await res.json();
+          if (!data.success) {
+            console.warn("Ödül alınamadı:", data.message);
+            return;
+          }
+          await loadRoadState();
+        } catch (err) {
+          console.warn("Ödül talebi başarısız:", err);
+        }
+      }
+
+      const assistantBubble = document.getElementById("assistantBubble");
+      const assistantCharacter = document.getElementById("assistantCharacter");
+      const assistantCloseBtn = document.getElementById("assistantCloseBtn");
+      const assistantStartBtn = document.getElementById("assistantStartBtn");
+      const assistantSeenKey = "kelimeOkyanusuAssistantSeen";
+// Asistan Elementleri
+const assistantText = document.getElementById('assistantText');
+const assistantTipBtn = document.getElementById('assistantTipBtn');
+const assistantStatsBtn = document.getElementById('assistantStatsBtn');
+
+// Günün İpucu Fonksiyonu
+assistantTipBtn?.addEventListener('click', () => {
+    const tips = [
+        "Bugün 'Ağzından baklayı çıkarmak' deyiminin anlamını pekiştirmeye ne dersin?",
+        "Zinciri kırmadan arka arkaya kelime ürettiğinde puan çarpanın artar!",
+        "Kelime Okyanusu modunda süreyi ne kadar iyi kullanırsan o kadar çok köpük toplarsın.",
+        "Ön testi çözmek, seviyene en uygun kelimelerin karşına çıkmasını sağlar."
+    ];
+    // Rastgele bir ipucu seçip asistana söyletiyoruz
+    const randomTip = tips[Math.floor(Math.random() * tips.length)];
+    assistantText.textContent = "💡 Kaptan İpucu: " + randomTip;
+});
+
+// Kullanıcı Durumu (İstatistik) Fonksiyonu
+assistantStatsBtn?.addEventListener('click', () => {
+    const currentPts = document.getElementById('totalPoints')?.textContent || "0";
+    const currentRank = document.getElementById('summaryRank')?.textContent || "#--";
+    const currentTitleVal = document.getElementById('currentTitle')?.textContent || "Acemi Kaptan";
+    
+    assistantText.textContent = `📊 Şu anki unvanın "${currentTitleVal}". Toplam ${currentPts} puanın var ve sıralaman ${currentRank}. Daha üst sıralara çıkmak için okyanusa açılma vakti!`;
+});
+
+      function setAssistantOpen(isOpen) {
+        if (!assistantBubble) return;
+        assistantBubble.classList.toggle("is-collapsed", !isOpen);
+      }
+
+      if (localStorage.getItem(assistantSeenKey) === "true") {
+        setAssistantOpen(false);
+      }
+
+      assistantCharacter?.addEventListener("click", () => {
+        setAssistantOpen(assistantBubble?.classList.contains("is-collapsed"));
+      });
+
+      assistantCloseBtn?.addEventListener("click", () => {
+        localStorage.setItem(assistantSeenKey, "true");
+        setAssistantOpen(false);
+      });
+
+      assistantStartBtn?.addEventListener("click", () => {
+        const firstOceanLink = document.querySelector(
+          'a[href*="Kelime-Okyanusu"]',
+        );
+        window.location.href =
+          firstOceanLink?.getAttribute("href") ||
+          "Kelime-Okyanusu-Seviye-Secimi.html";
+      });
+
+      // Dropdown toggle
+      trigger.addEventListener("click", (e) => {
+        e.stopPropagation();
+        dropdown.classList.toggle("hidden");
+      });
+
+      // Dropdown içi tıklamalarda kapanmayı engelleme
+      dropdown.addEventListener("click", (e) => {
+        e.stopPropagation();
+      });
+
+      // Profil Tab Değişimi
+      accountTabBtn.addEventListener("click", () => {
+        accountTabBtn.classList.add("active-tab");
+        settingsTabBtn.classList.remove("active-tab", "text-white");
+        settingsTabBtn.classList.add("text-slate-500");
+        accountContent.classList.remove("hidden");
+        settingsContent.classList.add("hidden");
+      });
+
+      settingsTabBtn.addEventListener("click", () => {
+        settingsTabBtn.classList.add("active-tab", "text-white");
+        settingsTabBtn.classList.remove("text-slate-500");
+        accountTabBtn.classList.remove("active-tab");
+        accountContent.classList.add("hidden");
+        settingsContent.classList.remove("hidden");
+      });
+
+      // Dışarı tıklanınca dropdown kapatma
+      document.addEventListener("click", () => {
+        dropdown.classList.add("hidden");
+      });
+
+      // URL Hazırlama ve Fetch İşlemi
+      const isRelativeSafe = window.location.protocol.startsWith("http");
+      const meEndpoint = isRelativeSafe
+        ? new URL("/me", window.location.origin).href
+        : "";
+
+      function setMockUserData() {
+        const mockData = {
+          isim: "Kaptan Yeni",
+          puan: 0,
+          onTestTamamlandi: false,
+          successRate: 0,
+        };
+        applyUserData(mockData);
+      }
+
+      function applyUserData(data) {
+        document.getElementById("userName").textContent = data.isim;
+        document.getElementById("userScore").textContent = `Puan: ${data.puan}`;
+        document.getElementById("totalPoints").textContent = data.puan;
+        const profileSuccessRate =
+          document.getElementById("profileSuccessRate");
+        const dailySuccessRate = document.getElementById("dailySuccessRate");
+        const computedSuccessRate =
+          typeof data.successRate === "number"
+            ? data.successRate
+            : data.totalQuestions > 0
+              ? Math.round(((data.correct || 0) / data.totalQuestions) * 100)
+              : 0;
+        if (profileSuccessRate)
+          profileSuccessRate.textContent = `${computedSuccessRate}%`;
+        if (dailySuccessRate)
+          dailySuccessRate.textContent = `${computedSuccessRate}%`;
+        const rankValue = data.rank ?? "--";
+        const rankText = `#${rankValue}`;
+        const profileRank = document.getElementById("profileRank");
+        const summaryRank = document.getElementById("summaryRank");
+        if (profileRank) profileRank.textContent = `Rank: ${rankText}`;
+        if (summaryRank) summaryRank.textContent = rankText;
+        const computedTitle = data.title || "Acemi Kaptan";
+        if (currentTitle) currentTitle.textContent = computedTitle;
+        if (roadCurrentTitle) roadCurrentTitle.textContent = computedTitle;
+        if (roadMiniProgress)
+          roadMiniProgress.textContent = `${data.roadProgressPercent ?? 0}%`;
+        renderProfileBadges(
+          data.claimedRoadRewards || [],
+          currentBadgeCatalog.length
+            ? currentBadgeCatalog
+            : badgeCatalogFallback,
+        );
+
+        const firstLetter = (data.isim || "K").charAt(0).toUpperCase();
+        document.getElementById("userAvatar").textContent = firstLetter;
+        document.getElementById("dropdownAvatar").textContent = firstLetter;
+        document.getElementById("userInitials").textContent = firstLetter;
+
+        // ÖN TEST KOŞULU:
+        // Genel puanı 0 olan herkes veya daha ön testi tamamlamamış olanlar için test modalı gösterilir.
+        const storedLevel3Summary = localStorage.getItem("level3Summary");
+        if (storedLevel3Summary) {
+          try {
+            showLevel3Summary(JSON.parse(storedLevel3Summary));
+          } catch (err) {
+            console.warn("Level 3 özeti okunamadı:", err);
+            localStorage.removeItem("level3Summary");
+          }
+          return;
+        }
+
+        const needsPreTest = data.puan === 0 || data.onTestTamamlandi === false;
+        if (needsPreTest) {
+          showPreTest();
+        }
+      }
+
+      if (meEndpoint) {
+        fetch(meEndpoint)
+          .then((res) => {
+            if (!res.ok) throw new Error("Ağ yanıtı uygun değil");
+            return res.json();
+          })
+          .then((data) => {
+            if (!data.loggedIn) {
+              window.location.href = "login.html";
+              return;
+            }
+            applyUserData(data);
+          })
+          .catch((err) => {
+            console.warn(
+              "Sunucu bulunamadı, çevrimdışı önizleme moduna geçiliyor:",
+              err,
+            );
+            setMockUserData();
+          });
+      } else {
+        setMockUserData();
+      }
+
+      // Ayarlar Kayıt ve Yönetim
+      const soundToggle = document.querySelectorAll(
+        "#settingsContent input",
+      )[0];
+      const darkModeToggle = document.querySelectorAll(
+        "#settingsContent input",
+      )[1];
+      const emailToggle = document.querySelectorAll(
+        "#settingsContent input",
+      )[2];
+
+      if (localStorage.getItem("soundEffects") !== null) {
+        soundToggle.checked = localStorage.getItem("soundEffects") === "true";
+      }
+      if (localStorage.getItem("darkMode") !== null) {
+        darkModeToggle.checked = localStorage.getItem("darkMode") === "true";
+      }
+      if (localStorage.getItem("emailNotifications") !== null) {
+        emailToggle.checked =
+          localStorage.getItem("emailNotifications") === "true";
+      }
+
+      soundToggle.addEventListener("change", () => {
+        localStorage.setItem("soundEffects", soundToggle.checked);
+      });
+
+      darkModeToggle.addEventListener("change", () => {
+        localStorage.setItem("darkMode", darkModeToggle.checked);
+        applyDarkMode(darkModeToggle.checked);
+      });
+
+      function applyDarkMode(isDark) {
+        if (isDark) {
+          document.body.classList.remove("bg-slate-100", "text-slate-900");
+          document.body.classList.add("bg-slate-950", "text-slate-100");
+        } else {
+          document.body.classList.remove("bg-slate-950", "text-slate-100");
+          document.body.classList.add("bg-slate-100", "text-slate-900");
+        }
+      }
+
+      if (localStorage.getItem("darkMode") === "false") {
+        applyDarkMode(false);
+      } else {
+        applyDarkMode(true);
+      }
+
+      emailToggle.addEventListener("change", () => {
+        localStorage.setItem("emailNotifications", emailToggle.checked);
+      });
+
+      // Çıkış Yap Butonu
+      document
+        .getElementById("logoutBtn")
+        .addEventListener("click", async () => {
+          const logoutEndpoint = isRelativeSafe
+            ? new URL("/logout", window.location.origin).href
+            : "";
+          if (logoutEndpoint) {
+            try {
+              await fetch(logoutEndpoint, { method: "POST" });
+              window.location.href = "login.html";
+            } catch (err) {
+              console.error(err);
+              window.location.href = "login.html";
+            }
+          } else {
+            window.location.href = "login.html";
+          }
+        });
+
+      // ============================================
+      // === ÖN TEST SİSTEMİ MOTORU (JAVASCRIPT) ===
+      // ============================================
+
+      let currentQuestionIndex = 0;
+      let userAnswers = [];
+      let score = 0;
+      let correctCount = 0;
+      let incorrectCount = 0;
+
+      // Ön Test Başlatma/Gösterme
+      function showPreTest() {
+        document.getElementById("totalQuestionsCount").textContent =
+          preTestQuestions.length;
+        const modal = document.getElementById("preTestModal");
+        modal.classList.remove("hidden");
+
+        document
+          .getElementById("preTestStartScreen")
+          .classList.remove("hidden");
+        document
+          .getElementById("preTestQuestionScreen")
+          .classList.add("hidden");
+        document.getElementById("preTestResultScreen").classList.add("hidden");
+      }
+
+      // Testi Başlat Buton Etkinliği
+      document
+        .getElementById("startPreTestBtn")
+        .addEventListener("click", () => {
+          document.getElementById("preTestStartScreen").classList.add("hidden");
+          document
+            .getElementById("preTestQuestionScreen")
+            .classList.remove("hidden");
+
+          currentQuestionIndex = 0;
+          userAnswers = [];
+          score = 10;
+          correctCount = 0;
+          incorrectCount = 0;
+          loadQuestion(currentQuestionIndex);
+        });
+
+      // Soru Yükleme Fonksiyonu
+      function loadQuestion(index) {
+        if (index >= preTestQuestions.length) {
+          showResults();
+          return;
+        }
+
+        const qData = preTestQuestions[index];
+
+        document.getElementById("questionCounter").textContent =
+          `Soru ${index + 1} / ${preTestQuestions.length}`;
+        const percentage = ((index + 1) / preTestQuestions.length) * 100;
+        document.getElementById("preTestProgressBar").style.width =
+          `${percentage}%`;
+
+        document.getElementById("preTestQuestionText").textContent =
+          qData.question;
+
+        const optionsContainer = document.getElementById("preTestOptions");
+        optionsContainer.innerHTML = "";
+
+        qData.options.forEach((optionText, optionIdx) => {
+          const btn = document.createElement("button");
+          btn.className =
+            "w-full text-left p-4 rounded-xl border border-slate-700 hover:border-blue-500 bg-slate-900/40 hover:bg-slate-900/80 transition duration-150 text-sm font-medium flex items-center justify-between group";
+
+          const charCode = String.fromCharCode(65 + optionIdx); // A, B, C, D
+
+          btn.innerHTML = `
+                    <div class="flex items-center gap-3">
+                        <span class="w-7 h-7 rounded-lg bg-slate-800 flex items-center justify-center font-bold text-xs text-slate-400 group-hover:bg-blue-500 group-hover:text-white transition">
+                            ${charCode}
+                        </span>
+                        <span>${optionText}</span>
+                    </div>
+                    <span class="opacity-0 group-hover:opacity-100 transition text-blue-400 text-xs">Seç ➔</span>
+                `;
+
+          btn.addEventListener("click", () => {
+            handleAnswerSelection(index, optionIdx);
+          });
+
+          optionsContainer.appendChild(btn);
+        });
+      }
+
+      // Cevap Seçim Mantığı
+      function handleAnswerSelection(questionIdx, selectedIdx) {
+        const qData = preTestQuestions[questionIdx];
+        const isCorrect = selectedIdx === qData.correct;
+
+        userAnswers.push({
+          questionId: qData.id,
+          selected: selectedIdx,
+          isCorrect: isCorrect,
+          pointsGained: isCorrect ? qData.points : 0,
+        });
+
+        if (isCorrect) {
+          score += qData.points;
+          correctCount++;
+        } else {
+          incorrectCount++;
+        }
+
+        currentQuestionIndex++;
+        setTimeout(() => {
+          loadQuestion(currentQuestionIndex);
+        }, 150);
+      }
+
+      // Sonuçları Hesaplama ve Gösterme
+      function showResults() {
+        document
+          .getElementById("preTestQuestionScreen")
+          .classList.add("hidden");
+        document
+          .getElementById("preTestResultScreen")
+          .classList.remove("hidden");
+
+        // Toplam alınabilecek maksimum puanı dinamik olarak hesaplıyoruz (5 soru x 10 puan = 50 puan)
+        const totalPossiblePoints = preTestQuestions.reduce(
+          (acc, q) => acc + q.points,
+          0,
+        );
+
+        // Dinamik skoru başarıyla HTML elemanına yazdırıyoruz
+        document.getElementById("preTestFinalScore").textContent =
+          `${score} / ${totalPossiblePoints}`;
+
+        let tierTitle = "";
+        let closingMsg = "";
+
+        if (score >= totalPossiblePoints * 0.8) {
+          tierTitle = "🌊 OKYANUS EFENDİSİ (ZOR) 🏆";
+          closingMsg =
+            "Harika ötesi! Dil ve kelime bilgin en üst seviyede. Seni zorlu sular bekliyor!";
+        } else if (score >= totalPossiblePoints * 0.5) {
+          tierTitle = "🎯 HARF AVCISI (ORTA) 🏹";
+          closingMsg =
+            "Harika bir temel! Orta zorluktaki maceralarla seviyeni daha da yukarı taşıyacaksın.";
+        } else {
+          tierTitle = "🧭 ÇAYLAK KAPTAN (KOLAY) 🌱";
+          closingMsg =
+            "Okyanusa hoş geldin! Temel düzeyden başlayarak harf okyanusunu fethedeceksin.";
+        }
+
+        const tierBadge = document.getElementById("preTestTier");
+        tierBadge.textContent = tierTitle;
+        document.getElementById("preTestClosingMsg").textContent =
+          `"${closingMsg}"`;
+      }
+
+      // Testi Bitirme ve Verileri Kaydetme
+      document
+        .getElementById("finishPreTestBtn")
+        .addEventListener("click", async () => {
+          localStorage.setItem("preTestCompleted", "true");
+          localStorage.setItem("preTestScore", score);
+
+          const rewardPoints = 10;
+          const saveEndpoint = isRelativeSafe
+            ? new URL("/save-score", window.location.origin).href
+            : "";
+          let saveResponseData = null;
+          if (saveEndpoint) {
+            try {
+              const saveRes = await fetch(saveEndpoint, {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                  score: rewardPoints,
+                  dogruSayisi: correctCount,
+                  yanlisSayisi: incorrectCount,
+                  toplamSoru: preTestQuestions.length,
+                  unvan: document
+                    .getElementById("preTestTier")
+                    .textContent.trim(),
+                }),
+              });
+              saveResponseData = await saveRes.json();
+            } catch (err) {
+              console.log(
+                "Sunucu bağlantısı yok veya kaydedilemedi, lokal kaydedildi.",
+                err,
+              );
+            }
+          }
+
+          const currentPointsElem = document.getElementById("totalPoints");
+          const userScoreElem = document.getElementById("userScore");
+          if (currentPointsElem) {
+            let currentPts = parseInt(currentPointsElem.textContent) || 0;
+            currentPts += rewardPoints;
+            currentPointsElem.textContent = currentPts;
+            userScoreElem.textContent = `Puan: ${currentPts}`;
+          }
+
+          const profileSuccessRate =
+            document.getElementById("profileSuccessRate");
+          if (profileSuccessRate) {
+            if (
+              saveResponseData &&
+              typeof saveResponseData.successRate === "number"
+            ) {
+              profileSuccessRate.textContent = `${saveResponseData.successRate}%`;
+            } else if (
+              saveResponseData &&
+              saveResponseData.successRate != null
+            ) {
+              profileSuccessRate.textContent = `${saveResponseData.successRate}%`;
+            }
+          }
+
+          const rankEndpoint = isRelativeSafe
+            ? new URL("/me", window.location.origin).href
+            : "";
+          if (rankEndpoint) {
+            try {
+              const rankRes = await fetch(rankEndpoint);
+              const rankData = await rankRes.json();
+              if (rankData.loggedIn) {
+                const rankText = `#${rankData.rank ?? "--"}`;
+                const profileRank = document.getElementById("profileRank");
+                const summaryRank = document.getElementById("summaryRank");
+                if (profileRank) profileRank.textContent = `Rank: ${rankText}`;
+                if (summaryRank) summaryRank.textContent = rankText;
+                if (profileSuccessRate)
+                  profileSuccessRate.textContent = `${rankData.successRate ?? 0}%`;
+              }
+            } catch (err) {
+              console.log("Rank güncellenemedi:", err);
+            }
+          }
+
+          document.getElementById("preTestModal").classList.add("hidden");
+        });
+    </script>
+  </body>
+</html>

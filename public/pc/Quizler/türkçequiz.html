@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<link rel="stylesheet" href="/shared/ocean-loader.css">
+<script src="/shared/ocean-loader.js"></script>
+
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Kelime Okyanusu — Türkçe Bilgi Quiz</title>
+<style>
+  :root{
+    --bg-1: #001933;
+    --bg-2: #002b55;
+    --neon: #00eaff;
+    --accent: #00bfff;
+    --card: rgba(2,15,40,0.6);
+    --glass: rgba(255,255,255,0.04);
+    --ok: #39d98a;
+    --nok: #ff6b6b;
+    --glass-border: rgba(0,191,255,0.14);
+    --glass-glow: 0 8px 30px rgba(0,191,255,0.08);
+    font-size: 16px;
+  }
+   
+  *{box-sizing:border-box}
+  html,body{  background-size: 10000px 8000px;height:100%;margin:0;font-family:Inter, "Segoe UI", system-ui, Roboto, "Helvetica Neue", Arial; background: radial-gradient(circle at 10% 10%, var(--bg-1), var(--bg-2) 50%, #001020 100%); color:#eaf6ff; -webkit-font-smoothing:antialiased}
+  .wrap{min-height:100%;display:flex;align-items:center;justify-content:center;padding:48px}
+  .card{
+    width:100%;
+    max-width:980px;
+    background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+    border-radius:18px;
+    padding:22px;
+    border:1px solid var(--glass-border);
+    box-shadow: var(--glass-glow);
+    display:grid;
+    grid-template-columns: 360px 1fr;
+    gap:20px;
+    position:relative;
+    overflow:hidden;
+  }
+
+  /* LEFT: HUD / NAVBAR-STYLE (floating look) */
+  .hud{
+    padding:18px;
+    border-radius:12px;
+    background: linear-gradient(180deg, rgba(0,0,0,0.12), rgba(0,0,0,0.06));
+    border: 1px solid rgba(255,255,255,0.03);
+    display:flex;
+    flex-direction:column;
+    gap:14px;
+    align-items:stretch;
+  }
+  .logo{
+    display:flex;
+    gap:12px;
+    align-items:center;
+  }
+  .logo img{width:110px;height:110px;border-radius:12px;box-shadow:0 6px 18px rgba(0,204,102,0.16)}
+  .logo h1{font-size:18px;margin:0;color:var(--neon);text-shadow:0 0 10px rgba(0,234,255,0.12)}
+  .stats{
+    display:flex;
+    gap:12px;
+    flex-wrap:wrap;
+  }
+  .stat{
+    flex:1 1 45%;
+    background:var(--card);
+    padding:10px;border-radius:10px;border:1px solid rgba(255,255,255,0.02);
+    text-align:center;
+  }
+  .stat .num{font-weight:700;font-size:20px;color:var(--neon)}
+  .controls{display:flex;gap:10px;flex-wrap:wrap;}
+  .btn{
+    background:linear-gradient(180deg,var(--accent),var(--neon));
+    color:#001020;font-weight:700;padding:8px 12px;border-radius:10px;border:none;cursor:pointer;box-shadow:0 6px 18px rgba(0,191,255,0.14);
+  }
+  .btn.ghost{background:transparent;border:1px solid rgba(255,255,255,0.04);color:inherit;box-shadow:none}
+
+  /* RIGHT: MAIN QUIZ */
+  .main{
+    padding:10px;
+    display:flex;
+    flex-direction:column;
+    gap:18px;
+  }
+  .topbar{display:flex;justify-content:space-between;align-items:center;gap:12px}
+  .progress-wrap{display:flex;align-items:center;gap:12px}
+  /* circular timer */
+  .timer{
+    width:72px;height:72px;border-radius:50%;
+    display:grid;place-items:center;
+    background:conic-gradient(var(--accent) 0deg, rgba(255,255,255,0.06) 0deg);
+    box-shadow: inset 0 -6px 20px rgba(0,0,0,0.25), 0 8px 20px rgba(0,191,255,0.06);
+    border:1px solid rgba(255,255,255,0.02);
+  }
+  .timer .time{font-weight:700;color:var(--neon);font-size:18px}
+  .question-card{
+    background: linear-gradient(180deg, rgba(0,0,0,0.18), rgba(0,0,0,0.10));
+    padding:18px;border-radius:12px;border:1px solid rgba(255,255,255,0.02);
+    box-shadow: 0 10px 40px rgba(0,0,0,0.35);
+  }
+  .q-title{font-size:20px;margin:0 0 8px 0;color:#dff7ff}
+  .q-meta{font-size:13px;color:rgba(255,255,255,0.6);margin-bottom:12px}
+  .answers{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+  .answer{
+    background:var(--glass);
+    padding:12px;border-radius:10px;border:1px solid rgba(255,255,255,0.03);
+    cursor:pointer;transition:all 220ms ease;min-height:56px;display:flex;align-items:center;
+  }
+  .answer div {
+  color: #ffffff; /* Beyaz */
+}
+
+  .answer:hover{transform:translateY(-4px);box-shadow:0 8px 20px rgba(0,0,0,0.25)}
+  .answer .letter{font-weight:800;color:var(--neon);width:36px;height:36px;border-radius:8px;background:rgba(0,0,0,0.18);display:grid;place-items:center;margin-right:10px}
+  .answer.correct{background:linear-gradient(90deg, rgba(42, 250, 146, 0.562), rgba(40, 245, 143, 0.671));border-color:rgba(57,217,138,0.22);box-shadow:0 8px 26px rgba(36, 223, 129, 0.692)}
+  .answer.wrong{background:linear-gradient(90deg, rgba(255, 45, 45, 0.445), rgba(250, 60, 60, 0.363));border-color:rgba(243, 59, 59, 0.507);box-shadow:0 8px 26px rgba(250, 55, 55, 0.596)}
+  .foot{display:flex;justify-content:space-between;align-items:center;gap:10px}
+  .small{font-size:13px;color:rgba(255,255,255,0.6)}
+  .streak{font-weight:800;color:var(--neon)}
+  /* result modal */
+  .result{
+    position:absolute;inset:0;display:grid;place-items:center;background:linear-gradient(180deg, rgba(0,0,0,0.6), rgba(0,0,0,0.7));
+    padding:40px;backdrop-filter: blur(4px);opacity:0;pointer-events:none;transition:opacity 300ms ease;
+  }
+  .result.show{opacity:1;pointer-events:auto}
+  .result .box{background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));padding:28px;border-radius:16px;text-align:center;border:1px solid rgba(255,255,255,0.03)}
+  .big{font-size:36px;color:var(--neon);margin:6px 0 16px 0}
+  .muted{color:rgba(255,255,255,0.6)}
+  /* badges */
+  .badges{display:flex;gap:10px;flex-wrap:wrap}
+  .badge{padding:8px 10px;border-radius:10px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.02);font-weight:700;color:var(--neon)}
+  /* responsive */
+@media (max-width:768px){
+  .wrap{padding:20px;}
+  .card{grid-template-columns:1fr;max-width:95%;padding:16px;}
+  .hud{order:1;margin-bottom:20px;padding:12px;}
+  .main{order:2;}
+  .answers{grid-template-columns:1fr;gap:10px;}
+  .answer{min-height:50px;font-size:14px;padding:10px;}
+  .timer{width:50px;height:50px;}
+  .q-title{font-size:18px;}
+  .q-meta{font-size:12px;}
+  .small{font-size:11px;}
+  .btn{padding:8px 10px;font-size:14px;}
+  .logo img{width:90px;height:90px;}
+  .stat .num{font-size:18px;}
+}
+
+
+  /* keyboard hint */
+  .hint{font-size:12px;color:rgba(255,255,255,0.55)}
+  /* micro animations */
+  .pop{animation:pop 420ms ease forwards}
+  @keyframes pop{0%{transform:scale(0.88);opacity:0}100%{transform:none;opacity:1}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="card pop" id="app">
+    <!-- LEFT HUD -->
+    <div class="hud">
+      <div class="logo">
+        <img src="logo of okyanus.png" alt="Logo" id="logoImg" aria-hidden="true"/>
+        <div>
+          <h1>Kelime Okyanusu</h1>
+          <div class="small">Türkçe Bilgi Quiz — 20 Soru</div>
+        </div>
+      </div>
+
+      <div class="stats" aria-hidden="true">
+        <div class="stat">
+          <div class="small">PUAN</div>
+          <div class="num" id="score">0</div>
+        </div>
+        <div class="stat">
+          <div class="small">SIRA</div>
+          <div class="num" id="qIndex">0/20</div>
+        </div>
+        <div class="stat">
+          <div class="small">STREAK</div>
+          <div class="num" id="streak">0</div>
+        </div>
+        <div class="stat">
+          <div class="small">EN YÜKSEK</div>
+          <div class="num" id="high">0</div>
+        </div>
+      </div>
+
+    
+      <div>
+        <div class="small" style="margin-bottom:8px">Kategoriler</div>
+        <div class="badges" id="categoryList"></div>
+      </div>
+
+      <div style="margin-top:auto">
+        <div class="small hint">Klavye ile 1-4 tuşlarını kullanabilirsin. Hızlı cevap -> daha çok puan.</div>
+      </div>
+    </div>
+
+    <!-- RIGHT MAIN -->
+    <div class="main" role="main" aria-live="polite">
+      <div class="topbar">
+        <div class="progress-wrap">
+          <div id="categoryTag" class="small muted">Kategori: Genel</div>
+        </div>
+
+        <div style="display:flex;align-items:center;gap:12px">
+          <div class="timer" id="timer" aria-hidden="true"><div class="time" id="timeText">20</div></div>
+        </div>
+      </div>
+<div class="question-card" id="qCard">
+  <h2 class="q-title" id="questionText">Ekran hazır — başlatmak için Başlat'a bas.</h2>
+  <div class="q-meta" id="meta">Hazır olduğunda 20 soruluk seri başlayacak.</div>
+  <div class="answers" id="answers">
+    <!-- answers inserted here -->
+  </div>
+  <div class="foot" style="margin-top:14px">
+    <div class="small">Sıradaki: <span id="nextLabel">—</span></div>
+  </div>
+
+  <!-- Butonlar şimdi sorunun altında -->
+  <div class="controls" style="margin-top:10px; justify-content:flex-start">
+    <button class="btn" id="startBtn">Başlat</button>
+    <button class="btn" onclick="document.getElementById('bg-music').play()">🎵 Müziği Başlat</button>
+          <audio id="bg-music" src="türkçe müzik.mp3" loop preload="auto"></audio>
+    <button class="btn ghost" id="resetBtn">Sıfırla</button>
+    <button class="btn ghost" id="shareBtn">Skoru Kopyala</button>
+  </div>
+</div>
+
+    <!-- result overlay -->
+    <div class="result" id="result">
+      <div class="box">
+        <div class="big" id="finalScore">0</div>
+        <div class="muted" id="finalText">Tebrikler! Puanın kaydedildi.</div>
+        <div style="margin-top:12px">
+          <button class="btn" id="playAgain">Tekrar Oyna</button>
+          <button class="btn ghost" id="closeRes">Kapat</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+/* ==========================
+   Basit ama sağlam quiz mekanikleri
+   - 10 soruluk tur
+   -20s timer (her soru)
+   - skor = base + zaman*10, streak çarpanı
+   - localStorage highscore
+   - keyboard destek 1-4
+   - küçük confetti (DOM-based)
+   ========================== */
+
+const QUESTIONS = [
+  // Örnek sorular; gerektiğinde genişlet
+  {q:"Hangisi yazım yanlışı içerir?", cat:"Yazım", opts:["herkeze", "herkese", "herkesin", "herkesle"], a:0},
+  {q:"'Gözden ırak olan ...' atasözünün tamamı nedir?", cat:"Deyimler", opts:["yok olur","yok olur mu","gözden ırak gamdan uzak","gözden ırak gönülden ırak"], a:3},
+  {q:"Aşağıdakilerden hangisi eş anlamlıdır?", cat:"Anlam", opts:["salkım","salkım","demet","küme"], a:2},
+  {q:"'-ki' bağlacının doğru yazımı hangisinde farklıdır?", cat:"Dilbilgisi", opts:["baktıki","bildiğimki","söylediği ki","sandığıki"], a:2},
+  {q:"Hangi kelime bitişik yazılır?", cat:"Yazım", opts:["her zaman","herşey","bilgi paylaşımı","gün doğumu"], a:3},
+  {q:"'İki karpuz bir koltuğa sığmaz' cümlesi hangi türdür?", cat:"Atasözü", opts:["Mecaz","Doğrudan","Atasözü","Öykü"], a:2},
+  {q:"Aşağıdaki sözcüklerden hangisi yabancı kökenlidir?", cat:"Dil", opts:["kalem","masa","defter","pencere"], a:3},
+  {q:"'mecaz' kelimesinin anlamı hangisine en yakın?", cat:"Anlam", opts:["gerçek","benzetme","ikili","türev"], a:1},
+  {q:"Hangi cümlede yazım yanlışı yoktur?", cat:"Yazım", opts:["Ona haber verdim.","On'a haber verdim.","Ona haber verdim mi?","On a haber verdim."], a:0},
+  {q:"Aşağıdakilerden hangisi deyim değildir?", cat:"Deyimler", opts:["Kulağına küpe olsun","İşin içinden çıkmak","Gözünü kırpmak","Bıçak sırtı"], a:1},
+  {q:"Hangisi doğru yazılmıştır?", cat:"Yazım", opts:["herkeze","herkese","herkesin","herkesle"], a:1},
+  {q:"'Azıcık sabır taşları deler' atasözünün anlamı nedir?", cat:"Atasözü", opts:["Az sabır yeter","Çabuk pes etme","Her şey zor","Sabır boş"], a:0},
+  {q:"Aşağıdaki sözcüklerden hangisi eş anlamlıdır?", cat:"Anlam", opts:["büyük","devasa","küçük","minik"], a:1},
+  {q:"'-de' ekinin doğru yazımı hangisinde farklıdır?", cat:"Dilbilgisi", opts:["Evde","okulda","Bahçede","ev De"], a:3},
+  {q:"Hangi kelime bitişik yazılır?", cat:"Yazım", opts:["her zaman","herşey","bilgi paylaşımı","gün doğumu"], a:1},
+  {q:"'Komşu komşunun külüne muhtaçtır' cümlesi hangi türdür?", cat:"Atasözü", opts:["Öykü","Mecaz","Atasözü","Hikaye"], a:2},
+  {q:"Aşağıdaki sözcüklerden hangisi Türkçe kökenlidir?", cat:"Dil", opts:["telefon","masa","kalem","otomobil"], a:2},
+  {q:"'Mecaz' kelimesinin anlamı hangisine en yakındır?", cat:"Anlam", opts:["gerçek","benzetme","karışık","türev"], a:1},
+  {q:"Hangi cümlede yazım yanlışı yoktur?", cat:"Yazım", opts:["Ben geldim.","Ben geldimm.","Ben gelddim.","Ben gelddimm."], a:0},
+  {q:"Aşağıdakilerden hangisi deyim değildir?", cat:"Deyimler", opts:["Gözünü kırpmak","İşin içinden çıkmak","Süt gibi saf","Kulağına küpe olsun"], a:2}
+];
+
+// UI elemanları
+const startBtn = document.getElementById('startBtn');
+const resetBtn = document.getElementById('resetBtn');
+const shareBtn = document.getElementById('shareBtn');
+const scoreEl = document.getElementById('score');
+const qIndexEl = document.getElementById('qIndex');
+const streakEl = document.getElementById('streak');
+const highEl = document.getElementById('high');
+const timerEl = document.getElementById('timer');
+const timeText = document.getElementById('timeText');
+const questionText = document.getElementById('questionText');
+const metaText = document.getElementById('meta');
+const answersWrap = document.getElementById('answers');
+const categoryTag = document.getElementById('categoryTag');
+const resultOverlay = document.getElementById('result');
+const finalScore = document.getElementById('finalScore');
+const finalText = document.getElementById('finalText');
+const playAgain = document.getElementById('playAgain');
+const closeRes = document.getElementById('closeRes');
+const nextLabel = document.getElementById('nextLabel');
+const categoryList = document.getElementById('categoryList');
+
+let QUESTIONS_POOL = []; // karıştırılmış
+let currentIndex = 0;
+let score = 0;
+let streak = 0;
+let timer = null;
+let timeLeft = 20;
+let running = false;
+let highscore = Number(localStorage.getItem('kk_high')) || 0;
+
+// initialize UI
+highEl.textContent = highscore;
+qIndexEl.textContent = `0/20`;
+scoreEl.textContent = score;
+streakEl.textContent = streak;
+populateCategories();
+
+function populateCategories(){
+  const cats = [...new Set(QUESTIONS.map(s=>s.cat))];
+  categoryList.innerHTML = '';
+  cats.forEach(c=>{
+    const el = document.createElement('div');
+    el.className='badge'; el.textContent=c;
+    categoryList.appendChild(el);
+  });
+}
+document.addEventListener('click', () => {
+    const audio = document.getElementById('bg-music');
+    if (audio.muted) audio.muted = false;
+    audio.volume = 0.7; // %20 ses seviyesinde başlat
+    audio.play().catch(()=>{});
+});
+/* helpers */
+function shuffle(arr){ return arr.map(v=>[Math.random(),v]).sort((a,b)=>a[0]-b[0]).map(a=>a[1]); }
+function pickQuestions(){ return shuffle(QUESTIONS).slice(0,20); }
+function startGame(){
+  QUESTIONS_POOL = pickQuestions();
+  currentIndex = 0; score = 0; streak = 0;
+  running = true; updateHUD();
+  showQuestion();
+  startBtn.textContent = 'Devam';
+}
+function endGame(){
+  running=false;
+  clearTimer();
+  resultOverlay.classList.add('show');
+  finalScore.textContent = score;
+  finalText.textContent = `Seriyi bitirdin — ${score} puan!`;
+  // highscore kontrolü
+  if(score>highscore){ highscore = score; localStorage.setItem('kk_high', highscore); highEl.textContent = highscore; finalText.textContent += " Yeni rekor! 🎉"; }
+}
+function updateHUD(){
+  scoreEl.textContent = score;
+  qIndexEl.textContent = `${currentIndex}/${QUESTIONS_POOL.length||20}`;
+  streakEl.textContent = streak;
+  highEl.textContent = highscore;
+}
+
+/* Timer handling: conic gradient animasyonu */
+function startTimer(){
+  clearTimer();
+  timeLeft = 20;
+  updateTimerVisual();
+  timer = setInterval(()=>{
+    timeLeft -= 0.25;
+    if(timeLeft <= 0){
+      timeLeft = 0;
+      updateTimerVisual();
+      clearTimer();
+      handleTimeout();
+    } else {
+      updateTimerVisual();
+    }
+  },250);
+}
+function clearTimer(){ if(timer){ clearInterval(timer); timer = null; } }
+function updateTimerVisual(){
+  const pct = Math.max(0, (timeLeft/20));
+  const deg = pct*360;
+  timerEl.style.background = `conic-gradient(${varSafe('--accent')} ${deg}deg, rgba(255,255,255,0.06) ${deg}deg)`;
+  timeText.textContent = Math.ceil(timeLeft);
+}
+// CSS var injector fallback
+function varSafe(name){ try{ return getComputedStyle(document.documentElement).getPropertyValue(name)||'#00bfff'; }catch(e){return '#00bfff'} }
+
+/* show question */
+function showQuestion(){
+  if(!running) return;
+  if(currentIndex >= QUESTIONS_POOL.length){
+    endGame(); return;
+  }
+  const q = QUESTIONS_POOL[currentIndex];
+  categoryTag.textContent = `Kategori: ${q.cat}`;
+  questionText.textContent = q.q;
+  metaText.textContent = `Soru ${currentIndex+1} / ${QUESTIONS_POOL.length}`;
+  answersWrap.innerHTML = '';
+  q.opts.forEach((opt,i)=>{
+    const a = document.createElement('button');
+    a.className='answer';
+    a.setAttribute('data-index', i);
+    a.innerHTML = `<div class="letter">${['A','B','C','D'][i]||(i+1)}</div><div>${opt}</div>`;
+    a.addEventListener('click', ()=> selectAnswer(i, a));
+    answersWrap.appendChild(a);
+  });
+  nextLabel.textContent = currentIndex+1 < QUESTIONS_POOL.length ? `${QUESTIONS_POOL[currentIndex+1].q.slice(0,28)}...` : 'Serinin sonu';
+  // start timer
+  startTimer();
+  updateHUD();
+}
+
+/* selection logic */
+function selectAnswer(index, btnEl){
+  if(!running) return;
+  clearTimer();
+  const q = QUESTIONS_POOL[currentIndex];
+  const correct = q.a;
+  // mark correct/wrong
+  const all = answersWrap.querySelectorAll('.answer');
+  all.forEach(node=>{
+    node.classList.add('dim');
+    node.disabled = true;
+  });
+  if(index === correct){
+    btnEl.classList.remove('dim'); btnEl.classList.add('correct');
+    // scoring: base 50 + remainingSeconds*10, streak multiplier
+    const gained = Math.floor(50 + Math.ceil(timeLeft)*20) * (1 + Math.floor(streak/3));
+    score += 100;
+    streak += 1;
+    showInlineFeedback(true, gained);
+    spawnConfetti(btnEl);
+  } else {
+    btnEl.classList.remove('dim'); btnEl.classList.add('wrong');
+    // reveal correct
+    const correctBtn = answersWrap.querySelector(`[data-index="${correct}"]`);
+    if(correctBtn) correctBtn.classList.add('correct');
+    // penalty: küçük puan kaybı yok ama streak sıfırlanır
+    streak = 0;
+    showInlineFeedback(false, 0);
+    shakeElement(btnEl);
+  }
+  currentIndex++;
+  setTimeout(()=>{ updateHUD(); setTimeout(()=>{ if(currentIndex < QUESTIONS_POOL.length) showQuestion(); else endGame(); },600); },900);
+}
+
+/* timeout handler */
+function handleTimeout(){
+  if(!running) return;
+  // mark all dim and show correct
+  const q = QUESTIONS_POOL[currentIndex];
+  const correct = q.a;
+  const all = answersWrap.querySelectorAll('.answer');
+  all.forEach(node=>{ node.classList.add('dim'); node.disabled = true; });
+  const correctBtn = answersWrap.querySelector(`[data-index="${correct}"]`);
+  if(correctBtn) correctBtn.classList.add('correct');
+  streak = 0;
+  currentIndex++;
+  showInlineFeedback(false, 0, 'Süre doldu!');
+  setTimeout(()=>{ updateHUD(); if(currentIndex < QUESTIONS_POOL.length) showQuestion(); else endGame(); },1100);
+}
+
+/* small UI helpers */
+function showInlineFeedback(ok, points=0, text=null){
+  const el = document.createElement('div');
+  el.style.position='absolute'; el.style.right='28px'; el.style.top='28px';
+  el.style.padding='8px 14px'; el.style.borderRadius='10px'; el.style.fontWeight='800';
+  el.style.boxShadow='0 10px 30px rgba(0,0,0,0.45)'; el.style.zIndex=999;
+  if(ok){ el.style.background='linear-gradient(90deg,#1b7b6d,#39d98a)'; el.textContent = `Doğru! +${points}`; }
+  else { el.style.background='linear-gradient(90deg,#b24a4a,#ff6b6b)'; el.textContent = text || 'Yanlış!'; }
+  document.getElementById('app').appendChild(el);
+  setTimeout(()=>{ el.style.transition='all 500ms ease'; el.style.opacity=0; el.style.transform='translateY(-8px)'; },800);
+  setTimeout(()=> el.remove(),1400);
+}
+
+function spawnConfetti(target){
+  // küçük DOM-based confetti: birkaç span ekle, CSS inline animate
+  for(let i=0;i<12;i++){
+    const c = document.createElement('span');
+    c.textContent = '•';
+    c.style.position='absolute';
+    const r = target.getBoundingClientRect();
+    const a = document.getElementById('app').getBoundingClientRect();
+    c.style.left = (r.left - a.left + r.width/2) + 'px';
+    c.style.top = (r.top - a.top + r.height/2) + 'px';
+    c.style.fontSize = `${8+Math.random()*14}px`;
+    c.style.opacity = 0.9;
+    c.style.color = i%2? '#fff':'#ffd700';
+    c.style.transform = `translate3d(0,0,0)`;
+    c.style.transition = `transform 900ms cubic-bezier(.2,.8,.3,1), opacity 900ms linear`;
+    document.getElementById('app').appendChild(c);
+    const dx = (Math.random()-0.5)*200;
+    const dy = -120 - Math.random()*200;
+    setTimeout(()=>{ c.style.transform = `translate3d(${dx}px,${dy}px,0) rotate(${Math.random()*720}deg)`; c.style.opacity=0; },20);
+    setTimeout(()=> c.remove(),1100);
+  }
+}
+
+function shakeElement(el){
+  el.animate([{transform:'translateX(0)'},{transform:'translateX(-8px)'},{transform:'translateX(8px)'},{transform:'translateX(0)'}],{duration:500,iterations:1});
+}
+
+/* controls */
+startBtn.addEventListener('click', ()=>{ if(!running) startGame(); else { /* allow to restart mid-quiz? */ if(confirm('Devam eden oyun sıfırlansın mı?')) startGame(); } });
+resetBtn.addEventListener('click', ()=>{ if(confirm('Skoru ve rekoru sıfırlamak istiyor musun?')){ score=0; highscore=0; localStorage.removeItem('kk_high'); updateHUD(); highEl.textContent=0 } });
+shareBtn.addEventListener('click', ()=>{ navigator.clipboard?.writeText(`Kelime Okyanusu: ${score} puan!`); alert('Skor panoya kopyalandı!'); });
+
+playAgain.addEventListener('click', ()=>{ resultOverlay.classList.remove('show'); startGame(); });
+closeRes.addEventListener('click', ()=>{ resultOverlay.classList.remove('show'); });
+
+/* keyboard shortcuts 1-4 for answer selection */
+document.addEventListener('keydown', (e)=>{
+  if(!running) return;
+  if(['1','2','3','4'].includes(e.key)){
+    const idx = Number(e.key)-1;
+    const btn = answersWrap.querySelector(`[data-index="${idx}"]`);
+    if(btn) btn.click();
+  }
+});
+
+/* preload logo (optional - leave blank to keep none) */
+/*
+const logoImg = document.getElementById('logoImg');
+logoImg.src = 'resimler/logo of okyanus.jpg'; // eğer bir logo dosyan varsa yolunu buraya koy: 'resimler/logo.png'
+*/
+/* init */
+(function init(){
+  // small preparatory shuffle to show ready state
+  QUESTIONS_POOL = pickQuestions();
+  currentIndex = 0;
+  qIndexEl.textContent = `0/`;
+  // render placeholder answers to keep layout stable
+  answersWrap.innerHTML = '';
+  for(let i=0;i<4;i++){
+    const a = document.createElement('div'); a.className='answer'; a.innerHTML = `<div class="letter">${['A','B','C','D'][i]}</div><div>—</div>`;
+    answersWrap.appendChild(a);
+  }
+  // small pop
+  document.querySelector('.card').classList.add('pop');
+})();
+
+</script>
+</body>
+</html>

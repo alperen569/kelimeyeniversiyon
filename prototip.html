@@ -1,0 +1,199 @@
+```html
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<link rel="stylesheet" href="/shared/ocean-loader.css">
+<script src="/shared/ocean-loader.js"></script>
+
+<meta charset="UTF-8">
+<title>Kelime Okyanusu - İlk Prototip</title>
+
+<style>
+
+body{
+background:#3b82f6;
+font-family:Arial;
+text-align:center;
+color:white;
+}
+
+#game{
+width:800px;
+height:350px;
+border:2px solid white;
+margin:auto;
+position:relative;
+background:#60a5fa;
+}
+
+.word{
+position:absolute;
+background:#2563eb;
+padding:8px;
+cursor:pointer;
+border-radius:4px;
+}
+
+button{
+margin:10px;
+padding:10px;
+}
+
+#collected{
+margin-top:20px;
+font-size:18px;
+}
+
+#score{
+font-size:22px;
+margin-top:10px;
+}
+
+</style>
+</head>
+
+<body>
+
+<h2>Kelime Okyanusu</h2>
+
+<div id="game"></div>
+
+<div id="collected">Toplanan Kelimeler:</div>
+
+<div id="score">Puan: 0</div>
+
+<button id="start">Başlat</button>
+<button id="check">Kontrol Et</button>
+<button id="remove">Son Kelimeyi Sil</button>
+
+<script>
+
+const game=document.getElementById("game");
+const collectedDiv=document.getElementById("collected");
+const scoreDiv=document.getElementById("score");
+
+const startBtn=document.getElementById("start");
+const checkBtn=document.getElementById("check");
+const removeBtn=document.getElementById("remove");
+
+let proverb="";
+let collected=[];
+let score=0;
+
+const proverbs=[
+"Birlikten kuvvet doğar",
+"Damlaya damlaya göl olur",
+"Erken kalkan yol alır",
+"Ağaç yaşken eğilir",
+"İşleyen demir ışıldar"
+];
+
+function shuffle(arr){
+return arr.sort(()=>Math.random()-0.5);
+}
+
+function startGame(){
+
+game.innerHTML="";
+collected=[];
+
+proverb=proverbs[Math.floor(Math.random()*proverbs.length)];
+
+let words=shuffle(proverb.split(" "));
+
+words.forEach(word=>{
+
+let el=document.createElement("div");
+el.className="word";
+el.textContent=word;
+
+el.style.left=Math.random()*700+"px";
+el.style.top=Math.random()*300+"px";
+
+el.onclick=function(){
+collected.push(word);
+updateCollected();
+el.remove();
+};
+
+game.appendChild(el);
+
+});
+
+}
+
+function updateCollected(){
+collectedDiv.innerText="Toplanan Kelimeler: "+collected.join(" ");
+}
+
+function updateScore(){
+scoreDiv.innerText="Puan: "+score;
+}
+
+function check(){
+
+let target=proverb.split(" ");
+let correct=true;
+
+if(target.length!==collected.length){
+correct=false;
+}else{
+
+for(let i=0;i<target.length;i++){
+if(target[i]!==collected[i]){
+correct=false;
+}
+}
+
+}
+
+if(correct){
+
+score+=100;
+alert("Doğru! +100 puan");
+startGame();
+
+}else{
+
+score=Math.max(0,score-20);
+alert("Yanlış! -20 puan");
+
+}
+
+updateScore();
+
+}
+
+function removeLast(){
+
+if(collected.length===0)return;
+
+let word=collected.pop();
+updateCollected();
+
+let el=document.createElement("div");
+el.className="word";
+el.textContent=word;
+
+el.style.left=Math.random()*700+"px";
+el.style.top=Math.random()*300+"px";
+
+el.onclick=function(){
+collected.push(word);
+updateCollected();
+el.remove();
+};
+
+game.appendChild(el);
+
+}
+
+startBtn.onclick=startGame;
+checkBtn.onclick=check;
+removeBtn.onclick=removeLast;
+
+</script>
+
+</body>
+</html>
+```

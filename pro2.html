@@ -1,0 +1,301 @@
+
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<link rel="stylesheet" href="/shared/ocean-loader.css">
+<script src="/shared/ocean-loader.js"></script>
+
+<meta charset="UTF-8">
+<title>Kelime Okyanusu</title>
+
+<style>
+
+
+*{
+box-sizing:border-box;
+}
+
+body{
+margin:0;
+font-family:Segoe UI,Arial;
+background:linear-gradient(180deg,#4da3ff,#0f2f6b);
+min-height:100vh;
+display:flex;
+flex-direction:column;
+align-items:center;
+color:white;
+}
+
+h1{
+margin-top:25px;
+font-size:32px;
+letter-spacing:1px;
+}
+
+#game{
+width:950px;
+max-width:95%;
+height:450px;
+background:rgba(255,255,255,0.08);
+border:3px solid rgba(255,255,255,0.25);
+border-radius:14px;
+position:relative;
+overflow:hidden;
+margin-top:25px;
+backdrop-filter:blur(4px);
+box-shadow:
+0 15px 40px rgba(0,0,0,0.35),
+inset 0 0 30px rgba(255,255,255,0.08);
+}
+
+.word{
+position:absolute;
+background:linear-gradient(145deg,#ffffff,#e8f3ff);
+color:#0f2f6b;
+padding:10px 18px;
+border-radius:10px;
+font-weight:600;
+font-size:16px;
+cursor:pointer;
+user-select:none;
+white-space:nowrap;
+
+box-shadow:
+0 4px 10px rgba(0,0,0,0.25);
+
+transition:
+transform 0.15s,
+box-shadow 0.15s,
+background 0.2s;
+}
+
+.word:hover{
+transform:scale(1.12);
+box-shadow:0 6px 16px rgba(0,0,0,0.35);
+background:linear-gradient(145deg,#ffffff,#d8ecff);
+}
+
+#collected{
+margin-top:18px;
+font-size:18px;
+background:rgba(255,255,255,0.12);
+padding:12px 16px;
+border-radius:10px;
+min-width:420px;
+text-align:center;
+box-shadow:0 4px 12px rgba(0,0,0,0.25);
+}
+
+#score{
+margin-top:14px;
+font-size:24px;
+font-weight:bold;
+background:rgba(0,0,0,0.25);
+padding:12px 18px;
+border-radius:12px;
+box-shadow:0 6px 16px rgba(0,0,0,0.3);
+}
+
+.controls{
+margin-top:18px;
+display:flex;
+gap:12px;
+flex-wrap:wrap;
+justify-content:center;
+}
+
+button{
+padding:12px 20px;
+border:none;
+border-radius:10px;
+font-size:15px;
+font-weight:600;
+cursor:pointer;
+
+background:linear-gradient(145deg,#1f6bff,#1242a0);
+color:white;
+
+box-shadow:0 4px 12px rgba(0,0,0,0.35);
+
+transition:
+transform 0.15s,
+box-shadow 0.15s,
+background 0.2s;
+}
+
+button:hover{
+transform:translateY(-2px);
+box-shadow:0 6px 18px rgba(0,0,0,0.45);
+background:linear-gradient(145deg,#2d7cff,#1a4db8);
+}
+
+button:active{
+transform:scale(0.97);
+}
+
+@media (max-width:700px){
+
+#game{
+height:340px;
+}
+
+.word{
+font-size:14px;
+padding:8px 14px;
+}
+
+#collected{
+min-width:90%;
+}
+
+button{
+font-size:14px;
+padding:10px 16px;
+}
+
+}
+
+
+
+</style>
+</head>
+
+<body>
+
+<h1>Kelime Okyanusu</h1>
+
+<div id="game"></div>
+
+<div id="collected">Toplanan Kelimeler:</div>
+
+<div id="score">Puan: 0</div>
+
+<div class="controls">
+<button onclick="startGame()">Başlat</button>
+<button onclick="check()">Kontrol Et</button>
+<button onclick="removeLast()">Son Kelimeyi Sil</button>
+</div>
+
+<script>
+
+const game=document.getElementById("game")
+const collectedDiv=document.getElementById("collected")
+const scoreDiv=document.getElementById("score")
+
+let proverb=""
+let collected=[]
+let score=0
+
+const proverbs=[
+"Birlikten kuvvet doğar",
+"Damlaya damlaya göl olur",
+"Erken kalkan yol alır",
+"Ağaç yaşken eğilir",
+"İşleyen demir ışıldar"
+]
+
+function shuffle(a){
+return a.sort(()=>Math.random()-0.5)
+}
+
+function startGame(){
+
+game.innerHTML=""
+collected=[]
+
+proverb=proverbs[Math.floor(Math.random()*proverbs.length)]
+let words=shuffle(proverb.split(" "))
+
+words.forEach(word=>{
+
+let el=document.createElement("div")
+el.className="word"
+el.textContent=word
+
+game.appendChild(el)
+
+let x=Math.random()*(game.clientWidth-120)
+let y=Math.random()*(game.clientHeight-40)
+
+el.style.left=x+"px"
+el.style.top=y+"px"
+
+el.onclick=function(){
+collected.push(word)
+updateCollected()
+el.remove()
+}
+
+})
+
+}
+
+function updateCollected(){
+collectedDiv.innerText="Toplanan Kelimeler: "+collected.join(" ")
+}
+
+function updateScore(){
+scoreDiv.innerText="Puan: "+score
+}
+
+function check(){
+
+let target=proverb.split(" ")
+let correct=true
+
+if(target.length!==collected.length){
+correct=false
+}else{
+
+for(let i=0;i<target.length;i++){
+if(target[i]!==collected[i]){
+correct=false
+}
+}
+
+}
+
+if(correct){
+score+=100
+alert("Doğru! +100 puan")
+startGame()
+}else{
+score=Math.max(0,score-20)
+alert("Yanlış! -20 puan")
+}
+
+updateScore()
+
+}
+
+function removeLast(){
+
+if(collected.length===0) return
+
+let word=collected.pop()
+updateCollected()
+
+let el=document.createElement("div")
+el.className="word"
+el.textContent=word
+
+game.appendChild(el)
+
+let x=Math.random()*(game.clientWidth-120)
+let y=Math.random()*(game.clientHeight-40)
+
+el.style.left=x+"px"
+el.style.top=y+"px"
+
+el.onclick=function(){
+collected.push(word)
+updateCollected()
+el.remove()
+}
+
+}
+
+</script>
+
+</body>
+</html>

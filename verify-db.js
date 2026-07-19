@@ -1,0 +1,11 @@
+const fs = require('node:fs');
+const path = require('node:path');
+const { initializeDatabase, createUser, getUsersWithRanks, updateUserScore, addClaimedRoadReward } = require('./db');
+const dbPath = path.join(__dirname, 'tmp-verify.sqlite');
+if (fs.existsSync(dbPath)) fs.unlinkSync(dbPath);
+const db = initializeDatabase(dbPath, { migrateLegacy: false });
+createUser(db, { isim: 'verifyuser', sifre: '1234' });
+updateUserScore(db, 'verifyuser', { score: 250, correct: 3, wrong: 1, totalQuestions: 4 });
+addClaimedRoadReward(db, 'verifyuser', 'r1:seed');
+const user = getUsersWithRanks(db).find(u => u.isim === 'verifyuser');
+console.log(JSON.stringify({ name: user.isim, score: user.puan, correct: user.correct, wrong: user.wrong, total: user.totalQuestions, rewards: user.claimedRoadRewards }, null, 2));

@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="tr">
+  <head>
+<link rel="stylesheet" href="/shared/ocean-loader.css">
+<script src="/shared/ocean-loader.js"></script>
+
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Platform Seçimi</title>
+
+    <link
+      href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap"
+      rel="stylesheet"
+    />
+
+    <style>
+      :root {
+        --bg1: #020b1a;
+        --bg2: #041d3a;
+        --glass: rgba(255, 255, 255, 0.08);
+        --accent: #00f0ff;
+      }
+
+
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+        font-family: "Poppins", sans-serif;
+      }
+
+      body {
+        min-height: 100vh;
+        background: radial-gradient(circle at top, var(--bg2), var(--bg1));
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+        color: white;
+      }
+
+      .box {
+        width: 100%;
+        max-width: 420px;
+        background: var(--glass);
+        backdrop-filter: blur(18px);
+        padding: 40px 30px;
+        border-radius: 26px;
+        text-align: center;
+        box-shadow: 0 30px 60px rgba(0, 0, 0, 0.5);
+        animation: fade 0.6s ease;
+      }
+
+      @keyframes fade {
+        from {
+          opacity: 0;
+          transform: translateY(20px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      h2 {
+        font-size: 24px;
+        margin-bottom: 30px;
+        letter-spacing: 0.5px;
+      }
+
+      /* BUTTONS */
+      .platform-btn {
+        width: 100%;
+        padding: 20px;
+        margin-bottom: 18px;
+        border: none;
+        border-radius: 22px;
+        font-size: 18px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: 0.35s ease;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+
+      .platform-btn span {
+        font-size: 22px;
+      }
+
+      /* EFFECT */
+      .platform-btn:hover {
+        transform: scale(1.04);
+      }
+      .platform-btn:active {
+        transform: scale(0.97);
+      }
+
+      /* COLORS */
+      .pc {
+        background: linear-gradient(135deg, #00c6ff, #0072ff);
+        color: white;
+      }
+      .mobil {
+        background: linear-gradient(135deg, #ff4b2b, #ff416c);
+        color: white;
+      }
+
+      /* MOBILE */
+      @media (max-width: 450px) {
+        h2 {
+          font-size: 22px;
+        }
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="box">
+      <h2>🎮 Hangi platformdan oynuyorsun?</h2>
+
+      <button class="platform-btn pc" onclick="git('pc')">
+        <span>💻 Bilgisayar</span>
+        ➜
+      </button>
+
+      <button class="platform-btn mobil" onclick="git('mobil')">
+        <span>📱 Mobil</span>
+        ➜
+      </button>
+    </div>
+
+    <script>
+      function git(platform) {
+        window.location.href = "/" + platform + "/login.html";
+      }
+    </script>
+  </body>
+</html>

@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<link rel="stylesheet" href="/shared/ocean-loader.css">
+<script src="/shared/ocean-loader.js"></script>
+ 
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Kelime Okyanusu — Tarih Quiz</title>
+<style>
+  :root{
+    --bg-1: #331a00;      /* Koyu turuncu kahve */
+    --bg-2: #663300;      /* Açık turuncu ton */
+    --neon: #ff9900;      /* Neon turuncu vurgular */
+    --accent: #ff6600;    /* Buton ve hover rengi */
+    --card: rgba(40,20,2,0.6); /* Kart arka planı */
+    --glass: rgba(255,255,255,0.04); /* Cam efekti */
+    --ok: #ffcc66;        /* Doğru cevabın rengi */
+    --nok: #ff3333;       /* Yanlış cevabın rengi */
+    --glass-border: rgba(255,140,0,0.14);
+    --glass-glow: 0 8px 30px rgba(255,120,0,0.12);
+    font-size: 16px;
+  }
+  
+  *{box-sizing:border-box}
+  html,body{  background-size: 10000px 8000px;height:100%;margin:0;font-family:Inter, "Segoe UI", system-ui, Roboto, "Helvetica Neue", Arial; background: radial-gradient(circle at 10% 10%, var(--bg-1), var(--bg-2) 50%, #1a0d00 100%); color:#fff4e6; -webkit-font-smoothing:antialiased}
+  .wrap{min-height:100%;display:flex;align-items:center;justify-content:center;padding:48px}
+  .card{
+    width:100%;
+    max-width:980px;
+    background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+    border-radius:18px;
+    padding:22px;
+    border:1px solid var(--glass-border);
+    box-shadow: var(--glass-glow);
+    display:grid;
+    grid-template-columns: 360px 1fr;
+    gap:20px;
+    position:relative;
+    overflow:hidden;
+  }
+
+  /* LEFT HUD / NAVBAR */
+  .hud{
+    padding:18px;
+    border-radius:12px;
+    background: linear-gradient(180deg, rgba(40,20,0,0.12), rgba(40,20,0,0.06));
+    border: 1px solid rgba(255,255,255,0.03);
+    display:flex;
+    flex-direction:column;
+    gap:14px;
+    align-items:stretch;
+  }
+  .logo{
+    display:flex;
+    gap:12px;
+    align-items:center;
+  }
+  .logo img{width:110px;height:110px;border-radius:12px;box-shadow:0 6px 18px rgba(255,140,0,0.2)}
+  .logo h1{font-size:18px;margin:0;color:var(--neon);text-shadow:0 0 10px rgba(255,153,0,0.3)}
+  .stats{
+    display:flex;
+    gap:12px;
+    flex-wrap:wrap;
+  }
+  .stat{
+    flex:1 1 45%;
+    background:var(--card);
+    padding:10px;border-radius:10px;border:1px solid rgba(255,255,255,0.02);
+    text-align:center;
+  }
+  .stat .num{font-weight:700;font-size:20px;color:var(--neon)}
+  .controls{display:flex;gap:10px;flex-wrap:wrap;}
+  .btn{
+    background:linear-gradient(180deg,var(--accent),var(--neon));
+    color:#1a0d00;font-weight:700;padding:8px 12px;border-radius:10px;border:none;cursor:pointer;box-shadow:0 6px 18px rgba(255,120,0,0.2);
+  }
+  .btn.ghost{background:transparent;border:1px solid rgba(255,255,255,0.08);color:inherit;box-shadow:none}
+
+  /* MAIN QUIZ */
+  .main{
+    padding:10px;
+    display:flex;
+    flex-direction:column;
+    gap:18px;
+  }
+  .topbar{display:flex;justify-content:space-between;align-items:center;gap:12px}
+  .progress-wrap{display:flex;align-items:center;gap:12px;}
+  .timer{
+    width:72px;height:72px;border-radius:50%;
+    display:grid;place-items:center;
+    background:conic-gradient(var(--accent) 0deg, rgba(255,255,255,0.06) 0deg);
+    box-shadow: inset 0 -6px 20px rgba(0,0,0,0.25), 0 8px 20px rgba(0,191,255,0.06);
+    border:1px solid rgba(255,255,255,0.02);
+  }
+  .timer .time{font-weight:700;color:var(--neon);font-size:18px}
+  .question-card{
+    background: linear-gradient(180deg, rgba(40,20,0,0.18), rgba(40,20,0,0.1));
+    padding:18px;border-radius:12px;border:1px solid rgba(255,255,255,0.02);
+    box-shadow: 0 10px 40px rgba(0,0,0,0.35);
+  }
+  .q-title{font-size:20px;margin:0 0 8px 0;color:#ffeedd}
+  .q-meta{font-size:13px;color:rgba(255,255,255,0.6);margin-bottom:12px}
+  .answers{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+  .answer{
+    background:var(--glass);
+    padding:12px;border-radius:10px;border:1px solid rgba(255,255,255,0.05);
+    cursor:pointer;transition:all 220ms ease;min-height:56px;display:flex;align-items:center;
+  }
+  .answer div { color: #fffaf2; }
+  .answer:hover{transform:translateY(-4px);box-shadow:0 8px 20px rgba(0,0,0,0.25)}
+  .answer .letter{font-weight:800;color:var(--neon);width:36px;height:36px;border-radius:8px;background:rgba(0,0,0,0.18);display:grid;place-items:center;margin-right:10px}
+  .answer.correct{background:linear-gradient(90deg, rgba(255,180,60,0.7), rgba(255,150,40,0.7));border-color:rgba(255,180,60,0.5);box-shadow:0 8px 26px rgba(255,160,60,0.6)}
+  .answer.wrong{background:linear-gradient(90deg, rgba(255,60,60,0.6), rgba(220,40,40,0.5));border-color:rgba(250,80,80,0.5);box-shadow:0 8px 26px rgba(250,55,55,0.5)}
+  .answer.dim{opacity:0.45;transform:none}
+  .foot{display:flex;justify-content:space-between;align-items:center;gap:10px}
+  .small{font-size:13px;color:rgba(255,255,255,0.7)}
+  .streak{font-weight:800;color:var(--neon)}
+
+  /* result modal */
+  .result{
+    position:absolute;inset:0;display:grid;place-items:center;background:linear-gradient(180deg, rgba(0,0,0,0.6), rgba(0,0,0,0.7));
+    padding:40px;backdrop-filter: blur(4px);opacity:0;pointer-events:none;transition:opacity 300ms ease;
+  }
+  .result.show{opacity:1;pointer-events:auto}
+  .result .box{background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));padding:28px;border-radius:16px;text-align:center;border:1px solid rgba(255,255,255,0.03)}
+  .big{font-size:36px;color:var(--neon);margin:6px 0 16px 0}
+  .muted{color:rgba(255,255,255,0.6)}
+
+  .badges{display:flex;gap:10px;flex-wrap:wrap}
+  .badge{padding:8px 10px;border-radius:10px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.02);font-weight:700;color:var(--neon)}
+
+ @media (max-width:768px){
+  .wrap{padding:20px;}
+  .card{grid-template-columns:1fr;max-width:95%;padding:16px;}
+  .hud{order:1;margin-bottom:20px;padding:12px;}
+  .main{order:2;}
+  .answers{grid-template-columns:1fr;gap:10px;}
+  .answer{min-height:50px;font-size:14px;padding:10px;}
+  .timer{width:50px;height:50px;}
+  .q-title{font-size:18px;}
+  .q-meta{font-size:12px;}
+  .small{font-size:11px;}
+  .btn{padding:8px 10px;font-size:14px;}
+  .logo img{width:90px;height:90px;}
+  .stat .num{font-size:18px;}
+}
+
+  .hint{font-size:12px;color:rgba(255,255,255,0.55)}
+  .pop{animation:pop 420ms ease forwards}
+  @keyframes pop{0%{transform:scale(0.88);opacity:0}100%{transform:none;opacity:1}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="card pop" id="app">
+    <div class="hud">
+      <div class="logo">
+        <img src="logo of okyanus.png" alt="Logo"/>
+        <div>
+          <h1>Kelime Okyanusu</h1>
+          <div class="small">Tarih Quiz — 20 Soru</div>
+        </div>
+      </div>
+      <div class="stats" aria-hidden="true">
+        <div class="stat"><div class="small">PUAN</div><div class="num" id="score">0</div></div>
+        <div class="stat"><div class="small">SIRA</div><div class="num" id="qIndex">0/20</div></div>
+        <div class="stat"><div class="small">STREAK</div><div class="num" id="streak">0</div></div>
+        <div class="stat"><div class="small">EN YÜKSEK</div><div class="num" id="high">0</div></div>
+      </div>
+      <div>
+        <div class="small" style="margin-bottom:8px">Kategoriler</div>
+        <div class="badges" id="categoryList"></div>
+      </div>
+      <div style="margin-top:auto"><div class="small hint">Klavye ile 1-4 tuşlarını kullanabilirsin. Hızlı cevap → daha çok puan.</div></div>
+    </div>
+
+    <div class="main" role="main" aria-live="polite">
+      <div class="topbar">
+        <div class="progress-wrap"><div id="categoryTag" class="small-muted">Kategori: Genel</div></div>
+        <div style="display:flex;align-items:center;gap:12px"><div class="timer" id="timer"><div class="time" id="timeText">20</div></div></div>
+      </div>
+      <div class="question-card" id="qCard">
+        <h2 class="q-title" id="questionText">Ekran hazır — başlatmak için Başlat'a bas.</h2>
+        <div class="q-meta" id="meta">Hazır olduğunda 20 soruluk seri başlayacak.</div>
+        <div class="answers" id="answers"></div>
+        <div class="foot" style="margin-top:14px"><div class="small">Sıradaki: <span id="nextLabel">—</span></div></div>
+        <div class="controls" style="margin-top:10px; justify-content:flex-start">
+          <button class="btn" id="startBtn">Başlat</button>
+           <button class="btn" onclick="document.getElementById('bg-music').play()">🎵 Müziği Başlat</button>
+               <audio id="bg-music" src="Tarih Müzik.mp3" loop preload="auto"></audio>
+          <button class="btn ghost" id="resetBtn">Sıfırla</button>
+          <button class="btn ghost" id="shareBtn">Skoru Kopyala</button>
+        </div>
+      </div>
+
+      <div class="result" id="result">
+        <div class="box">
+          <div class="big" id="finalScore">0</div>
+          <div class="muted" id="finalText">Tebrikler! Puanın kaydedildi.</div>
+          <div style="margin-top:12px">
+            <button class="btn" id="playAgain">Tekrar Oyna</button>
+            <button class="btn ghost" id="closeRes">Kapat</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const QUESTIONS = [
+{q:"Tarih öncesi çağlar hangi sırayla gelir?",cat:"Antik",opts:["Taş, Tunç, Demir","Tunç, Taş, Demir","Demir, Tunç, Taş","Taş, Demir, Tunç"],a:0},
+{q:"Roma İmparatorluğu hangi yılda Batı ve Doğu olarak ayrıldı?",cat:"Antik",opts:["395","476","330","410"],a:0},
+{q:"Orta Çağ'ın başlangıcı hangi olayla kabul edilir?",cat:"Ortaçağ",opts:["Batı Roma'nın çöküşü","Moğol istilası","Haçlı Seferleri","Büyük İskender'in ölümü"],a:0},
+{q:"Magna Carta hangi yıl imzalanmıştır?",cat:"Ortaçağ",opts:["1215","1066","1492","1302"],a:0},
+{q:"Rönesans hangi şehirde başlamıştır?",cat:"Rönesans",opts:["Floransa","Roma","Paris","Venedik"],a:0},
+{q:"Amerika kıtası hangi yılda keşfedildi?",cat:"Keşifler",opts:["1492","1500","1488","1519"],a:0},
+{q:"Fransız Devrimi hangi yıl başladı?",cat:"Modern",opts:["1789","1776","1799","1804"],a:0},
+{q:"Sanayi Devrimi hangi ülkede başladı?",cat:"Modern",opts:["İngiltere","Fransa","Almanya","ABD"],a:0},
+{q:"İstanbul'un fethi hangi yıl gerçekleşti?",cat:"Osmanlı",opts:["1453","1204","1492","1071"],a:0},
+{q:"Kanuni Sultan Süleyman hangi yıllar arasında tahtta kaldı?",cat:"Osmanlı",opts:["1520-1566","1512-1520","1540-1560","1500-1550"],a:0},
+{q:"Birinci Dünya Savaşı hangi yıllar arasında yaşandı?",cat:"Modern",opts:["1914-1918","1939-1945","1900-1904","1910-1912"],a:0},
+{q:"İkinci Dünya Savaşı hangi yıllar arasında yaşandı?",cat:"Modern",opts:["1939-1945","1914-1918","1946-1950","1929-1933"],a:0},
+{q:"Soğuk Savaş hangi iki blok arasında yaşandı?",cat:"Modern",opts:["ABD ve SSCB","ABD ve Almanya","İngiltere ve Fransa","Japonya ve Çin"],a:0},
+{q:"Türk Kurtuluş Savaşı hangi yıllar arasında yapıldı?",cat:"Yakın Tarih",opts:["1919-1923","1920-1925","1914-1918","1925-1929"],a:0},
+{q:"Lozan Antlaşması hangi yıl imzalandı?",cat:"Yakın Tarih",opts:["1923","1919","1930","1921"],a:0},
+{q:"Türkiye Cumhuriyeti hangi yıl ilan edildi?",cat:"Yakın Tarih",opts:["1923","1920","1919","1925"],a:0},
+{q:"Ay’a ilk insan hangi yıl ayak bastı?",cat:"Modern",opts:["1969","1959","1972","1965"],a:0},
+{q:"Berlin Duvarı hangi yıl yıkıldı?",cat:"Modern",opts:["1989","1991","1980","1975"],a:0},
+{q:"Fransız İhtilali hangi tarihi sembolü doğurdu?",cat:"Modern",opts:["Bastille'in Ele Geçirilmesi","Napolyon Bonapart","Versay Antlaşması","Habeas Corpus"],a:0},
+{q:"Müslümanların Endülüs’ten çekilişi hangi yüzyılda oldu?",cat:"Ortaçağ",opts:["15. yüzyıl","13. yüzyıl","14. yüzyıl","16. yüzyıl"],a:0}
+];
+
+// doğru cevabı rastgele A–D'ye dağıtmak için fonksiyon
+QUESTIONS.forEach(q => {
+    let correct = q.opts[q.a];
+    let shuffledIndexes = [0,1,2,3].sort(() => Math.random()-0.5);
+    q.opts = shuffledIndexes.map(i => q.opts[i]);
+    q.a = q.opts.indexOf(correct);
+});
+
+
+
+// Script aynı, değişiklik yok
+const startBtn = document.getElementById('startBtn');
+const resetBtn = document.getElementById('resetBtn');
+const shareBtn = document.getElementById('shareBtn');
+const scoreEl = document.getElementById('score');
+const qIndexEl = document.getElementById('qIndex');
+const streakEl = document.getElementById('streak');
+const highEl = document.getElementById('high');
+const timerEl = document.getElementById('timer');
+const timeText = document.getElementById('timeText');
+const questionText = document.getElementById('questionText');
+const metaText = document.getElementById('meta');
+const answersWrap = document.getElementById('answers');
+const categoryTag = document.getElementById('categoryTag');
+const resultOverlay = document.getElementById('result');
+const finalScore = document.getElementById('finalScore');
+const finalText = document.getElementById('finalText');
+const playAgain = document.getElementById('playAgain');
+const closeRes = document.getElementById('closeRes');
+const nextLabel = document.getElementById('nextLabel');
+const categoryList = document.getElementById('categoryList');
+
+let QUESTIONS_POOL = [];
+let currentIndex = 0;
+let score = 0;
+let streak = 0;
+let timer = null;
+let timeLeft = 20;
+let running = false;
+let highscore = Number(localStorage.getItem('kk_high')) || 0;
+
+highEl.textContent = highscore;
+qIndexEl.textContent = `0/20`;
+scoreEl.textContent = score;
+streakEl.textContent = streak;
+populateCategories();
+
+function populateCategories(){
+  const cats = [...new Set(QUESTIONS.map(s=>s.cat))];
+  categoryList.innerHTML = '';
+  cats.forEach(c=>{
+    const el = document.createElement('div');
+    el.className='badge'; el.textContent=c;
+    categoryList.appendChild(el);
+  });
+}
+document.addEventListener('click', () => {
+    const audio = document.getElementById('bg-music');
+    if (audio.muted) audio.muted = false;
+    audio.volume = 0.7; // %20 ses seviyesinde başlat
+    audio.play().catch(()=>{});
+});
+function shuffle(arr){ return arr.map(v=>[Math.random(),v]).sort((a,b)=>a[0]-b[0]).map(a=>a[1]); }
+function pickQuestions(){ return shuffle(QUESTIONS).slice(0,20); }
+function startGame(){ QUESTIONS_POOL = pickQuestions(); currentIndex = 0; score = 0; streak = 0; running = true; updateHUD(); showQuestion(); startBtn.textContent='Devam'; }
+function endGame(){ running=false; clearTimer(); resultOverlay.classList.add('show'); finalScore.textContent=score; finalText.textContent=`Seriyi bitirdin — ${score} puan!`; if(score>highscore){ highscore=score; localStorage.setItem('kk_high',highscore); highEl.textContent=highscore; finalText.textContent+=" Yeni rekor! 🎉"; } }
+function updateHUD(){ scoreEl.textContent=score; qIndexEl.textContent=`${currentIndex}/${QUESTIONS_POOL.length||20}`; streakEl.textContent=streak; nextLabel.textContent=QUESTIONS_POOL[currentIndex]?QUESTIONS_POOL[currentIndex].cat:'—'; }
+function showQuestion(){ if(currentIndex>=QUESTIONS_POOL.length){endGame(); return;} const q=QUESTIONS_POOL[currentIndex]; categoryTag.textContent=`Kategori: ${q.cat}`; questionText.textContent=q.q; metaText.textContent=`Soru ${currentIndex+1}/${QUESTIONS_POOL.length}`; answersWrap.innerHTML=''; q.opts.forEach((opt,i)=>{ const btn=document.createElement('button'); btn.className='answer'; btn.innerHTML=`<div class="letter">${['A','B','C','D'][i]}</div><div>${opt}</div>`; btn.addEventListener('click',()=>selectAnswer(i)); answersWrap.appendChild(btn); }); timeLeft=20; startTimer(); }
+function selectAnswer(i){ const q=QUESTIONS_POOL[currentIndex]; clearTimer(); const buttons = answersWrap.querySelectorAll('.answer'); buttons.forEach(b=>b.classList.add('dim')); if(i===q.a){ buttons[i].classList.add('correct'); score+=100; streak++; } else{ if(q.a>=0) buttons[q.a].classList.add('correct'); if(i>=0) buttons[i].classList.add('wrong'); streak=0;} currentIndex++; updateHUD(); setTimeout(()=>{if(running) showQuestion();},800); }
+function startTimer(){ clearTimer(); timer = setInterval(()=>{timeLeft--; timeText.textContent=timeLeft; if(timeLeft<=0){selectAnswer(-1);}},1000);}
+function clearTimer(){if(timer){clearInterval(timer); timer=null;}}
+
+startBtn.addEventListener('click',()=>{if(!running) startGame(); else showQuestion();});
+resetBtn.addEventListener('click',()=>{location.reload();});
+playAgain.addEventListener('click',()=>{resultOverlay.classList.remove('show'); startGame();});
+closeRes.addEventListener('click',()=>{resultOverlay.classList.remove('show');});
+shareBtn.addEventListener('click',()=>{navigator.clipboard.writeText(`Kelime Okyanusu Tarih Quiz Skoru: ${score}`); alert('Skor kopyalandı!');});
+</script>
+</body>
+</html>

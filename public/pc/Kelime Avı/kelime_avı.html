@@ -1,0 +1,897 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<link rel="stylesheet" href="/shared/ocean-loader.css">
+<script src="/shared/ocean-loader.js"></script>
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kelime Avı - TDK Oyunu</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 15px;
+            transition: background 0.5s ease;
+        }
+
+        body.theme-ocean {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        body.theme-sky {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        }
+
+        body.theme-midnight {
+            background: linear-gradient(135deg, #0f2027 0%, #203a43 50%, #2c5364 100%);
+        }
+
+        body.theme-royal {
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+        }
+
+        body.theme-ice {
+            background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
+        }
+
+        body.theme-deep {
+            background: linear-gradient(135deg, #141e30 0%, #243b55 100%);
+        }
+
+        .game-container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            padding: 25px;
+            max-width: 650px;
+            width: 100%;
+            animation: fadeIn 0.5s ease;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 15px;
+        }
+
+        .user-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+            padding: 10px 15px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            border-left: 4px solid #2563eb;
+        }
+
+        .user-name {
+            font-weight: bold;
+            color: #1e40af;
+        }
+
+        .user-total-score {
+            background: #2563eb;
+            color: white;
+            padding: 5px 15px;
+            border-radius: 15px;
+            font-weight: bold;
+        }
+
+        h1 {
+            color: #2563eb;
+            margin-bottom: 5px;
+            font-size: 2em;
+            text-shadow: 2px 2px 4px rgba(37, 99, 235, 0.2);
+        }
+
+        .subtitle {
+            color: #666;
+            margin-bottom: 8px;
+            font-size: 0.85em;
+        }
+
+        .theme-indicator {
+            display: inline-block;
+            padding: 5px 15px;
+            background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%);
+            color: white;
+            border-radius: 15px;
+            font-size: 0.75em;
+            font-weight: bold;
+        }
+
+        .how-to-play {
+            background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+            padding: 12px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            border-left: 3px solid #2563eb;
+        }
+
+        .how-to-play h3 {
+            color: #1e40af;
+            margin-bottom: 6px;
+            font-size: 0.95em;
+        }
+
+        .how-to-play ol {
+            margin-left: 18px;
+            color: #1e3a8a;
+            line-height: 1.5;
+            font-size: 0.8em;
+        }
+
+        .how-to-play li {
+            margin-bottom: 4px;
+        }
+
+        .scoring-info {
+            background: #fef3c7;
+            padding: 8px;
+            border-radius: 8px;
+            margin-top: 8px;
+            border-left: 3px solid #f59e0b;
+            font-size: 0.75em;
+        }
+
+        .scoring-info strong {
+            color: #92400e;
+        }
+
+        .advanced-score {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .score-card {
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+            padding: 12px;
+            border-radius: 12px;
+            color: white;
+            text-align: center;
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+            transition: transform 0.3s;
+        }
+
+        .score-card:hover {
+            transform: translateY(-3px);
+        }
+
+        .score-card.highlight {
+            animation: scoreUp 0.5s ease;
+        }
+
+        @keyframes scoreUp {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+
+        .score-label {
+            font-size: 0.7em;
+            opacity: 0.9;
+            margin-bottom: 5px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .score-value {
+            font-size: 1.6em;
+            font-weight: bold;
+        }
+
+        .score-card.total-score {
+            grid-column: 1 / -1;
+            background: linear-gradient(135deg, #1e40af 0%, #1e3a8a 100%);
+        }
+
+        .level-badge {
+            display: inline-block;
+            padding: 3px 12px;
+            background: #fbbf24;
+            color: #78350f;
+            border-radius: 15px;
+            font-weight: bold;
+            margin-top: 6px;
+            font-size: 0.75em;
+        }
+
+        .combo-meter {
+            background: #f0f9ff;
+            padding: 10px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            text-align: center;
+            border: 2px solid #3b82f6;
+        }
+
+        .combo-text {
+            color: #1e40af;
+            font-weight: bold;
+            margin-bottom: 6px;
+            font-size: 0.85em;
+        }
+
+        .combo-bar {
+            background: #dbeafe;
+            height: 16px;
+            border-radius: 8px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .combo-fill {
+            background: linear-gradient(90deg, #3b82f6 0%, #8b5cf6 100%);
+            height: 100%;
+            width: 0%;
+            transition: width 0.5s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 0.7em;
+            font-weight: bold;
+        }
+
+        .definition-box {
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 15px;
+            min-height: 100px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            font-size: 1em;
+            line-height: 1.5;
+            box-shadow: 0 6px 15px rgba(37, 99, 235, 0.4);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .definition-box::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(45deg, transparent, rgba(255,255,255,0.1), transparent);
+            transform: rotate(45deg);
+            animation: shine 3s infinite;
+        }
+
+        @keyframes shine {
+            0% { left: -50%; }
+            100% { left: 150%; }
+        }
+
+        .feedback {
+            text-align: center;
+            padding: 12px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            font-weight: bold;
+            display: none;
+            animation: slideIn 0.4s ease;
+            font-size: 0.9em;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .feedback.correct {
+            background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+            color: #065f46;
+            border: 2px solid #34d399;
+        }
+
+        .feedback.wrong {
+            background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+            color: #991b1b;
+            border: 2px solid #f87171;
+        }
+
+        .input-section {
+            margin-bottom: 15px;
+        }
+
+        #wordInput {
+            width: 100%;
+            padding: 14px;
+            font-size: 1.05em;
+            border: 3px solid #93c5fd;
+            border-radius: 10px;
+            transition: all 0.3s;
+            text-align: center;
+            font-weight: 500;
+        }
+
+        #wordInput:focus {
+            outline: none;
+            border-color: #2563eb;
+            box-shadow: 0 0 12px rgba(37, 99, 235, 0.4);
+        }
+
+        .button-group {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        button {
+            padding: 12px;
+            font-size: 0.9em;
+            font-weight: bold;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .btn-check {
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+            color: white;
+            box-shadow: 0 3px 10px rgba(37, 99, 235, 0.4);
+        }
+
+        .btn-check:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(37, 99, 235, 0.5);
+        }
+
+        .btn-check:active {
+            transform: translateY(0);
+        }
+
+        .btn-skip {
+            background: linear-gradient(135deg, #e0e7ff 0%, #c7d2fe 100%);
+            color: #3730a3;
+        }
+
+        .btn-skip:hover {
+            background: linear-gradient(135deg, #c7d2fe 0%, #a5b4fc 100%);
+        }
+
+        .action-buttons {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .btn-new {
+            background: linear-gradient(135deg, #1e40af 0%, #1e3a8a 100%);
+            color: white;
+            box-shadow: 0 3px 10px rgba(30, 64, 175, 0.4);
+        }
+
+        .btn-new:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(30, 64, 175, 0.5);
+        }
+
+        .btn-save {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+            box-shadow: 0 3px 10px rgba(16, 185, 129, 0.4);
+        }
+
+        .btn-save:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(16, 185, 129, 0.5);
+        }
+
+        .btn-home {
+            background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+            color: white;
+            width: 100%;
+            box-shadow: 0 3px 10px rgba(99, 102, 241, 0.4);
+        }
+
+        .btn-home:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(99, 102, 241, 0.5);
+        }
+
+        .hint {
+            text-align: center;
+            color: #1e40af;
+            font-size: 0.8em;
+            margin-top: 8px;
+            font-weight: 500;
+            background: #eff6ff;
+            padding: 8px;
+            border-radius: 6px;
+        }
+
+        .loading {
+            text-align: center;
+            color: white;
+            font-style: italic;
+            font-size: 0.95em;
+        }
+
+        .stats-footer {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+            margin-top: 15px;
+            padding: 12px;
+            background: #f8fafc;
+            border-radius: 10px;
+        }
+
+        .stat-item {
+            text-align: center;
+            padding: 8px;
+            background: white;
+            border-radius: 6px;
+            border: 2px solid #e0e7ff;
+        }
+
+        .stat-label {
+            font-size: 0.65em;
+            color: #64748b;
+            margin-bottom: 4px;
+        }
+
+        .stat-value {
+            font-size: 1.1em;
+            font-weight: bold;
+            color: #2563eb;
+        }
+
+        @media (max-width: 600px) {
+            .game-container {
+                padding: 20px;
+            }
+            
+            h1 {
+                font-size: 1.6em;
+            }
+
+            .advanced-score {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body class="theme-ocean">
+    <div class="game-container">
+        <div class="user-info">
+            <div class="user-name">👤 <span id="userName">Kullanıcı</span></div>
+            <div class="user-total-score">💎 <span id="userTotalScore">0</span> Toplam Puan</div>
+        </div>
+
+        <div class="header">
+            <h1>🎯 Kelime Avı</h1>
+            <p class="subtitle">TDK Sözlük'ten kelime tahmin oyunu</p>
+            <div class="theme-indicator" id="themeIndicator">Tema: Okyanus Mavisi</div>
+        </div>
+
+        <div class="how-to-play">
+            <h3>📖 Nasıl Oynanır?</h3>
+            <ol>
+                <li>Ekranda bir kelime anlamı görünecek</li>
+                <li>Hangi kelime olduğunu tahmin edin ve kutucuğa yazın</li>
+                <li>"Kontrol Et" butonuna basın veya Enter tuşuna basın</li>
+                <li>Her doğru cevap sizi bir üst temaya taşır! 🎨</li>
+            </ol>
+            <div class="scoring-info">
+                <strong>🏆 Puanlama:</strong> Doğru: +10 puan | Combo: +5 | Yanlış: -3
+            </div>
+        </div>
+
+        <div class="combo-meter">
+            <div class="combo-text" id="comboText">Combo: 0x 🔥</div>
+            <div class="combo-bar">
+                <div class="combo-fill" id="comboFill">0%</div>
+            </div>
+        </div>
+
+        <div class="advanced-score">
+            <div class="score-card" id="correctCard">
+                <div class="score-label">Doğru</div>
+                <div class="score-value" id="correct">0</div>
+            </div>
+            <div class="score-card" id="wrongCard">
+                <div class="score-label">Yanlış</div>
+                <div class="score-value" id="wrong">0</div>
+            </div>
+            <div class="score-card total-score" id="totalCard">
+                <div class="score-label">Bu Oyun Puanı</div>
+                <div class="score-value" id="totalScore">0</div>
+                <div class="level-badge" id="levelBadge">🌟 Başlangıç</div>
+            </div>
+        </div>
+
+        <div class="definition-box" id="definitionBox">
+            Kelime yükleniyor...
+        </div>
+
+        <div class="feedback" id="feedback"></div>
+
+        <div class="input-section">
+            <input type="text" id="wordInput" placeholder="Kelimeyi buraya yazın..." autocomplete="off">
+            <p class="hint" id="hint"></p>
+        </div>
+
+        <div class="button-group">
+            <button class="btn-check" onclick="checkAnswer()">✓ Kontrol Et</button>
+            <button class="btn-skip" onclick="skipWord()">⏭ Pas Geç</button>
+        </div>
+
+        <div class="action-buttons">
+            <button class="btn-new" onclick="newGame()">🔄 Yeni Oyun</button>
+            <button class="btn-save" onclick="saveScore()">💾 Puanı Kaydet</button>
+        </div>
+
+        <button class="btn-home" onclick="goHome()">🏠 Anasayfaya Dön</button>
+
+        <div class="stats-footer">
+            <div class="stat-item">
+                <div class="stat-label">Başarı Oranı</div>
+                <div class="stat-value" id="successRate">0%</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-label">En Yüksek Combo</div>
+                <div class="stat-value" id="maxCombo">0</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-label">Soru Sayısı</div>
+                <div class="stat-value" id="questionCount">0</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentWord = '';
+        let score = {
+            correct: 0,
+            wrong: 0,
+            total: 0,
+            combo: 0,
+            maxCombo: 0,
+            questions: 0
+        };
+
+        const themes = [
+            { name: 'Okyanus Mavisi', class: 'theme-ocean', emoji: '🌊' },
+            { name: 'Gökyüzü Mavisi', class: 'theme-sky', emoji: '☁️' },
+            { name: 'Gece Mavisi', class: 'theme-midnight', emoji: '🌙' },
+            { name: 'Kraliyet Mavisi', class: 'theme-royal', emoji: '👑' },
+            { name: 'Buz Mavisi', class: 'theme-ice', emoji: '❄️' },
+            { name: 'Derin Mavi', class: 'theme-deep', emoji: '🌌' }
+        ];
+
+        const levels = [
+            { name: 'Başlangıç', icon: '🌟', minScore: 0 },
+            { name: 'Acemi', icon: '⭐', minScore: 30 },
+            { name: 'Deneyimli', icon: '🌠', minScore: 60 },
+            { name: 'Uzman', icon: '💫', minScore: 100 },
+            { name: 'Usta', icon: '✨', minScore: 150 },
+            { name: 'Efsane', icon: '🏆', minScore: 200 }
+        ];
+
+        const commonWords = [
+            'kitap', 'kalem', 'masa', 'sandalye', 'pencere', 'kapı', 'ağaç', 'çiçek',
+            'güneş', 'ay', 'yıldız', 'deniz', 'göl', 'nehir', 'dağ', 'orman',
+            'kuş', 'kedi', 'köpek', 'balık', 'arı', 'kelebek', 'karınca',
+            'elma', 'armut', 'üzüm', 'portakal', 'muz', 'çilek', 'kiraz',
+            'ekmek', 'su', 'süt', 'çay', 'kahve', 'şeker', 'tuz',
+            'okul', 'ev', 'araba', 'uçak', 'tren', 'gemi', 'bisiklet',
+            'bilgisayar', 'telefon', 'saat', 'ayna', 'lamba', 'televizyon',
+            'mutlu', 'üzgün', 'güzel', 'çirkin', 'büyük', 'küçük', 'uzun', 'kısa',
+            'sıcak', 'soğuk', 'hızlı', 'yavaş', 'yeni', 'eski', 'temiz', 'kirli',
+            'sevgi', 'aşk', 'dostluk', 'barış', 'özgürlük', 'adalet', 'umut'
+        ];
+
+        // Kullanıcı bilgilerini yükle
+        async function loadUserInfo() {
+            try {
+                const response = await fetch('/me');
+                const data = await response.json();
+                
+                if (!data.loggedIn) {
+                    window.location.href = '/';
+                    return;
+                }
+                
+                document.getElementById('userName').textContent = data.isim;
+                document.getElementById('userTotalScore').textContent = data.puan;
+            } catch (error) {
+                console.error('Kullanıcı bilgileri yüklenemedi:', error);
+                window.location.href = '/';
+            }
+        }
+
+        // Puanı kaydet
+        async function saveScore() {
+            if (score.total <= 0) {
+                alert('Kaydetmek için önce puan kazanmalısınız!');
+                return;
+            }
+
+            try {
+                const response = await fetch('/save-score', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ score: score.total, taskPoints: score.total })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    alert(`✅ Tebrikler! ${score.total} puan hesabınıza eklendi!\n\nToplam Puanınız: ${data.toplamPuan}`);
+                    document.getElementById('userTotalScore').textContent = data.toplamPuan;
+                    
+                    // Puanları sıfırla
+                    score = {
+                        correct: 0,
+                        wrong: 0,
+                        total: 0,
+                        combo: 0,
+                        maxCombo: 0,
+                        questions: 0
+                    };
+                    
+                    updateScore();
+                    updateCombo();
+                    updateLevel();
+                    updateStats();
+                    
+                    // Anasayfaya yönlendir
+                    setTimeout(() => {
+                        window.location.href = '/pc/anasayfa.html';
+                    }, 1500);
+                } else {
+                    alert('❌ Puan kaydedilemedi. Lütfen tekrar deneyin.');
+                }
+            } catch (error) {
+                console.error('Puan kaydetme hatası:', error);
+                alert('❌ Bir hata oluştu. Lütfen tekrar deneyin.');
+            }
+        }
+
+        // Anasayfaya dön
+        function goHome() {
+            if (score.total > 0) {
+                if (confirm('Kaydedilmemiş puanlarınız var! Kaydedilsin mi?')) {
+                    saveScore();
+                    return;
+                }
+            }
+            window.location.href = '/pc/anasayfa.html';
+        }
+
+        function changeTheme() {
+            const currentThemeIndex = score.correct % themes.length;
+            const theme = themes[currentThemeIndex];
+            
+            document.body.className = theme.class;
+            document.getElementById('themeIndicator').textContent = `${theme.emoji} Tema: ${theme.name}`;
+        }
+
+        function updateLevel() {
+            let currentLevel = levels[0];
+            for (let level of levels) {
+                if (score.total >= level.minScore) {
+                    currentLevel = level;
+                }
+            }
+            
+            document.getElementById('levelBadge').textContent = `${currentLevel.icon} ${currentLevel.name}`;
+        }
+
+        function updateCombo() {
+            const comboPercent = Math.min((score.combo * 20), 100);
+            document.getElementById('comboFill').style.width = comboPercent + '%';
+            document.getElementById('comboFill').textContent = comboPercent + '%';
+            
+            let comboEmoji = '🔥';
+            if (score.combo >= 5) comboEmoji = '🔥🔥🔥';
+            else if (score.combo >= 3) comboEmoji = '🔥🔥';
+            
+            document.getElementById('comboText').textContent = `Combo: ${score.combo}x ${comboEmoji}`;
+        }
+
+        async function fetchWord() {
+            const randomWord = commonWords[Math.floor(Math.random() * commonWords.length)];
+            
+            try {
+                document.getElementById('definitionBox').innerHTML = '<div class="loading">Kelime yükleniyor...</div>';
+                document.getElementById('hint').textContent = '';
+                
+                const response = await fetch(`https://sozluk.gov.tr/gts?ara=${randomWord}`);
+                const data = await response.json();
+                
+                if (data && data[0] && data[0].anlamlarListe && data[0].anlamlarListe[0]) {
+                    currentWord = data[0].madde.toLowerCase();
+                    const definition = data[0].anlamlarListe[0].anlam;
+                    
+                    document.getElementById('definitionBox').textContent = definition;
+                    document.getElementById('hint').textContent = `💡 İpucu: ${currentWord.length} harfli bir kelime`;
+                    document.getElementById('wordInput').value = '';
+                    document.getElementById('wordInput').focus();
+                } else {
+                    fetchWord();
+                }
+            } catch (error) {
+                document.getElementById('definitionBox').textContent = 'Kelime yüklenirken hata oluştu. Yeni kelime yükleniyor...';
+                setTimeout(fetchWord, 1500);
+            }
+        }
+
+        function checkAnswer() {
+            const userAnswer = document.getElementById('wordInput').value.toLowerCase().trim();
+            const feedback = document.getElementById('feedback');
+            
+            if (!userAnswer) {
+                feedback.textContent = '⚠️ Lütfen bir kelime girin!';
+                feedback.className = 'feedback wrong';
+                feedback.style.display = 'block';
+                setTimeout(() => feedback.style.display = 'none', 2000);
+                return;
+            }
+            
+            score.questions++;
+            
+            if (userAnswer === currentWord) {
+                score.correct++;
+                score.combo++;
+                
+                let comboBonus = (score.combo - 1) * 5;
+                let totalPoints = 10 + comboBonus;
+                score.total += totalPoints;
+                
+                if (score.combo > score.maxCombo) {
+                    score.maxCombo = score.combo;
+                }
+                
+                feedback.textContent = `🎉 Harika! Doğru cevap: ${currentWord.toUpperCase()} (+${totalPoints} puan)`;
+                feedback.className = 'feedback correct';
+                
+                document.getElementById('correctCard').classList.add('highlight');
+                document.getElementById('totalCard').classList.add('highlight');
+                setTimeout(() => {
+                    document.getElementById('correctCard').classList.remove('highlight');
+                    document.getElementById('totalCard').classList.remove('highlight');
+                }, 500);
+                
+                changeTheme();
+            } else {
+                score.wrong++;
+                score.combo = 0;
+                score.total = Math.max(0, score.total - 3);
+                
+                feedback.textContent = `❌ Yanlış! Doğru cevap: ${currentWord.toUpperCase()} (-3 puan)`;
+                feedback.className = 'feedback wrong';
+                
+                document.getElementById('wrongCard').classList.add('highlight');
+                setTimeout(() => {
+                    document.getElementById('wrongCard').classList.remove('highlight');
+                }, 500);
+            }
+            
+            feedback.style.display = 'block';
+            updateScore();
+            updateCombo();
+            updateLevel();
+            updateStats();
+            
+            setTimeout(() => {
+                feedback.style.display = 'none';
+                fetchWord();
+            }, 2500);
+        }
+
+        function skipWord() {
+            const feedback = document.getElementById('feedback');
+            score.combo = 0;
+            score.questions++;
+            
+            feedback.textContent = `⏭️ Pas geçildi! Kelime: ${currentWord.toUpperCase()}`;
+            feedback.className = 'feedback';
+            feedback.style.backgroundColor = '#fef3c7';
+            feedback.style.color = '#92400e';
+            feedback.style.border = '2px solid #fbbf24';
+            feedback.style.display = 'block';
+            
+            updateCombo();
+            updateStats();
+            
+            setTimeout(() => {
+                feedback.style.display = 'none';
+                fetchWord();
+            }, 2000);
+        }
+
+        function updateScore() {
+            document.getElementById('correct').textContent = score.correct;
+            document.getElementById('wrong').textContent = score.wrong;
+            document.getElementById('totalScore').textContent = score.total;
+        }
+
+        function updateStats() {
+            const successRate = score.questions > 0 
+                ? Math.round((score.correct / score.questions) * 100) 
+                : 0;
+            
+            document.getElementById('successRate').textContent = successRate + '%';
+            document.getElementById('maxCombo').textContent = score.maxCombo + 'x';
+            document.getElementById('questionCount').textContent = score.questions;
+        }
+
+        function newGame() {
+            if (score.total > 0 && !confirm('Mevcut oyununuz kaydedilmedi! Yeni oyun başlatmak istediğinize emin misiniz?')) {
+                return;
+            }
+
+            score = {
+                correct: 0,
+                wrong: 0,
+                total: 0,
+                combo: 0,
+                maxCombo: 0,
+                questions: 0
+            };
+            
+            document.body.className = 'theme-ocean';
+            updateScore();
+            updateCombo();
+            updateLevel();
+            updateStats();
+            document.getElementById('feedback').style.display = 'none';
+            document.getElementById('themeIndicator').textContent = '🌊 Tema: Okyanus Mavisi';
+            fetchWord();
+        }
+
+        document.getElementById('wordInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                checkAnswer();
+            }
+        });
+
+        // Sayfa yüklendiğinde
+        loadUserInfo();
+        fetchWord();
+    </script>
+</body>
+</html>
