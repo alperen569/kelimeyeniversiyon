@@ -344,7 +344,7 @@ button:focus-visible,input:focus-visible{
     <section class="shell" aria-label="Giriş ekranı">
       <section class="card">
         <div class="mini-brand">
-          <img src="public/pc/resimler/logo of okyanus.png" alt="Kelime Okyanusu küçük logo">
+          <img src="/pc/resimler/logo of okyanus.png" alt="Kelime Okyanusu küçük logo">
           <div>
             <strong>Kelime Okyanusu</strong>
             <span>Giriş yap veya yeni hesap oluştur</span>
@@ -357,7 +357,7 @@ button:focus-visible,input:focus-visible{
         </div>
 
         <div class="stage">
-          <form id="loginBox" class="form active" onsubmit="return false;">
+          <form id="loginBox" class="form active" onsubmit="login(); return false;">
             <span class="eyebrow">Hoş geldin</span>
             <h2>Giriş Yap</h2>
             <p class="subtitle">Kullanıcı adını ve şifreni girerek devam et.</p>
@@ -372,7 +372,7 @@ button:focus-visible,input:focus-visible{
               <input class="input" type="password" id="loginPass" placeholder="Şifreni yaz">
             </div>
 
-            <button class="primary" type="button" onclick="login()">Giriş Yap</button>
+            <button class="primary" type="submit">Giriş Yap</button>
 
             <p class="switch" onclick="showRegister()">Hesabın yok mu? <strong>Kayıt ol</strong></p>
 
@@ -381,7 +381,7 @@ button:focus-visible,input:focus-visible{
             </div>
           </form>
 
-          <form id="registerBox" class="form" onsubmit="return false;">
+          <form id="registerBox" class="form" onsubmit="register(); return false;">
             <span class="eyebrow">Yeni hesap</span>
             <h2>Kayıt Ol</h2>
             <p class="subtitle">Yeni bir kullanıcı adı ve şifre ile hesap oluştur.</p>
@@ -396,7 +396,7 @@ button:focus-visible,input:focus-visible{
               <input class="input" type="password" id="regPass" placeholder="Yeni şifreni yaz">
             </div>
 
-            <button class="primary" type="button" onclick="register()">Kayıt Ol</button>
+            <button class="primary" type="submit">Kayıt Ol</button>
 
             <p class="switch" onclick="showLogin()">Zaten hesabın var mı? <strong>Giriş yap</strong></p>
 
@@ -433,7 +433,7 @@ function showRegister(){
 
 async function login(){
   const isim = document.getElementById("loginName").value.trim();
-  const sifre = document.getElementById("loginPass").value.trim();
+  const sifre = document.getElementById("loginPass").value;
 
   if(!isim || !sifre){
     alert("Lütfen boş alan bırakma.");
@@ -444,11 +444,8 @@ async function login(){
     const res = await fetch("/login", {
       method:"POST",
       headers:{ "Content-Type":"application/json" },
-      // login fonksiyonunun içi
-body: JSON.stringify({ username: isim, password: sifre })
-
-
-
+      credentials: "same-origin",
+      body: JSON.stringify({ isim, sifre })
     });
     const data = await res.json();
 
@@ -457,7 +454,6 @@ body: JSON.stringify({ username: isim, password: sifre })
       return;
     }
 
-    localStorage.setItem("username", isim);
     window.location.href = "/pc/anasayfa.html";
   }catch(err){
     alert("Sunucuya bağlanılamadı.");
@@ -466,7 +462,7 @@ body: JSON.stringify({ username: isim, password: sifre })
 
 async function register(){
   const isim = document.getElementById("regName").value.trim();
-  const sifre = document.getElementById("regPass").value.trim();
+  const sifre = document.getElementById("regPass").value;
 
   if(!isim || !sifre){
     alert("Lütfen boş alan bırakma.");
@@ -477,7 +473,9 @@ async function register(){
     const res = await fetch("/register", {
       method:"POST",
       headers:{ "Content-Type":"application/json" },
-body: JSON.stringify({ username: isim, password: sifre })    });
+      credentials: "same-origin",
+      body: JSON.stringify({ isim, sifre })
+    });
     const data = await res.json();
 
     alert(data.message || (data.success ? "Kayıt başarılı." : "Kayıt başarısız."));

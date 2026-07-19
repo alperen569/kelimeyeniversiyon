@@ -1,6 +1,7 @@
 const fs = require('node:fs');
 const path = require('node:path');
 const { DatabaseSync } = require('node:sqlite');
+const bcrypt = require('bcrypt');
 
 const DEFAULT_DB_PATH = path.join(__dirname, 'database.sqlite');
 
@@ -30,6 +31,8 @@ function initializeDatabase(dbPath = DEFAULT_DB_PATH, options = {}) {
   if (shouldMigrateLegacy) {
     migrateLegacyUsers(db);
   }
+
+  upgradePlaintextPasswords(db);
 
   return db;
 }
@@ -62,7 +65,7 @@ function migrateLegacyUsers(db) {
     .map(line => line.trim())
     .filter(Boolean);
 
-const insertStmt = db.prepare('INSERT INTO users (isim, sifre, puan, taskPoints, correct, wrong, totalQuestions, claimedRoadRewards) VALUES (?, ?, ?, ?, ?, ?, ?, ?)');
+  const insertStmt = db.prepare('INSERT INTO users (isim, sifre, puan, taskPoints, correct, wrong, totalQuestions, claimedRoadRewards) VALUES (?, ?, ?, ?, ?, ?, ?, ?)');
 
   for (const line of lines) {
     const parts = line.split(':');
@@ -78,7 +81,7 @@ const insertStmt = db.prepare('INSERT INTO users (isim, sifre, puan, taskPoints,
     const totalQuestions = Number(parts[5]) || 0;
     const claimedRoadRewards = parts[7] ? parseClaimedRoadRewards(parts[7]) : [];
 
-    insertStmt.run(isim, sifre, puan, 0, correct, wrong, totalQuestions, serializeClaimedRoadRewards(claimedRoadRewards));
+    insertStmt.run(isim, hashPassword(sifre), puan, 0, correct, wrong, totalQuestions, serializeClaimedRoadRewards(claimedRoadRewards));
   }
 }
 
@@ -169,14 +172,62 @@ function getProgressSnapshot(score, claimedRoadRewards = [], taskPoints = 0) {
 }
 
 function createUser(db, { isim, sifre }) {
+  const hashedPassword = hashPassword(sifre);
   const stmt = db.prepare('INSERT INTO users (isim, sifre) VALUES (?, ?)');
-  stmt.run(isim, sifre);
-  return { isim, sifre };
+  stmt.run(isim, hashedPassword);
+  return { isim, sifre: hashedPassword };
 }
 
 function findUser(db, isim) {
   const row = db.prepare('SELECT * FROM users WHERE isim = ?').get(isim);
   return row || null;
+}
+
+function hashPassword(password) {
+  return bcrypt.hashSync(String(password), 10);
+}
+
+function isPasswordHash(value) {
+  return typeof value === 'string' && /^\$2[aby]?\$\d{2}\$/.test(value);
+}
+
+function verifyPassword(plainPassword, storedPassword) {
+  const candidate = String(plainPassword ?? '');
+  if (!storedPassword) {
+    return false;
+  }
+
+  if (isPasswordHash(storedPassword)) {
+    return bcrypt.compareSync(candidate, storedPassword);
+  }
+
+  return candidate === String(storedPassword);
+}
+
+function upgradePasswordHashIfNeeded(db, isim, storedPassword, plainPassword) {
+  if (isPasswordHash(storedPassword)) {
+    return storedPassword;
+  }
+
+  if (!verifyPassword(plainPassword, storedPassword)) {
+    return storedPassword;
+  }
+
+  const upgradedHash = hashPassword(plainPassword);
+  db.prepare('UPDATE users SET sifre = ? WHERE isim = ?').run(upgradedHash, isim);
+  return upgradedHash;
+}
+
+function upgradePlaintextPasswords(db) {
+  const rows = db.prepare('SELECT id, isim, sifre FROM users').all() || [];
+  const stmt = db.prepare('UPDATE users SET sifre = ? WHERE id = ?');
+
+  for (const row of rows) {
+    if (isPasswordHash(row.sifre)) {
+      continue;
+    }
+    stmt.run(hashPassword(row.sifre), row.id);
+  }
 }
 
 function getUsersWithRanks(db) {
@@ -188,7 +239,6 @@ function getUsersWithRanks(db) {
     const successRate = totalQuestions > 0 ? Math.round((correct / totalQuestions) * 100) : 0;
     return {
       isim: user.isim,
-      sifre: user.sifre,
       puan: Number(user.puan) || 0,
       taskPoints: Number(user.taskPoints) || 0,
       correct,
@@ -253,5 +303,8 @@ module.exports = {
   parseClaimedRoadRewards,
   serializeClaimedRoadRewards,
   getScoreTitle,
-  getProgressSnapshot
+  getProgressSnapshot,
+  hashPassword,
+  verifyPassword,
+  upgradePasswordHashIfNeeded
 };

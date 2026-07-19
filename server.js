@@ -2,71 +2,83 @@ require("dotenv").config();
 
 const express = require("express");
 const helmet = require("helmet");
+const rateLimit = require("express-rate-limit");
 const session = require("express-session");
 const path = require("path");
 const http = require("http");
-const { initializeDatabase, createUser, findUser, getUsersWithRanks, updateUserScore, addClaimedRoadReward, getUserSnapshot, getProgressSnapshot, getScoreTitle } = require("./db");
+const {
+  initializeDatabase,
+  createUser,
+  findUser,
+  getUsersWithRanks,
+  updateUserScore,
+  addClaimedRoadReward,
+  getUserSnapshot,
+  getProgressSnapshot,
+  getScoreTitle,
+  verifyPassword,
+  upgradePasswordHashIfNeeded,
+} = require("./db");
 
-// 1. Önce app nesnesini oluşturuyoruz
 const app = express();
+const isProduction = process.env.NODE_ENV === "production";
+const sessionSecret = process.env.SESSION_SECRET || (isProduction ? null : "kelime_okyanusu_gizli_anahtar_9876");
+if (!sessionSecret) {
+  throw new Error("SESSION_SECRET must be set in production");
+}
+const sessionCookieOptions = {
+  maxAge: 1000 * 60 * 60,
+  httpOnly: true,
+  secure: isProduction,
+  sameSite: "lax",
+};
 
-// 💡 ÇÖZÜM 1: HTTPS (Nginx/Cloudflare proxy) arkasında session çerezlerinin tarayıcıya ulaşması için bu şarttır!
-app.set("trust proxy", 1);
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 20,
+  standardHeaders: true,
+  legacyHeaders: false,
+});
 
-// 2. Şimdi app nesnesini güvenle kullanabiliriz
+app.set("trust proxy", isProduction ? 1 : 0);
 app.use(helmet());
 
-app.use(session({
-    // 💡 ÇÖZÜM 3: .env dosyası okunamazsa bile sunucu çökmesin diye yedek şifre ekledik
-    secret: process.env.SESSION_SECRET || "kelime_okyanusu_gizli_anahtar_9876",
+app.use(
+  session({
+    secret: sessionSecret,
     resave: false,
     saveUninitialized: false,
-    cookie: {
-        maxAge: 1000 * 60 * 60,
-        httpOnly: true,
-        secure: true, // HTTPS canlı ortamda true kalmalı
-        sameSite: "lax"
-    }
-}));
+    cookie: sessionCookieOptions,
+  }),
+);
+
 const server = http.createServer(app);
-const PORT = 3000;
+const PORT = Number(process.env.PORT) || 3000;
 
 const db = initializeDatabase();
 const gameRoutes = {
   "/ilkokul-level-1": "Kelime OKyanusu İLKOKUL/İLKOKUL level 1.html",
   "/ilkokul-level-2": "Kelime OKyanusu İLKOKUL/İLKOKUL level 2.html",
   "/ilkokul-level-3": "Kelime OKyanusu İLKOKUL/İLKOKUL level 3.html",
-
   "/ortaokul-level-1": "Kelime OKyanusu ORTAOKUL/ORTAOKUL level 1.html",
   "/ortaokul-level-2": "Kelime OKyanusu ORTAOKUL/ORTAOKUL level 2.html",
   "/ortaokul-level-3": "Kelime OKyanusu ORTAOKUL/ORTAOKUL level 3.html",
-
   "/lise-level-1": "Kelime Okyanusu LİSE/LİSE level 1.html",
   "/lise-level-2": "Kelime Okyanusu LİSE/LİSE level 2.html",
-  "/lise-level-3": "Kelime Okyanusu LİSE/LİSE level 3.html"
+  "/lise-level-3": "Kelime Okyanusu LİSE/LİSE level 3.html",
 };
 
-app.use(express.json());
-
-function getCookieValue(req, name) {
-  const header = req.headers.cookie || "";
-  const cookies = header.split(";").map(part => part.trim()).filter(Boolean);
-  const pair = cookies.find(cookie => cookie.startsWith(`${name}=`));
-  if (!pair) return null;
-  return decodeURIComponent(pair.slice(name.length + 1));
-}
+app.use(express.json({ limit: "32kb" }));
 
 function getCurrentUsername(req) {
-  return getCookieValue(req, "kw_user");
+  return req.session?.username || null;
 }
 
-// 💡 ÇÖZÜM 2: HTTPS ortamına uygun olarak çerezlere "Secure;" etiketi ekledik
-function setLoginCookie(res, isim) {
-  res.setHeader("Set-Cookie", `kw_user=${encodeURIComponent(isim)}; Path=/; Secure; SameSite=Lax`);
-}
-
-function clearLoginCookie(res) {
-  res.setHeader("Set-Cookie", "kw_user=; Path=/; Max-Age=0; Secure; SameSite=Lax");
+function requireAuth(req, res, next) {
+  if (!req.session?.loggedIn || !getCurrentUsername(req)) {
+    return res.redirect("/pc/login.html");
+  }
+  return next();
 }
 
 function getActiveUserSnapshot(username) {
@@ -77,21 +89,18 @@ function getActiveUserSnapshot(username) {
   }
   return {
     ...snapshot,
-    rank: getUsersWithRanks(db).findIndex(user => user.isim === username) + 1
+    rank: getUsersWithRanks(db).findIndex((user) => user.isim === username) + 1,
   };
 }
 
 function getLeaderboard(limit) {
   const users = getUsersWithRanks(db);
-
   if (typeof limit === "number" && limit > 0) {
     return users.slice(0, limit);
   }
-
   return users;
 }
 
-// buildRoadStateResponse fonksiyonu
 function buildRoadStateResponse(snapshot) {
   const currentMilestones = snapshot.currentMilestones || [];
   return {
@@ -109,13 +118,13 @@ function buildRoadStateResponse(snapshot) {
     nextRotationStart: snapshot.nextRotationStart,
     milestones: currentMilestones,
     currentMilestones,
-    claimedRoadRewards: snapshot.claimedRoadRewards || []
+    claimedRoadRewards: snapshot.claimedRoadRewards || [],
   };
 }
 
 app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "pc", "login.html"));
-}); 
+});
 
 app.get("/pc", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "pc", "login.html"));
@@ -126,61 +135,59 @@ app.use(["/pc/cokoyunculu", "/pc/cokoyunculu.html"], (req, res) => {
 });
 
 Object.entries(gameRoutes).forEach(([route, file]) => {
-    app.get(route, (req, res) => {
-        if (!req.session.loggedIn) {
-            return res.redirect("/pc/login.html");
-        }
-        if (!req.session.inGame) {
-            return res.redirect("/pc/anasayfa.html");
-        }
-        res.sendFile(
-            path.join(__dirname, "public", "pc", file)
-        );
-    });
+  app.get(route, requireAuth, (req, res) => {
+    if (!req.session.inGame) {
+      return res.redirect("/pc/anasayfa.html");
+    }
+    res.sendFile(path.join(__dirname, "public", "pc", file));
+  });
 });
 
-// STATIC DOSYALAR
 app.use("/pc", (req, res, next) => {
-    if (req.path === "/" || req.path === "/login.html") {
-        return next();
-    }
+  if (req.path === "/" || req.path === "/login.html") {
+    return next();
+  }
 
-    if (
-        req.path.endsWith(".css") ||
-        req.path.endsWith(".js") ||
-        req.path.endsWith(".png") ||
-        req.path.endsWith(".jpg") ||
-        req.path.endsWith(".jpeg") ||
-        req.path.endsWith(".gif") ||
-        req.path.endsWith(".svg") ||
-        req.path.endsWith(".ico") ||
-        req.path.endsWith(".woff") ||
-        req.path.endsWith(".woff2")
-    ) {
-        return next();
-    }
+  if (
+    req.path.endsWith(".css") ||
+    req.path.endsWith(".js") ||
+    req.path.endsWith(".png") ||
+    req.path.endsWith(".jpg") ||
+    req.path.endsWith(".jpeg") ||
+    req.path.endsWith(".gif") ||
+    req.path.endsWith(".svg") ||
+    req.path.endsWith(".ico") ||
+    req.path.endsWith(".woff") ||
+    req.path.endsWith(".woff2") ||
+    req.path.endsWith(".mp3")
+  ) {
+    return next();
+  }
 
-    if (!req.session.loggedIn) {
-        return res.redirect("/pc/login.html");
-    }
+  if (!req.session?.loggedIn || !getCurrentUsername(req)) {
+    return res.redirect("/pc/login.html");
+  }
 
-    if (req.path.includes("Level")) {
-        if (!req.session.inGame) {
-            return res.redirect("/pc/anasayfa.html");
-        }
-    }
+  if (req.path.includes("Level") && !req.session.inGame) {
+    return res.redirect("/pc/anasayfa.html");
+  }
 
-    next();
+  next();
 });
 
 app.use("/pc", express.static(path.join(__dirname, "public", "pc")));
 app.use(express.static(path.join(__dirname, "public")));
 
-// KAYIT OL
-app.post("/register", (req, res) => {
-  const { isim, sifre } = req.body;
+app.post("/register", authLimiter, (req, res) => {
+  const isim = String(req.body.isim ?? req.body.username ?? "").trim();
+  const sifre = String(req.body.sifre ?? req.body.password ?? "");
+
   if (!isim || !sifre) {
     return res.json({ success: false, message: "Eksik bilgi" });
+  }
+
+  if (isim.length < 3 || isim.length > 32 || sifre.length < 6 || sifre.length > 128) {
+    return res.json({ success: false, message: "Geçersiz kullanıcı adı veya şifre" });
   }
 
   const existing = findUser(db, isim);
@@ -192,47 +199,45 @@ app.post("/register", (req, res) => {
   res.json({ success: true });
 });
 
-// GİRİŞ
-app.post("/login", (req, res) => {
-  const { isim, sifre } = req.body;
+app.post("/login", authLimiter, (req, res) => {
+  const isim = String(req.body.isim ?? req.body.username ?? "").trim();
+  const sifre = String(req.body.sifre ?? req.body.password ?? "");
+
   if (!isim || !sifre) {
     return res.json({ success: false, message: "Eksik bilgi" });
   }
 
   const user = findUser(db, isim);
-  if (!user || user.sifre !== sifre) {
-    return res.json({ success: false, message: "Hatalı kullanıcı adı veya şifre" });
+  if (!user || !verifyPassword(sifre, user.sifre)) {
+    return res.json({
+      success: false,
+      message: "Hatalı kullanıcı adı veya şifre",
+    });
   }
 
-  setLoginCookie(res, user.isim);
+  upgradePasswordHashIfNeeded(db, user.isim, user.sifre, sifre);
+
   req.session.loggedIn = true;
+  req.session.username = user.isim;
   res.json({ success: true });
 });
 
 app.post("/start-game", (req, res) => {
-    if (!req.session.loggedIn) {
-        return res.sendStatus(401);
-    }
-    req.session.inGame = true;
-    res.json({ success: true });
+  if (!req.session.loggedIn || !getCurrentUsername(req)) {
+    return res.sendStatus(401);
+  }
+  req.session.inGame = true;
+  res.json({ success: true });
 });
 
-// ANASAYFA KORUMA - PC
-app.get("/pc/anasayfa.html", (req, res) => {
-  if (!getCurrentUsername(req)) {
-    return res.redirect("/pc");
-  }
+app.get("/pc/anasayfa.html", requireAuth, (req, res) => {
   res.sendFile(path.join(__dirname, "public", "pc", "anasayfa.html"));
 });
 
-app.get("/pc/kelime_avı.html", (req, res) => {
-  if (!getCurrentUsername(req)) {
-    return res.redirect("/pc/login.html");
-  }
-  res.sendFile(path.join(__dirname, "public", "pc", "kelime_avı.html"));
+app.get("/pc/kelime_avı.html", requireAuth, (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "pc", "Kelime Avı", "kelime_avı.html"));
 });
 
-// AKTİF KULLANICI + PUAN + SIRALAMA
 app.get("/me", (req, res) => {
   const currentUser = getCurrentUsername(req);
   if (!currentUser) {
@@ -263,25 +268,25 @@ app.get("/me", (req, res) => {
     nextRotationStart: snapshot.nextRotationStart,
     nextMilestone: snapshot.nextMilestone,
     claimedRoadRewards: snapshot.claimedRoadRewards || [],
-    currentMilestones: snapshot.currentMilestones || []
+    currentMilestones: snapshot.currentMilestones || [],
   });
 });
 
 app.get("/leaderboard", (req, res) => {
   const limit = Number(req.query.limit) || 10;
-  const users = getLeaderboard(limit).map(user => ({
+  const users = getLeaderboard(limit).map((user) => ({
     isim: user.isim,
     puan: user.puan,
-    rank: user.rank
+    rank: user.rank,
   }));
   res.json({ success: true, users });
 });
 
-// SKOR KAYDET
 app.post("/save-score", (req, res) => {
-  const { score, dogruSayisi, yanlisSayisi, toplamSoru } = req.body;
+  const score = Number(req.body.score);
   const currentUser = getCurrentUsername(req);
-  if (!currentUser || typeof score !== "number") {
+
+  if (!currentUser || Number.isNaN(score)) {
     return res.json({ success: false, message: "Geçersiz istek" });
   }
 
@@ -292,14 +297,14 @@ app.post("/save-score", (req, res) => {
 
   const taskPoints = Number(req.body.taskPoints) || 0;
   updateUserScore(db, currentUser, {
-    score: Number(score) || 0,
+    score,
     taskPoints,
-    correct: Number(dogruSayisi) || 0,
-    wrong: Number(yanlisSayisi) || 0,
-    totalQuestions: Number(toplamSoru) || 0
+    correct: Number(req.body.dogruSayisi) || 0,
+    wrong: Number(req.body.yanlisSayisi) || 0,
+    totalQuestions: Number(req.body.toplamSoru) || 0,
   });
 
-  const updatedUser = getUsersWithRanks(db).find(item => item.isim === currentUser);
+  const updatedUser = getUsersWithRanks(db).find((item) => item.isim === currentUser);
   const updatedPuan = updatedUser ? updatedUser.puan : Number(user.puan) || 0;
   const updatedRank = updatedUser ? updatedUser.rank : 1;
   const updatedSuccessRate = updatedUser ? updatedUser.successRate : 0;
@@ -317,7 +322,11 @@ app.post("/save-score", (req, res) => {
     totalQuestions: updatedTotalQuestions,
     title: getScoreTitle(updatedPuan),
     taskPoints: updatedUser ? updatedUser.taskPoints || 0 : 0,
-    ...getProgressSnapshot(updatedPuan, updatedUser ? updatedUser.claimedRoadRewards || [] : [], updatedUser ? updatedUser.taskPoints || 0 : 0)
+    ...getProgressSnapshot(
+      updatedPuan,
+      updatedUser ? updatedUser.claimedRoadRewards || [] : [],
+      updatedUser ? updatedUser.taskPoints || 0 : 0,
+    ),
   });
 });
 
@@ -351,7 +360,9 @@ app.post("/road-claim", (req, res) => {
     return res.json({ success: false, message: "Kullanıcı bulunamadı" });
   }
 
-  const milestone = (beforeSnapshot.currentMilestones || []).find(item => item.id === milestoneId);
+  const milestone = (beforeSnapshot.currentMilestones || []).find(
+    (item) => item.id === milestoneId,
+  );
   if (!milestone) {
     return res.json({ success: false, message: "Geçersiz milestone" });
   }
@@ -380,14 +391,24 @@ app.post("/road-claim", (req, res) => {
     currentMilestones: snapshot.currentMilestones || [],
     roadProgressPercent: snapshot.roadProgressPercent,
     roadProgressValue: snapshot.roadProgressValue,
-    roadProgressTotal: snapshot.roadProgressTotal
+    roadProgressTotal: snapshot.roadProgressTotal,
   });
 });
 
-// ÇIKIŞ YAP
 app.post("/logout", (req, res) => {
-  clearLoginCookie(res);
-  res.json({ success: true });
+  req.session.destroy((err) => {
+    if (err) {
+      return res.status(500).json({ success: false, message: "Oturum kapatılamadı" });
+    }
+
+    res.clearCookie("connect.sid", {
+      path: "/",
+      httpOnly: true,
+      secure: isProduction,
+      sameSite: "lax",
+    });
+    res.json({ success: true });
+  });
 });
 
 server.listen(PORT, "0.0.0.0", () => {
