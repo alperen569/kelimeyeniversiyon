@@ -6,13 +6,20 @@ let pool;
 
 async function initializeDatabase() {
   pool = mysql.createPool({
-    host: process.env.MYSQL_HOST,
-    user: process.env.MYSQL_USER,
-    password: process.env.MYSQL_PASSWORD,
-    database: process.env.MYSQL_DATABASE,
-    port: Number(process.env.MYSQL_PORT) || 3306,
+    host: process.env.DB_HOST,
+
+    user: process.env.DB_USER,
+
+    password: process.env.DB_PASSWORD,
+
+    database: process.env.DB_NAME,
+
+    port: Number(process.env.DB_PORT) || 3306,
+
     waitForConnections: true,
+
     connectionLimit: 10,
+
     charset: "utf8mb4",
   });
 
