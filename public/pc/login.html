@@ -454,7 +454,11 @@ async function login(){
       return;
     }
 
-    window.location.href = "/pc/anasayfa.html";
+    if (window.kwNavigate) {
+      window.kwNavigate("/pc/anasayfa.html");
+    } else {
+      window.location.href = "/pc/anasayfa.html";
+    }
   }catch(err){
     alert("Sunucuya bağlanılamadı.");
   }
