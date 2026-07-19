@@ -394,11 +394,8 @@ module.exports = {
   getUserSnapshot,
 
   addClaimedRoadReward,
-
   hashPassword,
-
   verifyPassword,
-
   upgradePasswordHashIfNeeded,
   getScoreTitle,
   getProgressSnapshot,

@@ -1,6 +1,7 @@
 require("dotenv").config();
 
 const express = require("express");
+const registerIPs = new Map();
 const helmet = require("helmet");
 const rateLimit = require("express-rate-limit");
 const session = require("express-session");
@@ -77,7 +78,82 @@ async function start() {
 function getCurrentUsername(req) {
   return req.session?.username || null;
 }
+function getClientIP(req){
 
+  return (
+    req.headers["x-forwarded-for"]?.split(",")[0] ||
+    req.socket.remoteAddress ||
+    "unknown"
+  );
+
+}
+
+
+function containsBadWord(text){
+
+  const badWords = [
+
+    "amk",
+    "aq",
+    "siktir",
+    "sik",
+    "orospu",
+    "piç",
+    "pic",
+    "yarrak",
+    "ibne",
+    "fuck",
+    "shit"
+
+  ];
+
+
+  const clean =
+    text
+    .toLowerCase()
+    .replace(/[^a-zçğıöşü]/gi,"");
+
+
+  return badWords.some(word =>
+    clean.includes(word)
+  );
+
+}
+
+
+
+
+
+
+function validatePassword(sifre){
+
+  if(sifre.length < 8)
+    return false;
+
+
+  if(sifre.length > 64)
+    return false;
+
+
+  if(!/[A-Z]/.test(sifre))
+    return false;
+
+
+  if(!/[a-z]/.test(sifre))
+    return false;
+
+
+  if(!/[0-9]/.test(sifre))
+    return false;
+
+
+  if(/\s/.test(sifre))
+    return false;
+
+
+  return true;
+
+}
 function requireAuth(req, res, next) {
   if (!req.session.loggedIn || !getCurrentUsername(req)) {
     return res.redirect("/pc/login.html");
@@ -85,6 +161,48 @@ function requireAuth(req, res, next) {
 
   next();
 }
+function validateUsername(isim) {
+
+  const yasakliIsimler = [
+
+    "admin",
+    "administrator",
+    "root",
+    "moderator",
+    "mod",
+    "test",
+    "null",
+    "undefined",
+    "sistem"
+
+  ];
+
+
+  const temiz =
+    isim.toLowerCase()
+    .replace(/[^a-z0-9çğıöşü]/gi,"");
+
+
+  if (temiz.length < 3)
+    return false;
+
+
+  if (temiz.length > 20)
+    return false;
+
+
+  if (yasakliIsimler.includes(temiz))
+    return false;
+
+
+  return true;
+
+}
+
+
+
+
+
 
 app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "pc", "login.html"));
@@ -107,6 +225,25 @@ app.post("/register", authLimiter, async (req, res) => {
     const isim = String(req.body.isim ?? req.body.username ?? "").trim();
 
     const sifre = String(req.body.sifre ?? req.body.password ?? "");
+    const ip = getClientIP(req);
+
+
+const ipCount =
+registerIPs.get(ip) || 0;
+
+
+if(ipCount >= 3){
+
+ return res.json({
+
+  success:false,
+
+  message:
+  "Bu IP adresinden maksimum 3 hesap oluşturabilirsiniz"
+
+ });
+
+}
 
     if (!isim || !sifre) {
       return res.json({
@@ -116,13 +253,32 @@ app.post("/register", authLimiter, async (req, res) => {
       });
     }
 
-    if (isim.length < 3 || isim.length > 32 || sifre.length < 6) {
-      return res.json({
-        success: false,
+if (!validateUsername(isim)) {
 
-        message: "Geçersiz bilgi",
-      });
-    }
+ return res.json({
+
+  success:false,
+
+  message:"Geçersiz kullanıcı adı"
+
+ });
+
+}
+
+
+
+if (!validatePassword(sifre)) {
+
+ return res.json({
+
+  success:false,
+
+  message:
+  "Şifre en az 8 karakter olmalı, büyük harf, küçük harf ve sayı içermeli"
+
+ });
+
+}
 
     const old = await findUser(isim);
 
@@ -139,7 +295,10 @@ app.post("/register", authLimiter, async (req, res) => {
 
       sifre,
     });
-
+registerIPs.set(
+ ip,
+ ipCount + 1
+);
     res.json({
       success: true,
     });
@@ -163,6 +322,7 @@ app.post("/login", authLimiter, async (req, res) => {
     const isim = String(req.body.isim ?? req.body.username ?? "").trim();
 
     const sifre = String(req.body.sifre ?? req.body.password ?? "");
+  
 
     const user = await findUser(isim);
 
