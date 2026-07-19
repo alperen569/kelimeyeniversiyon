@@ -1,461 +1,869 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="tr">
-<head>
-<link rel="stylesheet" href="/shared/ocean-loader.css">
-<script src="/shared/ocean-loader.js"></script>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
 
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Kelime Zinciri — Ultra Geliştirilmiş</title>
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<style>
-  /* === TEMEL ================================================================= */
+    <title>Sözcük Zinciri</title>
 
-  body.fade {
-    opacity:0;
-    transition:opacity .4s ease;
-  }
+    <style>
+      /* =====================
+   GENEL
+===================== */
 
-  :root{
-    --bg-dark:#0f1724; --card-dark:rgba(11,18,32,0.75); --accent:#60a5fa; --text:#e6eef8;
-    --bg-light:#f5f7fb; --card-light:rgba(255,255,255,0.75); --text-light:#0b1220;
-    --green:#16a34a; --red:#ef4444;
-  }
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
 
-  *{box-sizing:border-box; margin:0; padding:0;}
-  html,body{
-    height:100%; width:100%; font-family:Inter,ui-sans-serif,system-ui,
-    -apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial;
-    display:flex; justify-content:center; padding:18px;
-    backdrop-filter:blur(4px);
-    transition:background .4s ease,color .4s ease;
-  }
+        font-family: "Segoe UI", Roboto, Arial, sans-serif;
+      }
 
-  .wrap{width:100%; max-width:1200px; display:flex; flex-direction:column; gap:12px;}
+      body {
+        min-height: 100vh;
 
-  /* === TEMA SİSTEMİ ========================================================== */
+        display: flex;
 
-  body.theme-dark{background:var(--bg-dark); color:var(--text);}
-  body.theme-dark .card{background:var(--card-dark); color:var(--text);}
+        justify-content: center;
 
-  body.theme-light{background:var(--bg-light); color:var(--text-light);}
-  body.theme-light .card{background:var(--card-light); color:var(--text-light);}
+        align-items: center;
 
-  body.theme-blue{background:linear-gradient(180deg,#07103a,#001a4d); color:#e6f4ff;}
-  body.theme-blue .card{background:rgba(255,255,255,0.18); color:#e6f4ff;}
+        padding: 20px;
 
-  body.theme-retro{background:linear-gradient(180deg,#1f2937,#071229); color:#ffdca8;}
-  body.theme-retro .card{background:rgba(183,129,56,0.18); color:#ffdca8;}
+        color: white;
 
-  body.theme-forest{background:linear-gradient(180deg,#0f2912,#05220c); color:#d9ffe1;}
-  body.theme-forest .card{background:rgba(0,255,99,0.15); color:#d9ffe1;}
+        background: linear-gradient(135deg, #020617, #0f172a, #1e3a8a);
 
-  body.theme-sunset{background:linear-gradient(120deg,#ff6a00,#ff2e63,#2e3192); color:#fff4e6;}
-  body.theme-sunset .card{background:rgba(255,255,255,0.18); color:#fff4e6;}
+        overflow-x: hidden;
+      }
 
-  body.theme-ocean{background:linear-gradient(120deg,#003973,#00a8ff); color:#e5f7ff;}
-  body.theme-ocean .card{background:rgba(255,255,255,0.18); color:#e5f7ff;}
+      /* hareketli arka plan */
 
-  body.theme-cyber{background:#000; color:#0aff9d;}
-  body.theme-cyber .card{background:#0a0a0a; color:#0aff9d;}
+      body::before {
+        content: "";
 
-  body.theme-pastel{background:#ffeefc; color:#513d52;}
-  body.theme-pastel .card{background:#ffffff; color:#513d52;}
+        position: fixed;
 
-  /* === HEADER ================================================================ */
+        width: 500px;
 
-  .header{display:flex; gap:12px; align-items:center; justify-content:space-between;}
-  .title{display:flex; flex-direction:column;}
-  h1{margin:0; font-size:24px; font-weight:700;}
-  .controls{display:flex; gap:8px; flex-wrap:wrap;}
+        height: 500px;
 
-  .btn, .theme-select, #levelSelect{
-    padding:8px 12px; border-radius:8px; border:none; cursor:pointer; font-weight:600;
-    backdrop-filter:blur(4px); transition:all .2s ease;
-  }
-  #levelSelect { display:none; }
+        background: radial-gradient(circle, #38bdf8, transparent 70%);
 
-  .btn:hover{transform:translateY(-1px); opacity:.9;}
-  .btn:active{transform:scale(.97);}
+        top: -200px;
 
-  .small{padding:6px 8px; font-size:14px;}
+        left: -200px;
 
-  /* === KART ================================================================== */
+        opacity: 0.25;
 
-  .card{
-    padding:18px; border-radius:14px; margin-bottom:8px;
-    box-shadow:0 8px 24px rgba(0,0,0,0.35);
-    transition:background .3s ease,color .3s ease;
-    display:flex; flex-direction:column; gap:10px;
-  }
+        animation: float 8s infinite alternate;
+      }
 
-  #sentence{
-    min-height:64px; padding:10px; border-radius:10px;
-    display:flex; gap:8px; flex-wrap:wrap; align-items:center;
-    background:rgba(255,255,255,0.06);
-  }
+      body::after {
+        content: "";
 
-  #bank{
-    display:flex; gap:8px; flex-wrap:wrap;
-    max-height:120px; overflow-y:auto; padding-right:6px;
-  }
-  #bank::-webkit-scrollbar{width:6px;}
-  #bank::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.2); border-radius:6px;}
+        position: fixed;
 
-  .chip{
-    background:rgba(96,165,250,0.18); padding:8px 12px; border-radius:999px;
-    display:inline-flex; align-items:center; cursor:pointer; user-select:none;
-    font-weight:600; transition:transform .15s ease,opacity .2s ease;
-  }
-  .chip:hover{transform:translateY(-2px);}
-  .chip.dragging{opacity:.45; transform:scale(.92) rotate(-2deg);}
+        width: 400px;
 
-  .word-box{
-    padding:6px 10px; border-radius:8px; background:rgba(16,185,129,0.2);
-    display:flex; align-items:center; gap:8px; font-weight:600;
-  }
-  .word-box .remove{
-    background:transparent; border:none; cursor:pointer; font-weight:700;
-    padding:2px 6px; font-size:14px;
-  }
+        height: 400px;
 
-  .feedback{padding:10px; border-radius:8px; display:none; font-weight:700; text-align:center;}
-  .correct{background:rgba(22,163,74,0.25); color:var(--green);}
-  .wrong{background:rgba(239,68,68,0.25); color:var(--red);}
+        background: radial-gradient(circle, #a855f7, transparent 70%);
 
-  #timer{font-weight:800; font-size:18px;}
+        bottom: -150px;
 
-  /* === SON EKRAN ============================================================= */
+        right: -150px;
 
-  #finalScreen{
-    display:none; text-align:center; padding:32px 10px; border-radius:14px;
-    font-size:22px; font-weight:700; animation:pop .35s ease;
-  }
-  @keyframes pop{0%{transform:scale(.8); opacity:0;}100%{transform:scale(1); opacity:1;}}
+        opacity: 0.25;
 
-  /* === KONFETİ =============================================================== */
+        animation: float 10s infinite alternate-reverse;
+      }
 
-  .confetti{
-    width:12px; height:12px; position:fixed; top:-20px; animation:fall 2.2s linear forwards;
-    border-radius:2px;
-  }
-  @keyframes fall{
-    to{transform:translateY(100vh) rotate(720deg);}
-  }
+      @keyframes float {
+        from {
+          transform: translateY(0);
+        }
 
-  /* === RESPONSIVE ============================================================ */
+        to {
+          transform: translateY(80px);
+        }
+      }
 
-  @media (max-width:640px){
-    body{padding:12px;}
-    .header{flex-direction:column; align-items:flex-start;}
-  }
-</style>
-</head>
+      /* =====================
+ KONTAINER
+===================== */
 
-<body class="theme-dark">
-<div class="wrap">
+      .container {
+        width: 100%;
 
-  <div class="header">
-    <div class="title">
-      <h1>Kelime Zinciri — Ultra Geliştirilmiş</h1>
-      <div style="opacity:0.7; font-size:13px">Sürükle-bırak, temalar, animasyonlar, sesler, zorluk seviyeleri</div>
+        max-width: 900px;
+
+        z-index: 2;
+      }
+
+      /* =====================
+ HEADER
+===================== */
+
+      header {
+        display: flex;
+
+        justify-content: space-between;
+
+        align-items: center;
+
+        margin-bottom: 25px;
+      }
+
+      h1 {
+        font-size: 32px;
+
+        background: linear-gradient(90deg, #38bdf8, #c084fc);
+
+        -webkit-background-clip: text;
+
+        color: transparent;
+      }
+
+      /* =====================
+ KART
+===================== */
+
+      .card {
+        background: rgba(255, 255, 255, 0.12);
+
+        border: 1px solid rgba(255, 255, 255, 0.2);
+
+        backdrop-filter: blur(20px);
+
+        border-radius: 25px;
+
+        padding: 30px;
+
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.45);
+
+        animation: show 0.5s ease;
+      }
+
+      @keyframes show {
+        from {
+          opacity: 0;
+
+          transform: translateY(30px);
+        }
+
+        to {
+          opacity: 1;
+
+          transform: none;
+        }
+      }
+
+      /* =====================
+ MENU
+===================== */
+
+      #menu {
+        text-align: center;
+      }
+
+      #menu h2 {
+        font-size: 35px;
+
+        margin-bottom: 15px;
+      }
+
+      #menu p {
+        opacity: 0.8;
+
+        font-size: 18px;
+
+        margin-bottom: 20px;
+      }
+
+      /* =====================
+ BUTONLAR
+===================== */
+
+      button,
+      select {
+        border: none;
+
+        outline: none;
+
+        padding: 13px 22px;
+
+        border-radius: 15px;
+
+        font-size: 16px;
+
+        font-weight: 700;
+
+        cursor: pointer;
+
+        transition: 0.25s;
+
+        background: linear-gradient(135deg, #38bdf8, #6366f1);
+
+        color: white;
+
+        box-shadow: 0 8px 20px #0005;
+      }
+
+      button:hover,
+      select:hover {
+        transform: translateY(-4px) scale(1.03);
+
+        box-shadow: 0 15px 30px #0007;
+      }
+
+      button:active {
+        transform: scale(0.95);
+      }
+
+      /* =====================
+ İSTATİSTİKLER
+===================== */
+
+      .stats {
+        display: flex;
+
+        justify-content: space-between;
+
+        align-items: center;
+
+        background: rgba(0, 0, 0, 0.25);
+
+        padding: 15px;
+
+        border-radius: 18px;
+
+        margin-bottom: 20px;
+
+        font-size: 18px;
+      }
+
+      #combo {
+        color: #facc15;
+
+        animation: pulse 1s infinite alternate;
+      }
+
+      @keyframes pulse {
+        from {
+          transform: scale(1);
+        }
+
+        to {
+          transform: scale(1.1);
+        }
+      }
+
+      #lives {
+        letter-spacing: 3px;
+      }
+
+      /* =====================
+ CÜMLE ALANI
+===================== */
+
+      #sentence {
+        min-height: 90px;
+
+        display: flex;
+
+        flex-wrap: wrap;
+
+        align-items: center;
+
+        gap: 12px;
+
+        padding: 20px;
+
+        border-radius: 20px;
+
+        background: rgba(255, 255, 255, 0.08);
+
+        border: 2px dashed rgba(255, 255, 255, 0.2);
+      }
+
+      .word {
+        background: linear-gradient(135deg, #22c55e, #16a34a);
+
+        padding: 12px 18px;
+
+        border-radius: 15px;
+
+        animation: pop 0.3s;
+
+        box-shadow: 0 8px 20px #0005;
+      }
+
+      @keyframes pop {
+        from {
+          transform: scale(0.5);
+
+          opacity: 0;
+        }
+
+        to {
+          transform: scale(1);
+
+          opacity: 1;
+        }
+      }
+
+      .word button {
+        background: none;
+
+        box-shadow: none;
+
+        padding: 0;
+
+        font-size: 12px;
+      }
+
+      /* =====================
+ KELİME HAVUZU
+===================== */
+
+      #bank {
+        display: flex;
+
+        flex-wrap: wrap;
+
+        gap: 12px;
+
+        margin-top: 25px;
+      }
+
+      .chip {
+        padding: 14px 22px;
+
+        border-radius: 50px;
+
+        background: linear-gradient(135deg, #60a5fa, #2563eb);
+
+        cursor: pointer;
+
+        font-weight: 700;
+
+        box-shadow: 0 8px 20px #0006;
+
+        transition: 0.25s;
+
+        user-select: none;
+      }
+
+      .chip:hover {
+        transform: translateY(-6px) rotate(-2deg);
+      }
+
+      .chip:active {
+        transform: scale(0.9);
+      }
+
+      .hidden {
+        opacity: 0;
+
+        pointer-events: none;
+      }
+
+      /* =====================
+ GERİ BİLDİRİM
+===================== */
+
+      .feedback {
+        margin-top: 20px;
+
+        padding: 15px;
+
+        border-radius: 15px;
+
+        font-size: 20px;
+      }
+
+      .good {
+        background: #22c55e55;
+
+        border: 1px solid #22c55e;
+      }
+
+      .bad {
+        background: #ef444455;
+
+        border: 1px solid #ef4444;
+      }
+
+      /* =====================
+ BİTİŞ
+===================== */
+
+      #final {
+        margin-top: 25px;
+
+        font-size: 28px;
+
+        line-height: 2;
+
+        animation: show 0.5s;
+      }
+
+      /* =====================
+ MOBİL
+===================== */
+
+      @media (max-width: 600px) {
+        body {
+          padding: 10px;
+        }
+
+        .card {
+          padding: 20px;
+        }
+
+        h1 {
+          font-size: 25px;
+        }
+
+        .stats {
+          flex-direction: column;
+
+          gap: 10px;
+        }
+
+        button {
+          width: 100%;
+        }
+
+        .chip {
+          padding: 12px 16px;
+        }
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="container">
+      <div id="menu" class="card">
+        <h2>🎮 Sözcük Zinciri</h2>
+
+        <p>Zorluk seviyesini seç:</p>
+
+        <br />
+
+        <button onclick="chooseLevel(0)">🟢 Kolay</button>
+
+        <button onclick="chooseLevel(1)">🟡 Orta</button>
+
+        <button onclick="chooseLevel(2)">🔴 Zor</button>
+
+        <button onclick="chooseLevel(3)">🟣 Çok Zor</button>
+      </div>
+      <header>
+        <h1>🎮 Kelime Zinciri+</h1>
+
+        <select id="level">
+          <option value="0">Kolay</option>
+
+          <option value="1">Orta</option>
+
+          <option value="2">Zor</option>
+        </select>
+      </header>
+
+      <div class="card">
+        <div class="stats">
+          <div>
+            Skor:
+            <span id="score"> 0 </span>
+          </div>
+
+          <div id="combo">Combo:0</div>
+
+          <div id="lives">❤️❤️❤️</div>
+
+          <div>
+            ⏱
+            <span id="time"> 30 </span>
+          </div>
+        </div>
+
+        <h3 id="info">Doğru cümleyi oluştur</h3>
+
+        <div id="sentence"></div>
+
+        <div id="bank"></div>
+
+        <div id="feedback" class="feedback"></div>
+
+        <div class="controls">
+          <button id="submit">Gönder</button>
+
+          <button id="clear">Temizle</button>
+
+          <button id="restart">Yeniden Başlat</button>
+        </div>
+
+        <div id="final"></div>
+      </div>
     </div>
-    <div class="controls">
-      <select id="levelSelect" class="theme-select small">
-        <option value="0">Kolay</option>
-        <option value="1">Orta</option>
-        <option value="2">Zor</option>
-        <option value="3">Çok Zor</option>
-      </select>
+    <script>
+      // ================= VERİLER =================
 
-      <select id="theme" class="theme-select small">
-        <option value="dark">Karanlık</option>
-        <option value="light">Aydınlık</option>
-        <option value="blue">Mavi</option>
-        <option value="retro">Retro</option>
-        <option value="forest">Forest</option>
-        <option value="sunset">Sunset</option>
-        <option value="ocean">Ocean</option>
-        <option value="cyber">Cyber</option>
-        <option value="pastel">Pastel</option>
-      </select>
+      const levels = [
+        {
+          name: "Kolay",
 
-      <button id="fullscreen" class="btn small" style="background:var(--accent);color:#02203a;">Tam Ekran</button>
-      <button id="mute" class="btn small" style="background:var(--accent);color:#02203a;">🔊 Ses Aç</button>
-    </div>
-  </div>
+          sentences: [
+            "Ali top oynar",
 
-  <div class="card">
-    <div id="instruction"></div>
-    <div id="sentence"></div>
-    <div style="display:flex; gap:12px; flex-wrap:wrap;">
-      <div id="levelBadge">Seviye 1</div>
-      <div id="levelName">Kolay</div>
-      <div id="timer">30 s</div>
-    </div>
-    <div id="bank"></div>
-    <div id="feedback" class="feedback"></div>
+            "Kedi süt içer",
 
-    <div id="finalScreen"></div>
+            "Kuş uçar",
 
-    <div style="display:flex; gap:8px; margin-top:6px;">
-      <button id="submit" class="btn" style="background:var(--accent);color:#02203a;">Cümleyi Gönder</button>
-      <button id="restart" class="btn" disabled style="background:rgba(255,255,255,0.1);">Tekrar Başlat</button>
-      <button id="clear" class="btn" style="background:rgba(255,255,255,0.08);">Cümleyi Temizle</button>
-    </div>
-  </div>
-</div>
+            "Arı bal yapar",
 
-<script>
-/* ====================== VERİLER ============================= */
+            "Çocuk güler",
 
-const levels = [
-  {
-    name:"Kolay",
-    sentences:[
-      {text:"Ahmet sınıfta hızlıca kitap okuyor.", type:"zarf"},
-      {text:"Kırmızı elma ağacın dalında duruyor.", type:"isim"},
-      {text:"Büyük köpek bahçede uyuyor.", type:"sıfat"},
-      {text:"Öğrenciler bahçede gürültüsüz oynuyor.", type:"zarf"},
-      {text:"Top masanın üzerinde duruyor.", type:"isim"},
-      {text:"Küçük kuş ağaçta ötüyor.", type:"sıfat"}
-    ]
-  },
-  {
-    name:"Orta",
-    sentences:[
-      {text:"Ahmet dün akşam ödevini dikkatlice yaptı.", type:"zarf"},
-      {text:"Büyük beyaz kedi çatıya tırmandı.", type:"isim"},
-      {text:"Küçük mavi araba yolda durdu.", type:"sıfat"},
-      {text:"Ayşe sabah erkenden okula gitti.", type:"zarf"},
-      {text:"Eski kitap rafın üzerinde duruyor.", type:"isim"},
-      {text:"Uzun ince kalem masanın kenarında duruyor.", type:"sıfat"}
-    ]
-  },
-  {
-    name:"Zor",
-    sentences:[
-      {text:"Öğrenciler kütüphanede sessizce kitap okuyor.", type:"zarf"},
-      {text:"Eski ve büyük ev sokak köşesinde duruyor.", type:"sıfat"},
-      {text:"Yeşil ve kırmızı elmalar bahçede duruyor.", type:"isim"},
-      {text:"Çocuklar parkta neşeyle koşuşturuyor.", type:"zarf"},
-      {text:"Geniş camlı modern bina şehrin merkezinde bulunuyor.", type:"sıfat"},
-      {text:"Taze ekmekler fırında sergileniyor.", type:"isim"}
-    ]
-  },
-  {
-    name:"Çok Zor",
-    sentences:[
-      {text:"Öğrenciler kütüphanede sessizce ve dikkatlice çalışıyor.", type:"zarf"},
-      {text:"Büyük kırmızı ve yeşil elmalar bahçede duruyor.", type:"isim"},
-      {text:"Ahmet dün sabah erken kalkarak sınavını dikkatle yaptı.", type:"zarf"},
-      {text:"Küçük çocuklar parka sabahın erken saatlerinde giderek birlikte oynadı.", type:"zarf"},
-      {text:"Uzun ince metal merdiven duvara yaslanmış duruyor.", type:"isim"},
-      {text:"Geniş yapraklı yüksek ağaçlar şiddetli rüzgârda sallanıyordu.", type:"sıfat"}
-    ]
-  }
-];
+            "Anne yemek yapar",
+          ],
+        },
+
+        {
+          name: "Orta",
+
+          sentences: [
+            "Ali parkta top oynar",
+
+            "Küçük kedi süt içer",
+
+            "Mavi kuş ağaçta uçar",
+
+            "Çocuk okulda kitap okur",
+
+            "Babam sabah kahve içer",
+          ],
+        },
+
+        {
+          name: "Zor",
+
+          sentences: [
+            "Öğrenciler sessizce kitap okuyor",
+
+            "Büyük köpek bahçede hızlı koşuyor",
+
+            "Yeşil araba uzun yolda ilerliyor",
+
+            "Çocuklar parkta neşeyle oynuyor",
+          ],
+        },
+
+        {
+          name: "Çok Zor",
+
+          sentences: [
+            "Öğrenciler kütüphanede dikkatlice uzun kitaplar okuyor",
+
+            "Yaşlı adam sabah erkenden yürüyüş yapıyor",
+
+            "Renkli kuşlar yüksek ağaçların üzerinde uçuyor",
+
+            "Genç sporcular yarışmaya hazırlanıyor",
+          ],
+        },
+      ];
+
+      // ================= STATE =================
+
+      let state = {
+        level: 0,
+
+        index: 0,
+
+        score: 0,
+
+        combo: 0,
+
+        lives: 3,
+
+        time: 30,
+      };
+
+      let selected = [];
+
+      let timer;
+
+      let best = localStorage.getItem("bestScore") || 0;
+
+      // ================= ELEMENTLER =================
+
+      const sentence = document.getElementById("sentence");
+
+      const bank = document.getElementById("bank");
+
+      const score = document.getElementById("score");
+
+      const combo = document.getElementById("combo");
+
+      const lives = document.getElementById("lives");
+
+      const time = document.getElementById("time");
+
+      const feedback = document.getElementById("feedback");
+
+      const info = document.getElementById("info");
+
+      const final = document.getElementById("final");
+
+      const submit = document.getElementById("submit");
+
+      const clear = document.getElementById("clear");
+
+      const restart = document.getElementById("restart");
+
+      const level = document.getElementById("level");
+
+      // ================= OYUN BAŞLAT =================
+
+      function startGame() {
+        state.index = 0;
+
+        state.score = 0;
+
+        state.combo = 0;
+
+        state.lives = 3;
+
+        updateUI();
+
+        loadSentence();
+      }
+
+      function loadSentence() {
+        clearInterval(timer);
+
+        sentence.innerHTML = "";
+
+        bank.innerHTML = "";
+
+        feedback.innerHTML = "";
+
+        selected = [];
+
+        let text = [state.level].sentences[state.index];
+
+        info.textContent = "Kelimeyi doğru sıraya diz";
+
+        let words = text.split(" ");
+
+        shuffle(words);
+
+        words.forEach((word) => {
+          let chip = document.createElement("div");
+
+          chip.className = "chip";
+
+          chip.textContent = word;
+
+          chip.onclick = () => {
+            addWord(word, chip);
+          };
+
+          bank.appendChild(chip);
+        });
+
+        state.time = 30;
+
+        time.textContent = state.time;
+
+        startTimer();
+      }
+
+      // ================= KELİME EKLEME =================
+
+      function addWord(word, element) {
+        if (selected.includes(word)) return;
+
+        selected.push(word);
+
+        element.classList.add("hidden");
+
+        let box = document.createElement("div");
+
+        box.className = "word";
+
+        box.innerHTML =
+          word +
+          `
+<button>❌</button>
+`;
+
+        box.querySelector("button").onclick = () => {
+          selected = selected.filter((x) => x !== word);
+
+          box.remove();
+
+          [...bank.children].forEach((c) => {
+            if (c.textContent === word) c.classList.remove("hidden");
+          });
+        };
+
+        sentence.appendChild(box);
+      }
+
+      // ================= KONTROL =================
+
+      submit.onclick = () => {
+        let correct = levels[state.level].sentences[state.index]
+          .split(" ")
+          .join(" ");
+
+        let answer = selected.join(" ");
+
+        if (answer === correct) {
+          feedback.textContent = "🎉 Doğru!";
+
+          feedback.className = "feedback good";
+
+          state.combo++;
+
+          state.score += 10 + state.combo * 2;
+
+          next();
+        } else {
+          feedback.textContent = "❌ Yanlış";
+
+          feedback.className = "feedback bad";
+
+          state.combo = 0;
+
+          state.lives--;
+
+          if (state.lives <= 0) endGame();
+        }
+
+        updateUI();
+      };
+
+      // ================= SONRAKİ =================
+
+      function next() {
+        state.index++;
+
+        if (state.index >= levels[state.level].sentences.length) {
+          state.index = 0;
+
+          if (state.level < levels.length - 1) state.level++;
+          else endGame();
+        }
+
+        setTimeout(loadSentence, 700);
+      }
+
+      // ================= TIMER =================
+
+      function startTimer() {
+        timer = setInterval(() => {
+          state.time--;
+
+          time.textContent = state.time;
+
+          if (state.time <= 0) {
+            clearInterval(timer);
+
+            state.combo = 0;
+
+            state.lives--;
+
+            if (state.lives <= 0) endGame();
+            else loadSentence();
+
+            updateUI();
+          }
+        }, 1000);
+      }
+
+      // ================= UI =================
+
+      function updateUI() {
+        score.textContent = state.score;
+
+        combo.textContent = "Combo:" + state.combo;
+
+        lives.textContent = "❤️".repeat(state.lives);
+      }
+
+      // ================= BİTİŞ =================
+
+ function endGame(){
+
+saveScore(state.score);
+
+}
+async function saveScore(score){
 
 
-/* ====================== STATE ============================= */
+await fetch(
+"/api/game/score",
+{
 
-let state={level:0,score:0,sentenceIndex:0,retry:3,time:30};
-let sentenceWords=[];
-let timer=null;
-let dragging=null;
-let sound=true;
+method:"POST",
 
-/* ====================== ELEMENTLER ========================= */
+headers:{
 
-const bank=document.getElementById('bank');
-const sentence=document.getElementById('sentence');
-const feedback=document.getElementById('feedback');
-const levelBadge=document.getElementById('levelBadge');
-const levelName=document.getElementById('levelName');
-const instruction=document.getElementById('instruction');
-const restart=document.getElementById('restart');
-const submit=document.getElementById('submit');
-const clearBtn=document.getElementById('clear');
-const timerEl=document.getElementById('timer');
-const themeSelect=document.getElementById('theme');
-const fullscreenBtn=document.getElementById('fullscreen');
-const levelSelect=document.getElementById('levelSelect');
-const muteBtn=document.getElementById('mute');
-const finalScreen=document.getElementById('finalScreen');
+"Content-Type":"application/json"
 
-/* ====================== SESLER ============================= */
+},
 
-const sfx={
-  correct:new Audio("https://assets.mixkit.co/active_storage/sfx/2206/2206-preview.mp3"),
-  wrong:new Audio("https://assets.mixkit.co/active_storage/sfx/2018/2018-preview.mp3"),
-  time:new Audio("https://assets.mixkit.co/active_storage/sfx/2589/2589-preview.mp3"),
-  click:new Audio("https://assets.mixkit.co/active_storage/sfx/2448/2448-preview.mp3")
-};
-Object.values(sfx).forEach(a=>a.volume=0.45);
+body:JSON.stringify({
 
-/* ====================== CONFETTI =========================== */
+userId:currentUser.id,
 
-function confetti(){
-  for(let i=0;i<25;i++){
-    const c=document.createElement('div');
-    c.className='confetti';
-    c.style.left=Math.random()*100+"vw";
-    c.style.background=`hsl(${Math.random()*360},80%,60%)`;
-    document.body.appendChild(c);
-    setTimeout(()=>c.remove(),2200);
-  }
+score:score
+
+})
+
+});
+
+
 }
 
-/* ====================== OYUN İŞLEYİŞİ ======================= */
+      // ================= YARDIMCI =================
 
-function loadSentence(){
-  clearInterval(timer);
-  sentence.innerHTML="";
-  bank.innerHTML="";
-  feedback.style.display="none";
-  finalScreen.style.display="none";
-  sentenceWords=[];
+      function shuffle(array) {
+        return array.sort(() => Math.random() - 0.5);
+      }
 
-  const lvl=levels[state.level];
-  const s=lvl.sentences[state.sentenceIndex];
+      clear.onclick = () => {
+        selected = [];
 
-  instruction.textContent=`Talimat: ${s.type} cümlesi oluştur`;
+        sentence.innerHTML = "";
 
-  const words=s.text.replace(/[.,!?]/g,'').split(' ').sort(()=>Math.random()-0.5);
-  words.forEach(w=>{
-    const chip=document.createElement('div');
-    chip.className='chip';
-    chip.textContent=w;
-    chip.draggable=true;
+        [...bank.children].forEach((c) => {
+          c.classList.remove("hidden");
+        });
+      };
 
-    chip.addEventListener('dragstart',()=>{dragging=w; chip.classList.add('dragging');});
-    chip.addEventListener('dragend',()=>{dragging=null; chip.classList.remove('dragging');});
-    chip.addEventListener('click',()=>{if(sound)sfx.click.play(); addWord(w);});
+      restart.onclick = startGame;
 
-    bank.appendChild(chip);
-  });
+      level.onchange = () => {
+        state.level = Number(level.value);
 
-  state.time=30;
-  timerEl.textContent=state.time+" s";
-  startTimer();
-}
+        startGame();
+      };
 
-function addWord(w){
-  if(sentenceWords.includes(w)) return;
-  sentenceWords.push(w);
+      const menu = document.getElementById("menu");
 
-  const box=document.createElement('div');
-  box.className='word-box';
-  box.innerHTML=`${w} <button class="remove">✕</button>`;
-  box.querySelector(".remove").onclick=()=>{
-    sentenceWords=sentenceWords.filter(x=>x!==w);
-    box.remove();
-  }
-  sentence.appendChild(box);
-}
+      function chooseLevel(lvl) {
+        state.level = lvl;
 
-sentence.addEventListener("dragover",e=>e.preventDefault());
-sentence.addEventListener("drop",()=>{if(dragging)addWord(dragging);});
+        menu.style.display = "none";
 
-submit.onclick=()=>{
-  const original=levels[state.level].sentences[state.sentenceIndex].text.replace(/[.,!?]/g,'');
-  const user=sentenceWords.join(' ');
-  if(user===original.split(' ').join(' ')){
-    feedback.textContent='Doğru!';
-    feedback.className='feedback correct';
-    feedback.style.display='block';
-
-    if(sound)sfx.correct.play();
-    confetti();
-    randomTheme();
-
-    state.score+=10;
-    next();
-  } else {
-    feedback.textContent='Yanlış!';
-    feedback.className='feedback wrong';
-    feedback.style.display='block';
-
-    if(sound)sfx.wrong.play();
-    state.retry--;
-    if(state.retry<=0) end();
-  }
-};
-
-clearBtn.onclick=()=>{sentenceWords=[]; sentence.innerHTML=""; feedback.style.display="none";}
-
-function next(){
-  state.sentenceIndex++;
-if(state.sentenceIndex>=levels[state.level].sentences.length){
-  state.sentenceIndex=0;
-  if(state.level<levels.length-1){
-    state.level++; state.retry=3;
-    levelBadge.textContent=`Seviye ${state.level+1}`;
-    levelName.textContent=levels[state.level].name;
-  } else return end();
-}
-
-  loadSentence();
-}
-
-function startTimer(){
-  clearInterval(timer);
-  timer=setInterval(()=>{
-    state.time--;
-    timerEl.textContent=state.time+" s";
-    if(state.time<=0){
-      clearInterval(timer);
-      if(sound)sfx.time.play();
-      state.retry--;
-      if(state.retry<=0) end();
-      else loadSentence();
-    }
-  },1000);
-}
-
-function end(){
-  clearInterval(timer);
-  submit.disabled=true;
-  restart.disabled=false;
-
-  finalScreen.textContent=`Oyun Bitti! Skor: ${state.score}`;
-  finalScreen.style.display='block';
-}
-restart.onclick=()=>{
-  state={level:0,score:0,sentenceIndex:0,retry:3,time:30};
-  submit.disabled=false;
-  restart.disabled=true;
-  levelBadge.textContent="Seviye 1";
-  levelName.textContent="Kolay";
-  loadSentence();
-};
-
-
-/* ====================== TEMA & TAM EKRAN =================== */
-
-const themes=["dark","light","blue","retro","forest","sunset","ocean","cyber","pastel"];
-function randomTheme(){
-  const current=document.body.className.replace('theme-','');
-  let t;
-  do{t=themes[Math.floor(Math.random()*themes.length)];}while(t===current);
-  fadeTransition(()=>document.body.className=`theme-${t}`);
-  themeSelect.value=t;
-}
-
-function fadeTransition(cb){
-  document.body.classList.add("fade");
-  setTimeout(()=>{cb(); document.body.classList.remove("fade");},200);
-}
-
-themeSelect.onchange=()=>fadeTransition(()=>document.body.className=`theme-${themeSelect.value}`);
-
-fullscreenBtn.onclick=()=>!document.fullscreenElement?document.documentElement.requestFullscreen():document.exitFullscreen();
-muteBtn.onclick=()=>{sound=!sound; muteBtn.textContent=sound?'🔊 Ses Aç':'🔇 Ses Kapalı';}
-
-
-
-/* =========================================================== */
-loadSentence();
-</script>
-</body>
+        startGame();
+      }
+      menu.style.display = "block";
+    </script>
+  </body>
 </html>

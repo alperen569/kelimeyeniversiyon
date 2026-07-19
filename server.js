@@ -135,7 +135,14 @@ function requireAuth(req, res, next) {
 
 
 
+const gameRoutes =
+require("./routes/game");
 
+
+app.use(
+"/api/game",
+gameRoutes
+);
 
 app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "pc", "login.html"));

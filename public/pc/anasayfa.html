@@ -2732,7 +2732,33 @@ assistantStatsBtn?.addEventListener('click', () => {
         localStorage.setItem("darkMode", darkModeToggle.checked);
         applyDarkMode(darkModeToggle.checked);
       });
+async function loadScore(){
 
+
+const res =
+await fetch(
+"/api/game/score/"
++
+currentUser.id
+);
+
+
+
+const data =
+await res.json();
+
+
+
+document
+.getElementById("score")
+.textContent =
+data.total_score;
+
+
+}
+
+
+loadScore();
       function applyDarkMode(isDark) {
         if (isDark) {
           document.body.classList.remove("bg-slate-100", "text-slate-900");
