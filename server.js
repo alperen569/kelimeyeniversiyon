@@ -244,7 +244,7 @@ app.post("/start-game", (req, res) => {
   res.json({ success: true });
 });
 
-app.get("/pc/anasayfa.html", requireAuth, (req, res) => {
+app.get("/pc/anasayfa.html", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "pc", "anasayfa.html"));
 });
 

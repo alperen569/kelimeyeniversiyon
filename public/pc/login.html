@@ -454,6 +454,8 @@ async function login(){
       return;
     }
 
+    sessionStorage.setItem("kw_logged_in", "true");
+    sessionStorage.setItem("kw_username", isim);
     if (window.kwNavigate) {
       window.kwNavigate("/pc/anasayfa.html");
     } else {

@@ -2680,7 +2680,13 @@ assistantStatsBtn?.addEventListener('click', () => {
           })
           .then((data) => {
             if (!data.loggedIn) {
-              window.location.href = "login.html";
+              const fallbackLogin =
+                sessionStorage.getItem("kw_logged_in") === "true";
+              if (!fallbackLogin) {
+                window.location.href = "login.html";
+                return;
+              }
+              setMockUserData();
               return;
             }
             applyUserData(data);
