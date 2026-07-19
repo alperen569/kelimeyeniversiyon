@@ -440,6 +440,9 @@
           padding: 12px 16px;
         }
       }
+      .game-area {
+        display: none;
+      }
     </style>
   </head>
 
@@ -472,7 +475,7 @@
         </select>
       </header>
 
-      <div class="card">
+      <div class="card game-area">
         <div class="stats">
           <div>
             Skor:
@@ -509,85 +512,55 @@
       </div>
     </div>
     <script>
-      // ================= VERİLER =================
-
       const levels = [
         {
           name: "Kolay",
-
           sentences: [
             "Ali top oynar",
-
             "Kedi süt içer",
-
             "Kuş uçar",
-
             "Arı bal yapar",
-
             "Çocuk güler",
-
-            "Anne yemek yapar",
           ],
         },
 
         {
           name: "Orta",
-
           sentences: [
             "Ali parkta top oynar",
-
             "Küçük kedi süt içer",
-
             "Mavi kuş ağaçta uçar",
-
             "Çocuk okulda kitap okur",
-
-            "Babam sabah kahve içer",
           ],
         },
 
         {
           name: "Zor",
-
           sentences: [
             "Öğrenciler sessizce kitap okuyor",
-
             "Büyük köpek bahçede hızlı koşuyor",
-
             "Yeşil araba uzun yolda ilerliyor",
-
-            "Çocuklar parkta neşeyle oynuyor",
           ],
         },
 
         {
           name: "Çok Zor",
-
           sentences: [
-            "Öğrenciler kütüphanede dikkatlice uzun kitaplar okuyor",
-
-            "Yaşlı adam sabah erkenden yürüyüş yapıyor",
-
+            "Öğrenciler kütüphanede dikkatlice kitap okuyor",
             "Renkli kuşlar yüksek ağaçların üzerinde uçuyor",
-
             "Genç sporcular yarışmaya hazırlanıyor",
           ],
         },
       ];
 
-      // ================= STATE =================
+      // STATE
 
       let state = {
         level: 0,
-
         index: 0,
-
         score: 0,
-
         combo: 0,
-
         lives: 3,
-
         time: 30,
       };
 
@@ -595,9 +568,11 @@
 
       let timer;
 
-      let best = localStorage.getItem("bestScore") || 0;
+      // ELEMENTLER
 
-      // ================= ELEMENTLER =================
+      const menu = document.getElementById("menu");
+
+      const game = document.querySelector(".game-area");
 
       const sentence = document.getElementById("sentence");
 
@@ -617,17 +592,23 @@
 
       const final = document.getElementById("final");
 
-      const submit = document.getElementById("submit");
+      // ZORLUK SEÇME
 
-      const clear = document.getElementById("clear");
+      function chooseLevel(lvl) {
+        state.level = lvl;
 
-      const restart = document.getElementById("restart");
+        menu.style.display = "none";
 
-      const level = document.getElementById("level");
+        game.style.display = "block";
 
-      // ================= OYUN BAŞLAT =================
+        startGame();
+      }
+
+      // BAŞLAT
 
       function startGame() {
+        clearInterval(timer);
+
         state.index = 0;
 
         state.score = 0;
@@ -636,10 +617,16 @@
 
         state.lives = 3;
 
+        final.innerHTML = "";
+
+        final.style.display = "none";
+
         updateUI();
 
         loadSentence();
       }
+
+      // CÜMLE YÜKLE
 
       function loadSentence() {
         clearInterval(timer);
@@ -652,9 +639,7 @@
 
         selected = [];
 
-        let text = [state.level].sentences[state.index];
-
-        info.textContent = "Kelimeyi doğru sıraya diz";
+        let text = levels[state.level].sentences[state.index];
 
         let words = text.split(" ");
 
@@ -681,7 +666,7 @@
         startTimer();
       }
 
-      // ================= KELİME EKLEME =================
+      // KELİME EKLE
 
       function addWord(word, element) {
         if (selected.includes(word)) return;
@@ -705,25 +690,21 @@
 
           box.remove();
 
-          [...bank.children].forEach((c) => {
-            if (c.textContent === word) c.classList.remove("hidden");
-          });
+          element.classList.remove("hidden");
         };
 
         sentence.appendChild(box);
       }
 
-      // ================= KONTROL =================
+      // KONTROL
 
-      submit.onclick = () => {
-        let correct = levels[state.level].sentences[state.index]
-          .split(" ")
-          .join(" ");
+      document.getElementById("submit").onclick = () => {
+        let correct = levels[state.level].sentences[state.index];
 
         let answer = selected.join(" ");
 
         if (answer === correct) {
-          feedback.textContent = "🎉 Doğru!";
+          feedback.textContent = "🎉 Doğru";
 
           feedback.className = "feedback good";
 
@@ -741,13 +722,15 @@
 
           state.lives--;
 
-          if (state.lives <= 0) endGame();
+          if (state.lives <= 0) {
+            endGame();
+          }
         }
 
         updateUI();
       };
 
-      // ================= SONRAKİ =================
+      // SONRAKİ
 
       function next() {
         state.index++;
@@ -755,14 +738,18 @@
         if (state.index >= levels[state.level].sentences.length) {
           state.index = 0;
 
-          if (state.level < levels.length - 1) state.level++;
-          else endGame();
+          if (state.level < 3) state.level++;
+          else {
+            endGame();
+
+            return;
+          }
         }
 
         setTimeout(loadSentence, 700);
       }
 
-      // ================= TIMER =================
+      // TIMER
 
       function startTimer() {
         timer = setInterval(() => {
@@ -773,9 +760,9 @@
           if (state.time <= 0) {
             clearInterval(timer);
 
-            state.combo = 0;
-
             state.lives--;
+
+            state.combo = 0;
 
             if (state.lives <= 0) endGame();
             else loadSentence();
@@ -785,7 +772,7 @@
         }, 1000);
       }
 
-      // ================= UI =================
+      // UI
 
       function updateUI() {
         score.textContent = state.score;
@@ -795,75 +782,76 @@
         lives.textContent = "❤️".repeat(state.lives);
       }
 
-      // ================= BİTİŞ =================
+      // OYUN BİTİŞ
 
- function endGame(){
+      function endGame() {
+        clearInterval(timer);
 
-saveScore(state.score);
+        saveScore(state.score);
 
-}
-async function saveScore(score){
+        final.style.display = "block";
 
+        final.innerHTML = `
 
-await fetch(
-"/api/game/score",
-{
-
-method:"POST",
-
-headers:{
-
-"Content-Type":"application/json"
-
-},
-
-body:JSON.stringify({
-
-userId:currentUser.id,
-
-score:score
-
-})
-
-});
+<h2>🎮 Oyun Bitti</h2>
 
 
-}
+<p>
+Skor:
+<b>${state.score}</b>
+</p>
 
-      // ================= YARDIMCI =================
 
-      function shuffle(array) {
-        return array.sort(() => Math.random() - 0.5);
+<button onclick="startGame()">
+Tekrar Oyna
+</button>
+
+`;
       }
 
-      clear.onclick = () => {
+      // MYSQL API
+
+      async function saveScore(score) {
+        try {
+          await fetch("/api/game/score", {
+            method: "POST",
+
+            headers: {
+              "Content-Type": "application/json",
+            },
+
+            body: JSON.stringify({
+              userId: 1,
+
+              score: score,
+            }),
+          });
+
+          console.log("puan gönderildi");
+        } catch (err) {
+          console.log(err);
+        }
+      }
+
+      // TEMİZLE
+
+      document.getElementById("clear").onclick = () => {
         selected = [];
 
         sentence.innerHTML = "";
 
-        [...bank.children].forEach((c) => {
-          c.classList.remove("hidden");
+        [...bank.children].forEach((x) => {
+          x.classList.remove("hidden");
         });
       };
 
-      restart.onclick = startGame;
+      // YENİDEN
 
-      level.onchange = () => {
-        state.level = Number(level.value);
+      document.getElementById("restart").onclick = startGame;
 
-        startGame();
-      };
-
-      const menu = document.getElementById("menu");
-
-      function chooseLevel(lvl) {
-        state.level = lvl;
-
-        menu.style.display = "none";
-
-        startGame();
+      function shuffle(arr) {
+        return arr.sort(() => Math.random() - 0.5);
       }
-      menu.style.display = "block";
     </script>
   </body>
 </html>
