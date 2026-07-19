@@ -430,7 +430,7 @@ app.get("/road-state", async (req, res) => {
  ROAD CLAIM
 */
 
-aapp.post("/road-claim", async (req, res) => {
+app.post("/road-claim", async (req, res) => {
   const username = getCurrentUsername(req);
 
   if (!username) {
@@ -526,10 +526,6 @@ app.post("/logout", (req, res) => {
     });
   });
 });
-
-/*
- START SERVER
-*/
 
 const server = http.createServer(app);
 
