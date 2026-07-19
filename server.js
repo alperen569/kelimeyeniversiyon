@@ -2,13 +2,17 @@ require("dotenv").config();
 
 const express = require("express");
 const helmet = require("helmet");
-app.use(helmet());
 const session = require("express-session");
 const path = require("path");
 const http = require("http");
 const { initializeDatabase, createUser, findUser, getUsersWithRanks, updateUserScore, addClaimedRoadReward, getUserSnapshot, getProgressSnapshot, getScoreTitle } = require("./db");
 
+// 1. Önce app nesnesini oluşturuyoruz
 const app = express();
+
+// 2. Şimdi app nesnesini güvenle kullanabiliriz
+app.use(helmet());
+
 app.use(session({
     secret: process.env.SESSION_SECRET,
     resave: false,
@@ -18,10 +22,11 @@ app.use(session({
         httpOnly: true,
         secure: true,
         sameSite: "lax"
-}
+    }
 }));
 const server = http.createServer(app);
 const PORT = 3000;
+
 const db = initializeDatabase();
 const gameRoutes = {
   "/ilkokul-level-1": "Kelime OKyanusu İLKOKUL/İLKOKUL level 1.html",
