@@ -10,17 +10,21 @@ const { initializeDatabase, createUser, findUser, getUsersWithRanks, updateUserS
 // 1. Önce app nesnesini oluşturuyoruz
 const app = express();
 
+// 💡 ÇÖZÜM 1: HTTPS (Nginx/Cloudflare proxy) arkasında session çerezlerinin tarayıcıya ulaşması için bu şarttır!
+app.set("trust proxy", 1);
+
 // 2. Şimdi app nesnesini güvenle kullanabiliriz
 app.use(helmet());
 
 app.use(session({
-    secret: process.env.SESSION_SECRET,
+    // 💡 ÇÖZÜM 3: .env dosyası okunamazsa bile sunucu çökmesin diye yedek şifre ekledik
+    secret: process.env.SESSION_SECRET || "kelime_okyanusu_gizli_anahtar_9876",
     resave: false,
     saveUninitialized: false,
     cookie: {
         maxAge: 1000 * 60 * 60,
         httpOnly: true,
-        secure: true,
+        secure: true, // HTTPS canlı ortamda true kalmalı
         sameSite: "lax"
     }
 }));
@@ -56,12 +60,13 @@ function getCurrentUsername(req) {
   return getCookieValue(req, "kw_user");
 }
 
+// 💡 ÇÖZÜM 2: HTTPS ortamına uygun olarak çerezlere "Secure;" etiketi ekledik
 function setLoginCookie(res, isim) {
-  res.setHeader("Set-Cookie", `kw_user=${encodeURIComponent(isim)}; Path=/; SameSite=Lax`);
+  res.setHeader("Set-Cookie", `kw_user=${encodeURIComponent(isim)}; Path=/; Secure; SameSite=Lax`);
 }
 
 function clearLoginCookie(res) {
-  res.setHeader("Set-Cookie", "kw_user=; Path=/; Max-Age=0; SameSite=Lax");
+  res.setHeader("Set-Cookie", "kw_user=; Path=/; Max-Age=0; Secure; SameSite=Lax");
 }
 
 function getActiveUserSnapshot(username) {
@@ -86,6 +91,7 @@ function getLeaderboard(limit) {
   return users;
 }
 
+// buildRoadStateResponse fonksiyonu
 function buildRoadStateResponse(snapshot) {
   const currentMilestones = snapshot.currentMilestones || [];
   return {
@@ -107,52 +113,38 @@ function buildRoadStateResponse(snapshot) {
   };
 }
 
-
 app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "pc", "login.html"));
 }); 
-
 
 app.get("/pc", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "pc", "login.html"));
 });
 
-
-
 app.use(["/pc/cokoyunculu", "/pc/cokoyunculu.html"], (req, res) => {
   res.status(404).send("Cok oyunculu ozellik kaldirildi.");
 });
+
 Object.entries(gameRoutes).forEach(([route, file]) => {
-
     app.get(route, (req, res) => {
-
         if (!req.session.loggedIn) {
             return res.redirect("/pc/login.html");
         }
-
         if (!req.session.inGame) {
             return res.redirect("/pc/anasayfa.html");
         }
-
         res.sendFile(
-            path.join(__dirname, "public", "games", file)
+            path.join(__dirname, "public", "pc", file)
         );
-
     });
-
 });
+
 // STATIC DOSYALAR
 app.use("/pc", (req, res, next) => {
-
-    // Login sayfası herkese açık
-    if (
-        req.path === "/" ||
-        req.path === "/login.html" 
-    ) {
+    if (req.path === "/" || req.path === "/login.html") {
         return next();
     }
 
-    // CSS, JS, resimler serbest
     if (
         req.path.endsWith(".css") ||
         req.path.endsWith(".js") ||
@@ -168,22 +160,17 @@ app.use("/pc", (req, res, next) => {
         return next();
     }
 
-    // Giriş yapılmamışsa
     if (!req.session.loggedIn) {
         return res.redirect("/pc/login.html");
     }
 
-    // Level sayfaları sadece Başlat'tan sonra açılsın
     if (req.path.includes("Level")) {
-
         if (!req.session.inGame) {
             return res.redirect("/pc/anasayfa.html");
         }
-
     }
 
     next();
-
 });
 
 app.use("/pc", express.static(path.join(__dirname, "public", "pc")));
@@ -221,17 +208,15 @@ app.post("/login", (req, res) => {
   req.session.loggedIn = true;
   res.json({ success: true });
 });
-app.post("/start-game", (req, res) => {
 
+app.post("/start-game", (req, res) => {
     if (!req.session.loggedIn) {
         return res.sendStatus(401);
     }
-
     req.session.inGame = true;
-
     res.json({ success: true });
-
 });
+
 // ANASAYFA KORUMA - PC
 app.get("/pc/anasayfa.html", (req, res) => {
   if (!getCurrentUsername(req)) {
@@ -239,9 +224,6 @@ app.get("/pc/anasayfa.html", (req, res) => {
   }
   res.sendFile(path.join(__dirname, "public", "pc", "anasayfa.html"));
 });
-
-
-
 
 app.get("/pc/kelime_avı.html", (req, res) => {
   if (!getCurrentUsername(req)) {
@@ -295,7 +277,7 @@ app.get("/leaderboard", (req, res) => {
   res.json({ success: true, users });
 });
 
-// SKOR KAYDET -> PUANI ARTIR, DOSYADA SIRA NUMARASINI KORU
+// SKOR KAYDET
 app.post("/save-score", (req, res) => {
   const { score, dogruSayisi, yanlisSayisi, toplamSoru } = req.body;
   const currentUser = getCurrentUsername(req);
@@ -409,5 +391,5 @@ app.post("/logout", (req, res) => {
 });
 
 server.listen(PORT, "0.0.0.0", () => {
-  console.log("Server çalışıyor → http://0.0.0.0");
+  console.log("Server çalışıyor → http://0.0.0.0:" + PORT);
 });
