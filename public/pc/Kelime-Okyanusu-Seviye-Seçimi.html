@@ -1,140 +1,161 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="tr">
-<head>
-<link rel="stylesheet" href="/shared/ocean-loader.css">
-<script src="/shared/ocean-loader.js"></script>
+  <head>
+    <link rel="stylesheet" href="/shared/ocean-loader.css" />
+    <script src="/shared/ocean-loader.js"></script>
 
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, viewport-fit=cover"
+    />
     <title>Seviye Seçimi</title>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+    <link
+      href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap"
+      rel="stylesheet"
+    />
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Poppins', sans-serif;
-        }
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+        font-family: "Poppins", sans-serif;
+      }
 
-        body {
-            min-height: 100vh;
-            min-height: 100dvh;
-            padding: max(16px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) max(16px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
-            background: linear-gradient(135deg, #111b79, #00eeff);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            overflow-x: hidden;
-        }
+      body {
+        min-height: 100vh;
+        min-height: 100dvh;
+        padding: max(16px, env(safe-area-inset-top))
+          max(16px, env(safe-area-inset-right))
+          max(16px, env(safe-area-inset-bottom))
+          max(16px, env(safe-area-inset-left));
+        background: linear-gradient(135deg, #111b79, #00eeff);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow-x: hidden;
+      }
 
+      .container {
+        background: rgba(0, 153, 255, 0.349);
+        backdrop-filter: blur(15px);
+        border-radius: 24px;
+        padding: 34px;
+        width: min(92vw, 430px);
+        box-shadow: 0 25px 40px rgba(0, 0, 0, 0.3);
+        text-align: center;
+      }
+
+      .container h1 {
+        color: #ffffff;
+        margin-bottom: 22px;
+        font-size: clamp(24px, 6vw, 30px);
+        letter-spacing: 1px;
+        font-weight: bold;
+      }
+
+      .level {
+        display: block;
+        padding: 20px 18px;
+        margin: 14px 0;
+        border-radius: 18px;
+        text-decoration: none;
+        color: #fff;
+        font-size: clamp(18px, 4.6vw, 22px);
+        font-weight: 600;
+        transition: 0.3s ease;
+        min-height: 68px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        touch-action: manipulation;
+      }
+
+      .level:hover {
+        transform: translateY(-2px) scale(1.02);
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4);
+      }
+
+      .primary {
+        background: linear-gradient(135deg, #008cff, #0072ff);
+      }
+
+      .middle {
+        background: linear-gradient(135deg, #f7971e, #ffd200);
+        color: #333;
+      }
+
+      .high {
+        background: linear-gradient(135deg, #ff2f2f, #dd2496);
+      }
+
+      @media (max-width: 450px) {
         .container {
-            background: rgba(0, 153, 255, 0.349);
-            backdrop-filter: blur(15px);
-            border-radius: 24px;
-            padding: 34px;
-            width: min(92vw, 430px);
-            box-shadow: 0 25px 40px rgba(0,0,0,0.3);
-            text-align: center;
-        }
-
-        .container h1 {
-            color: #ffffff;
-            margin-bottom: 22px;
-            font-size: clamp(24px, 6vw, 30px);
-            letter-spacing: 1px;
-            font-weight: bold;
+          width: 100%;
+          padding: 24px 16px;
+          border-radius: 20px;
         }
 
         .level {
-            display: block;
-            padding: 20px 18px;
-            margin: 14px 0;
-            border-radius: 18px;
-            text-decoration: none;
-            color: #fff;
-            font-size: clamp(18px, 4.6vw, 22px);
-            font-weight: 600;
-            transition: 0.3s ease;
-            min-height: 68px;
-            display:flex;
-            align-items:center;
-            justify-content:center;
-            gap:10px;
-            touch-action: manipulation;
+          margin: 12px 0;
+          padding: 18px 14px;
+          min-height: 72px;
+        }
+      }
+
+      @media (max-width: 380px) {
+        .container h1 {
+          margin-bottom: 18px;
         }
 
-        .level:hover {
-            transform: translateY(-2px) scale(1.02);
-            box-shadow: 0 10px 25px rgba(0,0,0,0.4);
+        .level {
+          font-size: 17px;
+          border-radius: 16px;
         }
-
-        .primary {
-            background: linear-gradient(135deg, #008cff, #0072ff);
-        }
-
-        .middle {
-            background: linear-gradient(135deg, #f7971e, #ffd200);
-            color: #333;
-        }
-
-        .high {
-            background: linear-gradient(135deg, #ff2f2f, #dd2496);
-        }
-
-        @media (max-width: 450px) {
-            .container {
-                width: 100%;
-                padding: 24px 16px;
-                border-radius: 20px;
-            }
-
-            .level {
-                margin: 12px 0;
-                padding: 18px 14px;
-                min-height: 72px;
-            }
-        }
-
-        @media (max-width: 380px) {
-            .container h1 {
-                margin-bottom: 18px;
-            }
-
-            .level {
-                font-size: 17px;
-                border-radius: 16px;
-            }
-        }
+      }
     </style>
-</head>
-<body>
-
+  </head>
+  <body>
     <div class="container">
-        <h1>Seviye Seç</h1>
+      <h1>Seviye Seç</h1>
 
-        <a href="/Kelime OKyanusu İLKOKUL/İLKOKUL level 1.html" class="level primary" onclick="startGame()">İLKOKUL</a>
+      <a
+        href="kelime-okyanusu-ikokul/ilkokul-level-1.html"
+        class="level primary"
+      >
+        İLKOKUL
+      </a>
 
-        <a href="/Kelime OKyanusu ORTAOKUL/ORTAOKUL level 1.html" class="level middle" onclick="startGame()">ORTAOKUL</a>
-        
-        <a href="/Kelime Okyanusu LİSE/LİSE level 1.html" class="level high" onclick="startGame()">LİSE</a>
+      <a
+        href="kelime-okyanusu-ortaokul/ortaokul-level-1.html"
+        class="level middle"
+      >
+        ORTAOKUL
+      </a>
 
-
+      <a href="kelime-okyanusu-lise/lise-level-1.html" class="level high">
+        LİSE
+      </a>
     </div>
-<script>
-async function startGame(url) {
+    <script>
+      document.querySelectorAll(".level").forEach((link) => {
+        link.addEventListener("click", async function (e) {
+          e.preventDefault();
 
-    const response = await fetch("/start-game", {
-        method: "POST"
-    });
+          const hedef = this.href;
 
-    if (!response.ok) {
-        alert("Oyuna girilemedi.");
-        return;
-    }
+          const response = await fetch("/start-game", {
+            method: "POST",
+          });
 
-    window.location.href = url;
-
-}
-</script>
-</body>
+          if (response.ok) {
+            window.location.href = hedef;
+          } else {
+            alert("Oyuna girilemedi.");
+          }
+        });
+      });
+    </script>
+  </body>
 </html>
