@@ -274,13 +274,34 @@ app.get("/game/:token", requireAuth, async (req,res)=>{
 
 
 
-    if(current.level > maxLevel){
+    let maxLevel;
 
 
-        return res.redirect("/game/ilk1A8f3");
+if(current.type==="ilkokul"){
+    maxLevel = user.ilkokulLevel || 1;
+}
+
+if(current.type==="ortaokul"){
+    maxLevel = user.ortaokulLevel || 1;
+}
+
+if(current.type==="lise"){
+    maxLevel = user.liseLevel || 1;
+}
 
 
-    }
+if(current.level > maxLevel){
+
+    return res.redirect(
+        "/game/" +
+        (
+          current.type==="ilkokul" ? "ilk1A8f3" :
+          current.type==="ortaokul" ? "ort1D82m" :
+          "lis1H91z"
+        )
+    );
+
+}
 
 
 
