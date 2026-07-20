@@ -566,8 +566,24 @@
 
 let wrongCount=0;
 let score = 0;
-
-
+let usedWords = [];
+const proverbs = [
+  "Ağaç yaşken eğilir",
+  "Taş yerinde ağırdır",
+  "Her işin başı sağlıktır",
+  "Sabırla başarı gelir",
+  "Güzel sözün gülü vardır",
+  "Dost kara günde belli olur",
+  "Zararın neresinden dönülse kârdır",
+  "Acele işe şeytan karışır",
+  "Ne oldum dememeli ne olacağım demeli",
+  "Bir fincan kahvenin kırk yıl hatırı vardır",
+  "Diş koklayan insanı burnu incitir",
+  "El çabuk kan koklasa unutmaz",
+  "Komşu komşunun külüne muhtaçtır",
+  "Çalışan bulur huzur",
+  "Eğlence çalışmanın arkasında gelir"
+];
 
 let missionData = {
   streak1: { progress: 0, goal: 1, done: false },
@@ -585,14 +601,25 @@ let lastSkipped = false;
       return text.replace(/[.,!?;]/g, '');
     }
 
-    function selectNewProverb() {
-      let newProverb;
-      do {
-        newProverb = proverbs[Math.floor(Math.random() * proverbs.length)];
-      } while (usedWords.some(word => newProverb.includes(word)));
-      selectedProverb = newProverb;
-      usedWords = [...usedWords, ...cleanText(newProverb).split(" ")];
-    }
+let usedProverbs = [];
+
+function selectNewProverb() {
+
+  let index;
+
+  do {
+    index = Math.floor(Math.random() * proverbs.length);
+  } while (usedProverbs.includes(index));
+
+
+  usedProverbs.push(index);
+
+  if(usedProverbs.length >= proverbs.length){
+    usedProverbs = [];
+  }
+
+  selectedProverb = proverbs[index];
+}
 
     function shuffleArray(arr) {
       return arr.sort(() => Math.random() - 0.5);
@@ -713,7 +740,7 @@ let lastSkipped = false;
     }
 
     function checkProverb() {
-  // oyun başlamadıysa başlat
+ 
   if (!selectedProverb) {
     showToast('Önce oyunu başlatmalısın!');
     return;
@@ -722,9 +749,8 @@ let lastSkipped = false;
 const targetWords = cleanText(selectedProverb).split(/\s+/);
   const gotWords = collectedWords;
 
-  lastSkipped = false; // skip kontrolü sıfırla
+  lastSkipped = false;
 
-  // kelime sayısı ve sırasını kontrol et
   let correct = gotWords.length === targetWords.length;
   if (correct) {
     for (let i = 0; i < targetWords.length; i++) {
@@ -743,9 +769,8 @@ const targetWords = cleanText(selectedProverb).split(/\s+/);
     updateScore();
     showToast('Doğru! +100 Puan');
 
-    updateMissions(); // görevleri kontrol et
+    updateMissions(); 
 
-    // sonraki level
    
   } else {
     showToast('Yanlış! Doğru cümleyi oluşturmadın.');
@@ -757,7 +782,6 @@ const targetWords = cleanText(selectedProverb).split(/\s+/);
 }
 
 function updateMissions() {
-  // 1 doğru
   const streak1Mission = missionData.streak1;
   if (!streak1Mission.done && correctStreak >= 1) {
     streak1Mission.progress = 1;
@@ -765,12 +789,11 @@ function updateMissions() {
     const el = document.querySelector('.mission-box[data-id="streak1"] .mission-progress');
     el.textContent = '✔';
     document.querySelector('.mission-box[data-id="streak1"]').classList.add('completed');
-    score += 25; // Ödül puan
+    score += 25; 
     updateScore();
     showToast('Görev tamamlandı: 1 doğru!');
   }
 
-  // Üst üste 2 doğru
   const streak2Mission = missionData.streak2;
   if (!streak2Mission.done) {
     streak2Mission.progress = Math.min(correctStreak, streak2Mission.goal);
@@ -786,7 +809,7 @@ function updateMissions() {
     }
   }
 
-  // Üst üste 3 doğru
+
 const streak3Mission = missionData.streak3;
 if (!streak3Mission.done) {
   streak3Mission.progress = Math.min(correctStreak, streak3Mission.goal);
@@ -801,7 +824,7 @@ if (!streak3Mission.done) {
     updateScore();
     showToast('Görev tamamlandı: COMBO - Üst üste 3 doğru!');
 
-    // 🟢 Combo Neon Yazısı Ekrana
+
     showComboText();
   }
 }
@@ -814,16 +837,15 @@ function showComboText() {
   combo.textContent = 'COMBOO!';
   document.body.appendChild(combo);
 
-  // Küçükten büyüyüp görünür hale gelmesi
+ 
   setTimeout(() => {
     combo.style.opacity = 1;
-    combo.style.transform = 'translate(-50%, -50%) scale(1.2)'; // yavaşça büyü
+    combo.style.transform = 'translate(-50%, -50%) scale(1.2)';
   }, 50);
 
-  // 5 saniye sonra fade out ve kaldır
   setTimeout(() => {
     combo.style.opacity = 0;
-    setTimeout(() => combo.remove(), 1000); // 1 saniyelik fade out sonrası kaldır
+    setTimeout(() => combo.remove(), 1000); 
   }, 5000);
 }
 
@@ -1019,7 +1041,6 @@ async function saveScoreAndReturnHome() {
   const lastWord = collectedWords.pop();
   updateCollectedWords();
   
-  // Kelimeyi yeniden ekrana ekle
   const wordEl = document.createElement("div");
   wordEl.classList.add("word");
   wordEl.style.left = Math.random() * 25 + "vw";
@@ -1070,30 +1091,17 @@ async function saveScoreAndReturnHome() {
     resetButton.addEventListener("click", removeLastWord);
   
 
-const proverbs = [
-  "Ağaç yaşken eğilir",
-  "Taş yerinde ağırdır",
-  "Her işin başı sağlıktır",
-  "Sabırla başarı gelir",
-  "Güzel sözün gülü vardır",
-  "Dost kara günde belli olur",
-  "Zararın neresinden dönülse kârdır",
-  "Acele işe şeytan karışır",
-  "Ne oldum dememeli ne olacağım demeli",
-  "Bir fincan kahvenin kırk yıl hatırı vardır",
-  "Diş koklayan insanı burnu incitir",
-  "El çabuk kan koklasa unutmaz",
-  "Komşu komşunun külüne muhtaçtır",
-  "Çalışan bulur huzur",
-  "Eğlence çalışmanın arkasında gelir"
-];
 
 
 
-    window.onload = () => {
-      startCountdownAnimation();
-    };
-    // Market işlevleri
+
+window.onload = () => {
+
+  loadServerScore();
+
+  startCountdownAnimation();
+
+};
 document.querySelectorAll(".market-item").forEach(item => {
   item.addEventListener("click", () => {
     const itemText = item.textContent;
@@ -1103,12 +1111,10 @@ document.querySelectorAll(".market-item").forEach(item => {
   updateScore();
 
   
-  // Henüz toplanmamış doğru kelimelerden rastgele birini seç
   const correctWords = cleanText(selectedProverb).split(" ").filter(w => !collectedWords.includes(w));
   if (correctWords.length > 0) {
     const hintWord = correctWords[Math.floor(Math.random() * correctWords.length)];
 
-    // Sayfadaki kelimeler içinde bu kelimeyi arayıp görsel efekt ver
     const wordElements = document.querySelectorAll(".word");
     wordElements.forEach(el => {
       if (el.textContent === hintWord) {
@@ -1127,7 +1133,7 @@ if (itemText.includes("Büyük Şans") && score >= 400) {
   const correctWords = cleanText(selectedProverb).split(" ").filter(w => !collectedWords.includes(w));
 
 if (correctWords.length > 0) {
-  const hintWords = correctWords.join(", "); // Tüm doğru kelimeleri virgülle ayırarak birleştiriyoruz
+  const hintWords = correctWords.join(", ");  
   showToast(`İpucu: Henüz bulamadığın kelimeler: ${hintWords}`);
 } else {
   showToast("Zaten tüm kelimeleri buldun! Helal!");
