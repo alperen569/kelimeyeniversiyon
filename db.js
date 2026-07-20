@@ -427,7 +427,7 @@ async function addUserScore(username, amount){
 
     `
     UPDATE users
-    SET puan = ?
+    SET puan = puan + ?
     WHERE isim = ?
     `,
 
