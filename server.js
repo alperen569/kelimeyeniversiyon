@@ -575,9 +575,11 @@ await updateUserScore(username, {
     });
   }
 });
-/*
- ROAD STATE
-*/
+app.get("/home", (req,res)=>{
+  res.sendFile(
+    path.join(__dirname,"public","pc","anasayfa.html")
+  );
+});
 
 app.get("/road-state", async (req, res) => {
   const username = getCurrentUsername(req);
