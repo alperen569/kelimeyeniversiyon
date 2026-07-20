@@ -1066,33 +1066,6 @@ async function saveScoreAndReturnHome() {
 
 
 
-function skoruKaydet(scoreValue) {
-  showToast('Skor kaydediliyor...');
-  try {
-  } catch (e) {}
-  fetch('/save-score', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ score: scoreValue, ...buildLevel3Summary() })
-  })
-  .then(res => res.json())
-  .then(data => {
-    if (data && data.success) {
-      showToast('Skor kaydedildi.');
-    } else {
-      showToast('Skor kaydedilemedi.');
-    }
-  })
-  .catch(() => {
-    showToast('Sunucu hatası. Skor kaydedilemedi.');
-  });
-}
-
-
-
-
-
-
     checkButton.addEventListener("click", checkProverb);
     resetButton.addEventListener("click", removeLastWord);
   

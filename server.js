@@ -542,9 +542,8 @@ app.post("/save-score", async (req, res) => {
 
     const current = await getUserSnapshot(username);
 
-    await updateUserScore(username, {
-      // eski puanın üstüne ekle
-      score: current.puan + levelScore,
+await updateUserScore(username, {
+  score: levelScore,
 
       taskPoints:
         req.body.taskPoints !== undefined

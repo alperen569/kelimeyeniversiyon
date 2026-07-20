@@ -820,71 +820,7 @@ function showStatusMessage(message, type = 'info') {
   statusStrip.textContent = message;
 }
 
-async function transitionToLevel(url, scoreToSave) {
 
-  try {
-
-    const response = await fetch("/save-score", {
-
-      method: "POST",
-
-      headers: {
-        "Content-Type": "application/json"
-      },
-
-      body: JSON.stringify({
-
-        score: Number(scoreToSave) || 0,
-
-        // bu leveldeki bilgiler
-        dogruSayisi: 0,
-
-        yanlisSayisi: 0,
-
-        toplamSoru: 0
-
-      })
-
-    });
-
-
-    const data = await response.json();
-
-
-    if (!data.success) {
-
-      console.log(
-        "Puan kaydedilemedi",
-        data.message
-      );
-
-    }
-
-
-  } catch(err) {
-
-    console.log(
-      "Server puan hatası:",
-      err
-    );
-
-  }
-
-
-  document.body.classList.add(
-    "is-transitioning"
-  );
-
-
-  setTimeout(()=>{
-
-    window.location.assign(
-      encodeURI(url)
-    );
-
-  },420);
-
-}
 
 function softRoundTransition(nextRoundFn) {
   gameArea.classList.remove('game-area-soft-enter');
