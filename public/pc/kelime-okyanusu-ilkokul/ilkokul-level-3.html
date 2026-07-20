@@ -968,31 +968,29 @@ async function saveScoreAndReturnHome() {
   try {
 
 
-    const response = await fetch("/save-score",{
-
-      method:"POST",
-
-      headers:{
+  const response = await fetch("/save-score",{
+    method:"POST",
+    headers:{
         "Content-Type":"application/json"
-      },
-
-      body:JSON.stringify({
-
-        score:score,
-
+    },
+    body:JSON.stringify({
+        score,
         correct:correctCount,
-
         wrong:wrongCount,
-
         level:3
+    })
+});
 
-      })
+console.log(response.status);
 
-    });
+const text = await response.text();
+
+console.log(text);
+
+const data = JSON.parse(text);
 
 
 
-    const data = await response.json();
 
 
 
@@ -1149,7 +1147,6 @@ marketButton.addEventListener("click", () => {
   marketPanel.classList.toggle("open");
 });
 
-loadServerScore();
   </script>
 </body>
 </html>

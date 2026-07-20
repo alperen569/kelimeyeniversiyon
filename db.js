@@ -131,13 +131,11 @@ async function updateUserScore(
   await pool.execute(
     `
 UPDATE users SET
-
-puan = ?,
+puan = puan + ?,
 taskPoints = taskPoints + ?,
 correct = correct + ?,
 wrong = wrong + ?,
 totalQuestions = totalQuestions + ?
-
 WHERE isim = ?
     `,
     [score, taskPoints, correct, wrong, totalQuestions, isim],
