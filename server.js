@@ -522,58 +522,86 @@ app.get("/leaderboard", async (req, res) => {
 
 app.post("/save-score", async (req, res) => {
   try {
+
     const username = getCurrentUsername(req);
+
 
     if (!username) {
       return res.json({
-        success: false,
-        message: "Giriş yok",
+        success:false,
+        message:"Giriş yok"
       });
     }
+
 
     const levelScore = Number(req.body.score);
 
+
     if (Number.isNaN(levelScore)) {
+
       return res.json({
-        success: false,
-        message: "Geçersiz puan",
+        success:false,
+        message:"Geçersiz puan"
       });
+
     }
+
 
     const current = await getUserSnapshot(username);
 
-await updateUserScore(username, {
-  score: levelScore,
 
-      taskPoints:
-        req.body.taskPoints !== undefined
-          ? Number(req.body.taskPoints)
-          : current.taskPoints,
+    await updateUserScore(username, {
 
-      correct: current.correct + (Number(req.body.dogruSayisi) || 0),
+      score: levelScore,
 
-      wrong: current.wrong + (Number(req.body.yanlisSayisi) || 0),
+
+      taskPoints: current.taskPoints,
+
+
+      correct:
+        current.correct + (Number(req.body.correct) || 0),
+
+
+      wrong:
+        current.wrong + (Number(req.body.wrong) || 0),
+
 
       totalQuestions:
-        current.totalQuestions + (Number(req.body.toplamSoru) || 0),
+        current.totalQuestions + 1
+
     });
+
+
 
     const user = await getUserSnapshot(username);
 
-    res.json({
-      success: true,
 
-      toplamPuan: user.puan,
-    });
-  } catch (err) {
-    console.log(err);
 
     res.json({
-      success: false,
 
-      message: "Hata",
+      success:true,
+
+      toplamPuan:user.puan
+
     });
+
+
+
+  } catch(err){
+
+    console.log("SAVE SCORE HATASI:",err);
+
+
+    res.json({
+
+      success:false,
+
+      message:err.message
+
+    });
+
   }
+
 });
 app.get("/home", (req,res)=>{
   res.sendFile(
@@ -627,30 +655,7 @@ app.get("/road-state", async (req, res) => {
   });
 });
 
-app.get("/game-score", async (req,res)=>{
 
-  const username = getCurrentUsername(req);
-
-  if(!username){
-    return res.json({
-      success:false
-    });
-  }
-
-
-  const user = await getUserSnapshot(username);
-
-
-  res.json({
-
-    success:true,
-
-    score:user.puan
-
-  });
-
-
-});
 app.post("/road-claim", async (req, res) => {
   const username = getCurrentUsername(req);
 

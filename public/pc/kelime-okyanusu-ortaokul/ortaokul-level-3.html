@@ -601,6 +601,7 @@ async function loadServerScore(){
     const response = await fetch("/me");
 
     const data = await response.json();
+    console.log("SUNUCU CEVABI:", data);
 
 
     if(data.loggedIn && !scorePrimedFromPreviousLevel){
