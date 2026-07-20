@@ -399,6 +399,18 @@ async function isReservedUsername(username) {
   return rows.length > 0;
 
 }
+async function resetUserLevel(username){
+
+  await pool.execute(
+    `
+    UPDATE users
+    SET maxLevel = 1
+    WHERE isim = ?
+    `,
+    [username]
+  );
+
+}
 async function getBannedWords(){
 
     const [rows]=await pool.query(
@@ -470,5 +482,6 @@ module.exports = {
 isReservedUsername,
  containsBannedWord,
 getIPRegisterCount,
+resetUserLevel,
 incrementIPRegisterCount
 };

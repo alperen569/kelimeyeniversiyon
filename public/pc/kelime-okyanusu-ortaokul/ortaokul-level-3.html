@@ -919,9 +919,18 @@ function showComboText() {
           if (data && data.success) {
             showToast('Skor kaydedildi. Anasayfaya yönlendiriliyorsunuz...');
             document.body.classList.add('is-transitioning');
-            setTimeout(() => {
-              window.location.href = '/pc/anasayfa.html';
-            }, 1200);
+           setTimeout(async () => {
+
+
+  await fetch("/reset-level", {
+    method:"POST"
+  });
+
+
+  window.location.href = "/pc/anasayfa.html";
+
+
+},1200);
           } else {
             showToast('Skor kaydedilemedi. Lütfen tekrar deneyin.');
           }

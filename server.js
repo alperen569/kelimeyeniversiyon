@@ -21,6 +21,7 @@ const {
   getUserSnapshot,
   verifyPassword,
   upgradePasswordHashIfNeeded,
+  resetUserLevel
 } = require("./db");
 
 const app = express();
@@ -44,7 +45,25 @@ app.use(
     limit: "32kb",
   }),
 );
+app.post("/reset-level", async (req,res)=>{
 
+  const username = getCurrentUsername(req);
+
+  if(!username){
+    return res.json({
+      success:false
+    });
+  }
+
+
+  await resetUserLevel(username);
+
+
+  res.json({
+    success:true
+  });
+
+});
 app.use(
   session({
     secret: sessionSecret,
@@ -157,8 +176,93 @@ app.use("/pc", express.static(path.join(__dirname, "public", "pc")));
 app.use(express.static(path.join(__dirname, "public")));
 
 /*
- REGISTER
+ GAME TOKEN ROUTE
 */
+
+app.get("/game/:token", requireAuth, async (req,res)=>{
+
+
+    const levels = {
+
+
+        "a8F3kL92xQ": {
+            file:
+            "Kelime OKyanusu İLKOKUL/İLKOKUL level 1.html",
+            level:1
+        },
+
+
+        "b7Kp92LmX": {
+            file:
+            "Kelime OKyanusu İLKOKUL/İLKOKUL level 2.html",
+            level:2
+        },
+
+
+        "c91Zx81Qp": {
+            file:
+            "Kelime OKyanusu İLKOKUL/İLKOKUL level 3.html",
+            level:3
+        }
+
+
+    };
+
+
+    const current =
+    levels[req.params.token];
+
+
+    if(!current){
+
+        return res.status(404)
+        .send("Geçersiz oyun");
+
+    }
+
+
+    const username =
+    req.session.username;
+
+
+
+    /*
+       BURADA KULLANICININ SEVİYESİNE BAKACAĞIZ
+    */
+
+
+    const user =
+    await getUserSnapshot(username);
+
+
+
+    const maxLevel =
+    user.maxLevel || 1;
+
+
+
+    if(current.level > maxLevel){
+
+
+        return res.redirect(
+            "/game/a8F3kL92xQ"
+        );
+
+
+    }
+
+
+
+    res.sendFile(
+        path.join(
+            __dirname,
+            "public",
+            current.file
+        )
+    );
+
+
+});
 
 app.post("/register", authLimiter, async (req, res) => {
   try {
