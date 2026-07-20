@@ -568,37 +568,7 @@ let wrongCount=0;
 let score = 0;
 
 
-async function loadServerScore(){
 
-  try {
-
-    const response = await fetch("/me");
-
-    const data = await response.json();
-
-
-    if(data.loggedIn){
-
-      score = data.puan || 0;
-
-      updateScore();
-
-    }
-
-
-  } catch(err){
-
-    console.log(
-      "Puan yükleme hatası",
-      err
-    );
-
-  }
-
-}
-
-
-loadServerScore();    let usedWords = [];
 let missionData = {
   streak1: { progress: 0, goal: 1, done: false },
   streak2: { progress: 0, goal: 2, done: false },
@@ -964,45 +934,86 @@ async function loadServerScore(){
       };
     }
 
-    function saveScoreAndReturnHome() {
-      if (scoreSaved) return;
-      scoreSaved = true;
-      showToast('Zaman doldu. Skor kaydediliyor...');
-      try {
-        localStorage.setItem('level3Summary', JSON.stringify(buildLevel3Summary()));
-      } catch (e) {}
+async function saveScoreAndReturnHome() {
 
-      fetch('/save-score', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ score, ...buildLevel3Summary() })
+  if(scoreSaved) return;
+
+  scoreSaved = true;
+
+  showToast("Skor kaydediliyor...");
+
+
+  try {
+
+
+    const response = await fetch("/save-score",{
+
+      method:"POST",
+
+      headers:{
+        "Content-Type":"application/json"
+      },
+
+      body:JSON.stringify({
+
+        score:score,
+
+        correct:correctCount,
+
+        wrong:wrongCount,
+
+        level:3
+
       })
-        .then(res => res.json())
-        .then(data => {
-          if (data && data.success) {
-            showToast('Skor kaydedildi. Anasayfaya yönlendiriliyorsunuz...');
-            document.body.classList.add('is-transitioning');
-            setTimeout(async () => {
+
+    });
 
 
-  await fetch("/reset-level", {
-    method:"POST"
-  });
+
+    const data = await response.json();
 
 
-  window.location.href = "/home";
+
+    if(data.success){
 
 
-},1200);
-          } else {
-            showToast('Skor kaydedilemedi. Lütfen tekrar deneyin.');
-          }
-        })
-        .catch(() => {
-          showToast('Sunucu hatası. Skor kaydedilemedi.');
-        });
+      showToast("Skor kaydedildi. Anasayfaya gidiliyor...");
+
+
+      document.body.classList.add(
+        "is-transitioning"
+      );
+
+
+      setTimeout(()=>{
+
+        window.location.href="/home";
+
+      },1200);
+
+
+
+    }else{
+
+
+      showToast("Skor kaydedilemedi");
+
+
     }
 
+
+  }catch(err){
+
+
+    console.log(err);
+
+    showToast("Sunucu hatası");
+
+
+  }
+
+
+}
     function removeLastWord() {
   if (collectedWords.length === 0) return;
   const lastWord = collectedWords.pop();
@@ -1058,7 +1069,6 @@ async function loadServerScore(){
 function skoruKaydet(scoreValue) {
   showToast('Skor kaydediliyor...');
   try {
-    localStorage.setItem('level3Summary', JSON.stringify(buildLevel3Summary()));
   } catch (e) {}
   fetch('/save-score', {
     method: 'POST',

@@ -798,37 +798,7 @@ let wrongCount=0;
 let score = 0;
 
 
-async function loadServerScore(){
 
-  try {
-
-    const response = await fetch("/me");
-
-    const data = await response.json();
-
-
-    if(data.loggedIn){
-
-      score = data.puan || 0;
-
-      updateScore();
-
-    }
-
-
-  } catch(err){
-
-    console.log(
-      "Puan yükleme hatası",
-      err
-    );
-
-  }
-
-}
-
-
-loadServerScore();let timeRemaining = 75;
 let timerInterval = null;
 let missionData = {
   streak1: { progress: 0, goal: 1, done: false },
@@ -836,14 +806,6 @@ let missionData = {
   streak3: { progress: 0, goal: 3, done: false }
 };
 
-function loadSavedLevelScore() {
-  const saved = Number(localStorage.getItem('levelScore'));
-  if (Number.isFinite(saved) && saved > 0) {
-    score = saved;
-  }
-}
-
-loadSavedLevelScore();
 
 let correctStreak = 0;
 let lastSkipped = false;
@@ -1240,32 +1202,27 @@ function startGame() {
 async function completeLevelAndGo(url,level){
 
 
- await fetch("/complete-level",{
-
+ await fetch("/save-score",{
 
  method:"POST",
 
-
  headers:{
-
  "Content-Type":"application/json"
-
  },
 
+ body:JSON.stringify({
 
-body:JSON.stringify({
+ score: score,
+
+ level: level,
 
  correct: correctCount,
 
- wrong: wrongCount,
+ wrong: wrongCount
 
- level:3
-
-})
-
+ })
 
  });
-
 
 
  document.body.classList.add(
@@ -1275,12 +1232,9 @@ body:JSON.stringify({
 
  setTimeout(()=>{
 
-
  window.location.assign(url);
 
-
  },420);
-
 
 }
 function updateTimerDisplay() {

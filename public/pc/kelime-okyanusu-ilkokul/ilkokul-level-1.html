@@ -702,37 +702,9 @@ let wrongCount=0;
 let score = 0;
 
 
-async function loadServerScore(){
-
-  try {
-
-    const response = await fetch("/me");
-
-    const data = await response.json();
 
 
-    if(data.loggedIn){
 
-      score = data.puan || 0;
-
-      updateScore();
-
-    }
-
-
-  } catch(err){
-
-    console.log(
-      "Puan yükleme hatası",
-      err
-    );
-
-  }
-
-}
-
-
-loadServerScore();
 let timeRemaining = 90;
 let timerInterval = null;
 let missionData = {
@@ -897,8 +869,33 @@ function normalizeArray(arr) {
   return arr.map(w => cleanPunctuation(String(w)).toLowerCase().trim());
 }
 
-function updateScore() {
-  scoreDiv.textContent = 'Puan: ' + score;
+async function updateScore() {
+
+  scoreDiv.textContent = 'Puan: ' + score;
+
+
+  try {
+
+    await fetch("/save-score", {
+
+      method:"POST",
+
+      headers:{
+        "Content-Type":"application/json"
+      },
+
+      body:JSON.stringify({
+        score:score
+      })
+
+    });
+
+  } catch(err){
+
+    console.log("Puan kayıt hatası",err);
+
+  }
+
 }
 
 function updateCollectedWords() {
