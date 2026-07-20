@@ -188,19 +188,19 @@ app.get("/game/:token", requireAuth, async (req,res)=>{
         // İLKOKUL
 
         "ilk1A8f3": {
-            file:"/pc/kelime-okyanusu-ilkokul/ilkokul-level-1.html",
+            file:"kelime-okyanusu-ilkokul/ilkokul-level-1.html",
             level:1,
             type:"ilkokul"
         },
 
         "ilk2B7k9": {
-            file:"/pc/kelime-okyanusu-ilkokul/ilkokul-level-2.html",
+            file:"kelime-okyanusu-ilkokul/ilkokul-level-2.html",
             level:2,
             type:"ilkokul"
         },
 
         "ilk3C91x": {
-            file:"/pc/kelime-okyanusu-ilkokul/ilkokul-level-3.html",
+            file:"kelime-okyanusu-ilkokul/ilkokul-level-3.html",
             level:3,
             type:"ilkokul"
         },
@@ -209,19 +209,19 @@ app.get("/game/:token", requireAuth, async (req,res)=>{
         // ORTAOKUL
 
         "ort1D82m": {
-            file:"/pc/kelime-okyanusu-ortaokul/ortaokul-level-1.html",
+            file:"kelime-okyanusu-ortaokul/ortaokul-level-1.html",
             level:1,
             type:"ortaokul"
         },
 
         "ort2F71p": {
-            file:"/pc/kelime-okyanusu-ortaokul/ortaokul-level-2.html",
+            file:"kelime-okyanusu-ortaokul/ortaokul-level-2.html",
             level:2,
             type:"ortaokul"
         },
 
         "ort3G55q": {
-            file:"/pc/kelime-okyanusu-ortaokul/ortaokul-level-3.html",
+            file:"kelime-okyanusu-ortaokul/ortaokul-level-3.html",
             level:3,
             type:"ortaokul"
         },
@@ -230,19 +230,19 @@ app.get("/game/:token", requireAuth, async (req,res)=>{
         // LİSE
 
         "lis1H91z": {
-            file:"/pc/kelime-okyanusu-lise/lise-level-1.html",
+            file:"kelime-okyanusu-lise/lise-level-1.html",
             level:1,
             type:"lise"
         },
 
         "lis2K82v": {
-            file:"/pc/kelime-okyanusu-lise/lise-level-2.html",
+            file:"kelime-okyanusu-lise/lise-level-2.html",
             level:2,
             type:"lise"
         },
 
         "lis3M44n": {
-            file:"/pc/kelime-okyanusu-lise/lise-level-3.html",
+            file:"kelime-okyanusu-lise/lise-level-3.html",
             level:3,
             type:"lise"
         }
@@ -288,6 +288,7 @@ app.get("/game/:token", requireAuth, async (req,res)=>{
         path.join(
             __dirname,
             "public",
+            "pc",
             current.file
         )
     );
