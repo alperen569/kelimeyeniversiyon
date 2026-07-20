@@ -557,13 +557,12 @@ app.post("/save-score", async (req, res) => {
 
       taskPoints: current.taskPoints,
 
-
-      correct:
-        current.correct + (Number(req.body.correct) || 0),
+correct:
+ Number(req.body.correct) || 0,
 
 
       wrong:
-        current.wrong + (Number(req.body.wrong) || 0),
+ Number(req.body.wrong) || 0,
 
 
       totalQuestions:
