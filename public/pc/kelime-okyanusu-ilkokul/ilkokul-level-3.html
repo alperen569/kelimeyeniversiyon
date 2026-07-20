@@ -489,7 +489,7 @@
 <div id="missions-panel">
   <h3>🎯 Görevler</h3>
   <div class="score-timer-row">
-    <div id="score">Puan: 1000</div>
+    <div id="score">Puan yükleniyor...</div>
     <div id="timer">01:15</div>
   </div>
 
@@ -857,7 +857,31 @@ function showComboText() {
   }, 5000);
 }
 
+async function loadServerScore(){
 
+  try{
+
+    const res = await fetch("/game-score");
+
+    const data = await res.json();
+
+
+    if(data.success){
+
+      score = Number(data.score) || 0;
+
+      updateScore();
+
+    }
+
+
+  }catch(err){
+
+    console.log(err);
+
+  }
+
+}
     function updateScore() {
       scoreDiv.textContent = `Puan: ${score}`;
     }
@@ -1136,7 +1160,7 @@ marketButton.addEventListener("click", () => {
   marketPanel.classList.toggle("open");
 });
 
-
+loadServerScore();
   </script>
 </body>
 </html>

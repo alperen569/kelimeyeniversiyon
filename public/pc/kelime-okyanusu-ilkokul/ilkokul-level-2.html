@@ -634,7 +634,7 @@
         <div id="missions-panel">
           <h3>🎯 Görevler</h3>
           <div class="score-timer-row">
-            <div id="score">Puan: 1000</div>
+            <div id="score">Puan yükleniyor...</div>
             <div id="timer">01:30</div>
           </div>
           <div class="missions-row">
@@ -1001,7 +1001,31 @@ function shuffleArray(arr) {
 function normalizeArray(arr) {
   return arr.map(w => cleanPunctuation(String(w)).toLowerCase().trim());
 }
+async function loadServerScore(){
 
+  try{
+
+    const res = await fetch("/game-score");
+
+    const data = await res.json();
+
+
+    if(data.success){
+
+      score = Number(data.score) || 0;
+
+      updateScore();
+
+    }
+
+
+  }catch(err){
+
+    console.log("puan alınamadı",err);
+
+  }
+
+}
 function updateScore() {
   scoreDiv.textContent = 'Puan: ' + score;
 }
@@ -1539,7 +1563,9 @@ removeButton.addEventListener('click', removeLastWord);
 skipButton.addEventListener('click', skipProverb);
 
 createBubbles();
-updateScore();
+
+loadServerScore();
+
 updateTimerDisplay();
 </script>
 </body>

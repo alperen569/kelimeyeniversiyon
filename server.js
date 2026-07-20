@@ -398,7 +398,44 @@ app.get("/pc/anasayfa.html", (req, res) => {
 /*
  ME
 */
+app.get("/game-score", async (req,res)=>{
 
+  try {
+
+    const username = getCurrentUsername(req);
+
+    if(!username){
+      return res.json({
+        success:false,
+        score:0
+      });
+    }
+
+
+    const user = await getUserSnapshot(username);
+
+
+    res.json({
+
+      success:true,
+
+      score:user.puan || 0
+
+    });
+
+
+  } catch(err){
+
+    console.log(err);
+
+    res.json({
+      success:false,
+      score:0
+    });
+
+  }
+
+});
 app.get("/me", async (req, res) => {
   const username = getCurrentUsername(req);
 
@@ -589,10 +626,30 @@ app.get("/road-state", async (req, res) => {
   });
 });
 
-/*
- ROAD CLAIM
-*/
+app.get("/game-score", async (req,res)=>{
 
+  const username = getCurrentUsername(req);
+
+  if(!username){
+    return res.json({
+      success:false
+    });
+  }
+
+
+  const user = await getUserSnapshot(username);
+
+
+  res.json({
+
+    success:true,
+
+    score:user.puan
+
+  });
+
+
+});
 app.post("/road-claim", async (req, res) => {
   const username = getCurrentUsername(req);
 
