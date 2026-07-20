@@ -12,18 +12,18 @@ const path = require("path");
 const http = require("http");
 
 const {
- initializeDatabase,
- createUser,
- findUser,
- getUsersWithRanks,
- updateUserScore,
- addClaimedRoadReward,
- getUserSnapshot,
- verifyPassword,
- upgradePasswordHashIfNeeded,
- resetUserLevel,
- unlockNextLevel,
- addUserScore,
+  initializeDatabase,
+  createUser,
+  findUser,
+  getUsersWithRanks,
+  updateUserScore,
+  addClaimedRoadReward,
+  getUserSnapshot,
+  verifyPassword,
+  upgradePasswordHashIfNeeded,
+  resetUserLevel,
+  unlockNextLevel,
+  addUserScore,
 } = require("./db");
 
 const app = express();
@@ -47,64 +47,7 @@ app.use(
     limit: "32kb",
   }),
 );
-app.post("/reset-level", async (req, res) => {
-  const username = getCurrentUsername(req);
 
-  if (!username) {
-    return res.json({
-      success: false,
-    });
-  }
-
-  await resetUserLevel(username);
-
-  res.json({
-    success: true,
-  });
-});
-app.post("/complete-level", async(req,res)=>{
-
-
-const username=getCurrentUsername(req);
-
-
-if(!username){
-
-return res.json({
-success:false
-});
-
-}
-
-
-const level=Number(req.body.level);
-
-
-if(!level){
-
-return res.json({
-success:false
-});
-
-}
-
-
-
-await unlockNextLevel(
-username,
-level
-);
-
-
-
-res.json({
-
-success:true
-
-});
-
-
-});
 app.use(
   session({
     secret: sessionSecret,
@@ -121,7 +64,44 @@ app.use(
     },
   }),
 );
+app.post("/reset-level", async (req, res) => {
+  const username = getCurrentUsername(req);
 
+  if (!username) {
+    return res.json({
+      success: false,
+    });
+  }
+
+  await resetUserLevel(username);
+
+  res.json({
+    success: true,
+  });
+});
+app.post("/complete-level", async (req, res) => {
+  const username = getCurrentUsername(req);
+
+  if (!username) {
+    return res.json({
+      success: false,
+    });
+  }
+
+  const level = Number(req.body.level);
+
+  if (!level) {
+    return res.json({
+      success: false,
+    });
+  }
+
+  await unlockNextLevel(username, level);
+
+  res.json({
+    success: true,
+  });
+});
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
 
@@ -259,38 +239,30 @@ app.get("/game/:token", requireAuth, async (req, res) => {
     return res.status(404).send("Geçersiz oyun bağlantısı");
   }
 
+  const username = req.session.username;
 
-const username = req.session.username;
+  const user = await getUserSnapshot(username);
 
-const user = await getUserSnapshot(username);
+  const maxLevel = user.maxLevel || 1;
 
-const maxLevel = user.maxLevel || 1;
-
-
-if (current.level > maxLevel) {
-
+  if (current.level > maxLevel) {
     let redirectToken;
 
     if (current.type === "ilkokul") {
-        redirectToken = "ilk1A8f3";
-    } 
-    else if (current.type === "ortaokul") {
-        redirectToken = "ort1D82m";
-    } 
-    else {
-        redirectToken = "lis1H91z";
+      redirectToken = "ilk1A8f3";
+    } else if (current.type === "ortaokul") {
+      redirectToken = "ort1D82m";
+    } else {
+      redirectToken = "lis1H91z";
     }
 
     return res.redirect("/game/" + redirectToken);
-}
+  }
 
   res.sendFile(path.join(__dirname, "public", "pc", current.file));
 });
 
 app.use(express.static(path.join(__dirname, "public")));
-
-
-
 
 app.post("/register", authLimiter, async (req, res) => {
   try {
@@ -511,110 +483,61 @@ app.get("/leaderboard", async (req, res) => {
  SAVE SCORE
 */
 
-
-
 app.post("/save-score", async (req, res) => {
-
   try {
-
     const username = getCurrentUsername(req);
 
-
     if (!username) {
-
       return res.json({
-        success:false,
-        message:"Giriş yok"
+        success: false,
+        message: "Giriş yok",
       });
-
     }
-
 
     const levelScore = Number(req.body.score);
 
-
     if (Number.isNaN(levelScore)) {
-
       return res.json({
-        success:false,
-        message:"Geçersiz puan"
+        success: false,
+        message: "Geçersiz puan",
       });
-
     }
-
-
 
     const current = await getUserSnapshot(username);
 
-
-
     await updateUserScore(username, {
-
-
       // eski puanın üstüne ekle
       score: current.puan + levelScore,
 
-
       taskPoints:
-      req.body.taskPoints !== undefined
-      ?
-      Number(req.body.taskPoints)
-      :
-      current.taskPoints,
+        req.body.taskPoints !== undefined
+          ? Number(req.body.taskPoints)
+          : current.taskPoints,
 
+      correct: current.correct + (Number(req.body.dogruSayisi) || 0),
 
-      correct:
-      current.correct +
-      (Number(req.body.dogruSayisi)||0),
-
-
-
-      wrong:
-      current.wrong +
-      (Number(req.body.yanlisSayisi)||0),
-
-
+      wrong: current.wrong + (Number(req.body.yanlisSayisi) || 0),
 
       totalQuestions:
-      current.totalQuestions +
-      (Number(req.body.toplamSoru)||0)
-
-
+        current.totalQuestions + (Number(req.body.toplamSoru) || 0),
     });
-
-
 
     const user = await getUserSnapshot(username);
 
-
-
     res.json({
+      success: true,
 
-      success:true,
-
-      toplamPuan:user.puan
-
+      toplamPuan: user.puan,
     });
-
-
-
-  }
-  catch(err){
-
+  } catch (err) {
     console.log(err);
 
-
     res.json({
+      success: false,
 
-      success:false,
-
-      message:"Hata"
-
+      message: "Hata",
     });
-
   }
-
-
 });
 /*
  ROAD STATE
