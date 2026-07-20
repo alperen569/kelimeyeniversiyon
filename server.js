@@ -185,68 +185,99 @@ app.get("/game/:token", requireAuth, async (req,res)=>{
     const levels = {
 
 
-        "a8F3kL92xQ": {
-            file:
-            "Kelime OKyanusu İLKOKUL/İLKOKUL level 1.html",
-            level:1
+        // İLKOKUL
+
+        "ilk1A8f3": {
+            file:"kelime-okyanusu-ilkokul/ilkokul-level-1.html",
+            level:1,
+            type:"ilkokul"
+        },
+
+        "ilk2B7k9": {
+            file:"kelime-okyanusu-ilkokul/ilkokul-level-2.html",
+            level:2,
+            type:"ilkokul"
+        },
+
+        "ilk3C91x": {
+            file:"kelime-okyanusu-ilkokul/ilkokul-level-3.html",
+            level:3,
+            type:"ilkokul"
         },
 
 
-        "b7Kp92LmX": {
-            file:
-            "Kelime OKyanusu İLKOKUL/İLKOKUL level 2.html",
-            level:2
+        // ORTAOKUL
+
+        "ort1D82m": {
+            file:"kelime-okyanusu-ortaokul/ortaokul-level-1.html",
+            level:1,
+            type:"ortaokul"
+        },
+
+        "ort2F71p": {
+            file:"kelime-okyanusu-ortaokul/ortaokul-level-2.html",
+            level:2,
+            type:"ortaokul"
+        },
+
+        "ort3G55q": {
+            file:"kelime-okyanusu-ortaokul/ortaokul-level-3.html",
+            level:3,
+            type:"ortaokul"
         },
 
 
-        "c91Zx81Qp": {
-            file:
-            "Kelime OKyanusu İLKOKUL/İLKOKUL level 3.html",
-            level:3
+        // LİSE
+
+        "lis1H91z": {
+            file:"kelime-okyanusu-lise/lise-level-1.html",
+            level:1,
+            type:"lise"
+        },
+
+        "lis2K82v": {
+            file:"kelime-okyanusu-lise/lise-level-2.html",
+            level:2,
+            type:"lise"
+        },
+
+        "lis3M44n": {
+            file:"kelime-okyanusu-lise/lise-level-3.html",
+            level:3,
+            type:"lise"
         }
 
 
     };
 
 
-    const current =
-    levels[req.params.token];
+    const current = levels[req.params.token];
 
 
     if(!current){
 
         return res.status(404)
-        .send("Geçersiz oyun");
+        .send("Geçersiz oyun bağlantısı");
 
     }
 
 
-    const username =
-    req.session.username;
+
+    const username = req.session.username;
+
+
+    const user = await getUserSnapshot(username);
 
 
 
-    /*
-       BURADA KULLANICININ SEVİYESİNE BAKACAĞIZ
-    */
-
-
-    const user =
-    await getUserSnapshot(username);
-
-
-
-    const maxLevel =
-    user.maxLevel || 1;
+    const maxLevel = user.maxLevel || 1;
 
 
 
     if(current.level > maxLevel){
 
 
-        return res.redirect(
-            "/game/a8F3kL92xQ"
-        );
+        return res.redirect("/game/ilk1A8f3");
 
 
     }
