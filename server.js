@@ -4,7 +4,7 @@ const express = require("express");
 const validator = require("validator");
 const Filter = require("leo-profanity");
 const { zxcvbn } = require("@zxcvbn-ts/core");
-Filter.loadDictionary("en","tr");
+Filter.loadDictionary("en", "tr");
 const helmet = require("helmet");
 const rateLimit = require("express-rate-limit");
 const session = require("express-session");
@@ -21,7 +21,7 @@ const {
   getUserSnapshot,
   verifyPassword,
   upgradePasswordHashIfNeeded,
-  resetUserLevel
+  resetUserLevel,
 } = require("./db");
 
 const app = express();
@@ -45,24 +45,20 @@ app.use(
     limit: "32kb",
   }),
 );
-app.post("/reset-level", async (req,res)=>{
-
+app.post("/reset-level", async (req, res) => {
   const username = getCurrentUsername(req);
 
-  if(!username){
+  if (!username) {
     return res.json({
-      success:false
+      success: false,
     });
   }
 
-
   await resetUserLevel(username);
 
-
   res.json({
-    success:true
+    success: true,
   });
-
 });
 app.use(
   session({
@@ -100,47 +96,30 @@ async function start() {
 function getCurrentUsername(req) {
   return req.session?.username || null;
 }
-function getClientIP(req){
-
+function getClientIP(req) {
   return (
     req.headers["x-forwarded-for"]?.split(",")[0] ||
     req.socket.remoteAddress ||
     "unknown"
   );
-
 }
 
+function validatePassword(sifre) {
+  if (!validator.isLength(sifre, { min: 10, max: 64 })) return false;
 
+  if (!/[A-Z]/.test(sifre)) return false;
 
+  if (!/[a-z]/.test(sifre)) return false;
 
+  if (!/[0-9]/.test(sifre)) return false;
 
+  if (!/[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]/.test(sifre)) return false;
 
-
-
-function validatePassword(sifre){
-
-  if (!validator.isLength(sifre,{ min:10, max:64 }))
-    return false;
-
-  if (!/[A-Z]/.test(sifre))
-    return false;
-
-  if (!/[a-z]/.test(sifre))
-    return false;
-
-  if (!/[0-9]/.test(sifre))
-    return false;
-
-  if (!/[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]/.test(sifre))
-    return false;
-
-  if (/\s/.test(sifre))
-    return false;
+  if (/\s/.test(sifre)) return false;
 
   const result = zxcvbn(sifre);
 
-  if (result.score < 3)
-    return false;
+  if (result.score < 3) return false;
 
   return true;
 }
@@ -152,16 +131,9 @@ function requireAuth(req, res, next) {
   next();
 }
 
+const gameRoutes = require("./routes/game");
 
-
-const gameRoutes =
-require("./routes/game");
-
-
-app.use(
-"/api/game",
-gameRoutes
-);
+app.use("/api/game", gameRoutes);
 
 app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "pc", "login.html"));
@@ -179,142 +151,101 @@ app.use(express.static(path.join(__dirname, "public")));
  GAME TOKEN ROUTE
 */
 
-app.get("/game/:token", requireAuth, async (req,res)=>{
+app.get("/game/:token", requireAuth, async (req, res) => {
+  const levels = {
+    // İLKOKUL
+
+    ilk1A8f3: {
+      file: "kelime-okyanusu-ilkokul/ilkokul-level-1.html",
+      level: 1,
+      type: "ilkokul",
+    },
+
+    ilk2B7k9: {
+      file: "kelime-okyanusu-ilkokul/ilkokul-level-2.html",
+      level: 2,
+      type: "ilkokul",
+    },
+
+    ilk3C91x: {
+      file: "kelime-okyanusu-ilkokul/ilkokul-level-3.html",
+      level: 3,
+      type: "ilkokul",
+    },
+
+    // ORTAOKUL
+
+    ort1D82m: {
+      file: "kelime-okyanusu-ortaokul/ortaokul-level-1.html",
+      level: 1,
+      type: "ortaokul",
+    },
+
+    ort2F71p: {
+      file: "kelime-okyanusu-ortaokul/ortaokul-level-2.html",
+      level: 2,
+      type: "ortaokul",
+    },
+
+    ort3G55q: {
+      file: "kelime-okyanusu-ortaokul/ortaokul-level-3.html",
+      level: 3,
+      type: "ortaokul",
+    },
+
+    // LİSE
+
+    lis1H91z: {
+      file: "kelime-okyanusu-lise/lise-level-1.html",
+      level: 1,
+      type: "lise",
+    },
+
+    lis2K82v: {
+      file: "kelime-okyanusu-lise/lise-level-2.html",
+      level: 2,
+      type: "lise",
+    },
+
+    lis3M44n: {
+      file: "kelime-okyanusu-lise/lise-level-3.html",
+      level: 3,
+      type: "lise",
+    },
+  };
+
+  const current = levels[req.params.token];
+
+  if (!current) {
+    return res.status(404).send("Geçersiz oyun bağlantısı");
+  }
 
 
-    const levels = {
+const username = req.session.username;
+
+const user = await getUserSnapshot(username);
+
+const maxLevel = user.maxLevel || 1;
 
 
-        // İLKOKUL
+if (current.level > maxLevel) {
 
-        "ilk1A8f3": {
-            file:"kelime-okyanusu-ilkokul/ilkokul-level-1.html",
-            level:1,
-            type:"ilkokul"
-        },
+    let redirectToken;
 
-        "ilk2B7k9": {
-            file:"kelime-okyanusu-ilkokul/ilkokul-level-2.html",
-            level:2,
-            type:"ilkokul"
-        },
-
-        "ilk3C91x": {
-            file:"kelime-okyanusu-ilkokul/ilkokul-level-3.html",
-            level:3,
-            type:"ilkokul"
-        },
-
-
-        // ORTAOKUL
-
-        "ort1D82m": {
-            file:"kelime-okyanusu-ortaokul/ortaokul-level-1.html",
-            level:1,
-            type:"ortaokul"
-        },
-
-        "ort2F71p": {
-            file:"kelime-okyanusu-ortaokul/ortaokul-level-2.html",
-            level:2,
-            type:"ortaokul"
-        },
-
-        "ort3G55q": {
-            file:"kelime-okyanusu-ortaokul/ortaokul-level-3.html",
-            level:3,
-            type:"ortaokul"
-        },
-
-
-        // LİSE
-
-        "lis1H91z": {
-            file:"kelime-okyanusu-lise/lise-level-1.html",
-            level:1,
-            type:"lise"
-        },
-
-        "lis2K82v": {
-            file:"kelime-okyanusu-lise/lise-level-2.html",
-            level:2,
-            type:"lise"
-        },
-
-        "lis3M44n": {
-            file:"kelime-okyanusu-lise/lise-level-3.html",
-            level:3,
-            type:"lise"
-        }
-
-
-    };
-
-
-    const current = levels[req.params.token];
-
-
-    if(!current){
-
-        return res.status(404)
-        .send("Geçersiz oyun bağlantısı");
-
+    if (current.type === "ilkokul") {
+        redirectToken = "ilk1A8f3";
+    } 
+    else if (current.type === "ortaokul") {
+        redirectToken = "ort1D82m";
+    } 
+    else {
+        redirectToken = "lis1H91z";
     }
 
-
-
-    const username = req.session.username;
-
-
-    const user = await getUserSnapshot(username);
-
-
-
-    const maxLevel = user.maxLevel || 1;
-
-
-
-    let maxLevel;
-
-
-if(current.type==="ilkokul"){
-    maxLevel = user.ilkokulLevel || 1;
+    return res.redirect("/game/" + redirectToken);
 }
 
-if(current.type==="ortaokul"){
-    maxLevel = user.ortaokulLevel || 1;
-}
-
-if(current.type==="lise"){
-    maxLevel = user.liseLevel || 1;
-}
-
-
-if(current.level > maxLevel){
-
-    return res.redirect(
-        "/game/" +
-        (
-          current.type==="ilkokul" ? "ilk1A8f3" :
-          current.type==="ortaokul" ? "ort1D82m" :
-          "lis1H91z"
-        )
-    );
-
-}
-
-
-
-    res.sendFile(
-        path.join(
-            __dirname,
-            "public",
-            "pc",
-            current.file
-        )
-    );
-
-
+  res.sendFile(path.join(__dirname, "public", "pc", current.file));
 });
 
 app.post("/register", authLimiter, async (req, res) => {
@@ -324,23 +255,15 @@ app.post("/register", authLimiter, async (req, res) => {
     const sifre = String(req.body.sifre ?? req.body.password ?? "");
     const ip = getClientIP(req);
 
+    const ipCount = registerIPs.get(ip) || 0;
 
-const ipCount =
-registerIPs.get(ip) || 0;
+    if (ipCount >= 3) {
+      return res.json({
+        success: false,
 
-
-if(ipCount >= 3){
-
- return res.json({
-
-  success:false,
-
-  message:
-  "Bu IP adresinden maksimum 3 hesap oluşturabilirsiniz"
-
- });
-
-}
+        message: "Bu IP adresinden maksimum 3 hesap oluşturabilirsiniz",
+      });
+    }
 
     if (!isim || !sifre) {
       return res.json({
@@ -350,37 +273,28 @@ if(ipCount >= 3){
       });
     }
 
-if (!validateUsername(isim)) {
+    if (!validateUsername(isim)) {
+      return res.json({
+        success: false,
 
- return res.json({
+        message: "Geçersiz kullanıcı adı",
+      });
+    }
 
-  success:false,
+    if (containsBadWord(isim)) {
+      return res.json({
+        success: false,
+        message: "Kullanıcı adı uygun değil",
+      });
+    }
+    if (!validatePassword(sifre)) {
+      return res.json({
+        success: false,
 
-  message:"Geçersiz kullanıcı adı"
-
- });
-
-}
-
-
-if (containsBadWord(isim)) {
-  return res.json({
-    success: false,
-    message: "Kullanıcı adı uygun değil"
-  });
-}
-if (!validatePassword(sifre)) {
-
- return res.json({
-
-  success:false,
-
-  message:
-  "Şifre en az 8 karakter olmalı, büyük harf, küçük harf ve sayı içermeli"
-
- });
-
-}
+        message:
+          "Şifre en az 8 karakter olmalı, büyük harf, küçük harf ve sayı içermeli",
+      });
+    }
 
     const old = await findUser(isim);
 
@@ -397,10 +311,7 @@ if (!validatePassword(sifre)) {
 
       sifre,
     });
-registerIPs.set(
- ip,
- ipCount + 1
-);
+    registerIPs.set(ip, ipCount + 1);
     res.json({
       success: true,
     });
@@ -424,7 +335,6 @@ app.post("/login", authLimiter, async (req, res) => {
     const isim = String(req.body.isim ?? req.body.username ?? "").trim();
 
     const sifre = String(req.body.sifre ?? req.body.password ?? "");
-  
 
     const user = await findUser(isim);
 
