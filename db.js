@@ -33,6 +33,7 @@ async function initializeDatabase() {
       correct INT NOT NULL DEFAULT 0,
       wrong INT NOT NULL DEFAULT 0,
       totalQuestions INT NOT NULL DEFAULT 0,
+      maxLevel INT NOT NULL DEFAULT 1,
       claimedRoadRewards TEXT NOT NULL,
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )
@@ -129,16 +130,15 @@ async function updateUserScore(
 ) {
   await pool.execute(
     `
-    UPDATE users SET
+UPDATE users SET
 
-    puan = puan + ?,
-    taskPoints = taskPoints + ?,
-    correct = correct + ?,
-    wrong = wrong + ?,
-    totalQuestions = totalQuestions + ?
+puan = ?,
+taskPoints = taskPoints + ?,
+correct = correct + ?,
+wrong = wrong + ?,
+totalQuestions = totalQuestions + ?
 
-    WHERE isim = ?
-
+WHERE isim = ?
     `,
     [score, taskPoints, correct, wrong, totalQuestions, isim],
   );
@@ -242,6 +242,7 @@ async function getUserSnapshot(isim) {
     isim: user.isim,
 
     puan: Number(user.puan) || 0,
+    maxLevel: Number(user.maxLevel)||1,
 
     taskPoints: Number(user.taskPoints) || 0,
 
@@ -420,6 +421,24 @@ async function getBannedWords(){
     return rows.map(x=>x.word.toLowerCase());
 
 }
+async function addUserScore(username, amount){
+
+  await pool.execute(
+
+    `
+    UPDATE users
+    SET puan = ?
+    WHERE isim = ?
+    `,
+
+    [
+      amount,
+      username
+    ]
+
+  );
+
+}
 async function containsBannedWord(text){
 
     const words=await getBannedWords();
@@ -458,7 +477,24 @@ account_count=account_count+1`,
 );
 
 }
+async function unlockNextLevel(username, level){
 
+  const nextLevel = Number(level) + 1;
+
+
+  await pool.execute(
+    `
+    UPDATE users
+    SET maxLevel = GREATEST(maxLevel, ?)
+    WHERE isim = ?
+    `,
+    [
+      nextLevel,
+      username
+    ]
+  );
+
+}
 module.exports = {
   initializeDatabase,
 
@@ -483,5 +519,7 @@ isReservedUsername,
  containsBannedWord,
 getIPRegisterCount,
 resetUserLevel,
-incrementIPRegisterCount
+incrementIPRegisterCount,
+unlockNextLevel,
+addUserScore
 };

@@ -12,16 +12,18 @@ const path = require("path");
 const http = require("http");
 
 const {
-  initializeDatabase,
-  createUser,
-  findUser,
-  getUsersWithRanks,
-  updateUserScore,
-  addClaimedRoadReward,
-  getUserSnapshot,
-  verifyPassword,
-  upgradePasswordHashIfNeeded,
-  resetUserLevel,
+ initializeDatabase,
+ createUser,
+ findUser,
+ getUsersWithRanks,
+ updateUserScore,
+ addClaimedRoadReward,
+ getUserSnapshot,
+ verifyPassword,
+ upgradePasswordHashIfNeeded,
+ resetUserLevel,
+ unlockNextLevel,
+ addUserScore,
 } = require("./db");
 
 const app = express();
@@ -59,6 +61,49 @@ app.post("/reset-level", async (req, res) => {
   res.json({
     success: true,
   });
+});
+app.post("/complete-level", async(req,res)=>{
+
+
+const username=getCurrentUsername(req);
+
+
+if(!username){
+
+return res.json({
+success:false
+});
+
+}
+
+
+const level=Number(req.body.level);
+
+
+if(!level){
+
+return res.json({
+success:false
+});
+
+}
+
+
+
+await unlockNextLevel(
+username,
+level
+);
+
+
+
+res.json({
+
+success:true
+
+});
+
+
 });
 app.use(
   session({
@@ -144,12 +189,6 @@ app.get("/pc", (req, res) => {
 });
 
 app.use("/pc", express.static(path.join(__dirname, "public", "pc")));
-
-app.use(express.static(path.join(__dirname, "public")));
-
-/*
- GAME TOKEN ROUTE
-*/
 
 app.get("/game/:token", requireAuth, async (req, res) => {
   const levels = {
@@ -247,6 +286,11 @@ if (current.level > maxLevel) {
 
   res.sendFile(path.join(__dirname, "public", "pc", current.file));
 });
+
+app.use(express.static(path.join(__dirname, "public")));
+
+
+
 
 app.post("/register", authLimiter, async (req, res) => {
   try {
@@ -467,87 +511,111 @@ app.get("/leaderboard", async (req, res) => {
  SAVE SCORE
 */
 
+
+
 app.post("/save-score", async (req, res) => {
+
   try {
+
     const username = getCurrentUsername(req);
 
+
     if (!username) {
-      return res.json({
-        success: false,
 
-        message: "Giriş yok",
+      return res.json({
+        success:false,
+        message:"Giriş yok"
       });
+
     }
 
-    const score = Number(req.body.score);
 
-    if (Number.isNaN(score)) {
+    const levelScore = Number(req.body.score);
+
+
+    if (Number.isNaN(levelScore)) {
+
       return res.json({
-        success: false,
+        success:false,
+        message:"Geçersiz puan"
       });
+
     }
+
+
+
+    const current = await getUserSnapshot(username);
+
+
 
     await updateUserScore(username, {
-      score,
 
-      taskPoints: Number(req.body.taskPoints) || 0,
 
-      correct: Number(req.body.dogruSayisi) || 0,
+      // eski puanın üstüne ekle
+      score: current.puan + levelScore,
 
-      wrong: Number(req.body.yanlisSayisi) || 0,
 
-      totalQuestions: Number(req.body.toplamSoru) || 0,
+      taskPoints:
+      req.body.taskPoints !== undefined
+      ?
+      Number(req.body.taskPoints)
+      :
+      current.taskPoints,
+
+
+      correct:
+      current.correct +
+      (Number(req.body.dogruSayisi)||0),
+
+
+
+      wrong:
+      current.wrong +
+      (Number(req.body.yanlisSayisi)||0),
+
+
+
+      totalQuestions:
+      current.totalQuestions +
+      (Number(req.body.toplamSoru)||0)
+
+
     });
+
+
 
     const user = await getUserSnapshot(username);
 
-    const users = await getUsersWithRanks();
 
-    const ranked = users.find((u) => u.isim === username);
 
     res.json({
-      success: true,
 
-      toplamPuan: user.puan,
+      success:true,
 
-      taskPoints: user.taskPoints,
+      toplamPuan:user.puan
 
-      rank: ranked?.rank || 1,
-
-      correct: user.correct,
-
-      wrong: user.wrong,
-
-      totalQuestions: user.totalQuestions,
-      title: user.title,
-
-      roadProgressPercent: user.roadProgressPercent,
-
-      roadProgressValue: user.roadProgressValue,
-
-      roadProgressTotal: user.roadProgressTotal,
-
-      rotationIndex: user.rotationIndex,
-
-      rotationLabel: user.rotationLabel,
-
-      nextMilestone: user.nextMilestone,
-
-      currentMilestones: user.currentMilestones || [],
-
-      claimedRoadRewards: user.claimedRoadRewards || [],
     });
-  } catch (err) {
+
+
+
+  }
+  catch(err){
+
     console.log(err);
 
+
     res.json({
-      success: false,
 
-      message: "Hata",
+      success:false,
+
+      message:"Hata"
+
     });
-  }
-});
 
+  }
+
+
+});
 /*
  ROAD STATE
 */

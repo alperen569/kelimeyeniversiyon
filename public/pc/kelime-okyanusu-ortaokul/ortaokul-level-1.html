@@ -696,8 +696,43 @@ let usedProverbIndices = [];
 let selectedProverb = "";
 let scrambledWords = [];
 let collectedWords = [];
+let correctCount=0;
+
+let wrongCount=0;
 let score = 0;
-let timeRemaining = 90;
+
+
+async function loadServerScore(){
+
+  try {
+
+    const response = await fetch("/me");
+
+    const data = await response.json();
+
+
+    if(data.loggedIn){
+
+      score = data.puan || 0;
+
+      updateScore();
+
+    }
+
+
+  } catch(err){
+
+    console.log(
+      "Puan yükleme hatası",
+      err
+    );
+
+  }
+
+}
+
+
+loadServerScore();let timeRemaining = 90;
 let timerInterval = null;
 let missionData = {
   streak1: { progress: 0, goal: 1, done: false },
@@ -718,14 +753,70 @@ function showStatusMessage(message, type = 'info') {
   statusStrip.textContent = message;
 }
 
-function transitionToLevel(url, scoreToSave) {
-  if (typeof scoreToSave === 'number') {
-    try { localStorage.setItem('levelScore', String(scoreToSave)); } catch (e) {}
+async function transitionToLevel(url, scoreToSave) {
+
+  try {
+
+    const response = await fetch("/save-score", {
+
+      method: "POST",
+
+      headers: {
+        "Content-Type": "application/json"
+      },
+
+      body: JSON.stringify({
+
+        score: Number(scoreToSave) || 0,
+
+        // bu leveldeki bilgiler
+        dogruSayisi: 0,
+
+        yanlisSayisi: 0,
+
+        toplamSoru: 0
+
+      })
+
+    });
+
+
+    const data = await response.json();
+
+
+    if (!data.success) {
+
+      console.log(
+        "Puan kaydedilemedi",
+        data.message
+      );
+
+    }
+
+
+  } catch(err) {
+
+    console.log(
+      "Server puan hatası:",
+      err
+    );
+
   }
-  document.body.classList.add('is-transitioning');
-  setTimeout(() => {
-    window.location.assign(encodeURI(url));
-  }, 420);
+
+
+  document.body.classList.add(
+    "is-transitioning"
+  );
+
+
+  setTimeout(()=>{
+
+    window.location.assign(
+      encodeURI(url)
+    );
+
+  },420);
+
 }
 
 function softRoundTransition(nextRoundFn) {
@@ -1011,13 +1102,58 @@ function startGame() {
       timeExpired = true;
       showStatusMessage('Zaman bitti! Level 2\'ye aktarılıyor...', 'warning');
       setTimeout(() => {
-        transitionToLevel('/game/ort2F71p', score);
+        completeLevelAndGo('/game/ort2F71p', 1);
       }, 260);
       return;
     }
   }, 1000);
 }
+async function completeLevelAndGo(url,level){
 
+
+ await fetch("/complete-level",{
+
+
+ method:"POST",
+
+
+ headers:{
+
+ "Content-Type":"application/json"
+
+ },
+
+
+body:JSON.stringify({
+
+ correct: correctCount,
+
+ wrong: wrongCount,
+
+ level:3
+
+})
+
+
+ });
+
+
+
+ document.body.classList.add(
+ "is-transitioning"
+ );
+
+
+ setTimeout(()=>{
+
+
+ window.location.assign(url);
+
+
+ },420);
+
+
+}
 function updateTimerDisplay() {
   const mins = Math.floor(timeRemaining / 60);
   const secs = timeRemaining % 60;
@@ -1046,7 +1182,7 @@ function checkProverb() {
   }
 
 if (correct) {
-  score += 100;
+   correctCount++;
   correctStreak++;
   updateScore();
   playSuccessSound();
@@ -1062,6 +1198,8 @@ if (correct) {
     showStatusMessage('Maalesef yanlış! Doğru cümleyi oluşturamadın.', 'error');
   }
   correctStreak = 0;
+   wrongCount++;
+
   updateMissions();
 }
 }

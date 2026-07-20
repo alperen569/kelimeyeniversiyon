@@ -563,8 +563,43 @@
 
     let selectedProverb = "";
     let collectedWords = [];
-    let score = 1000;
-    let usedWords = [];
+    let correctCount=0;
+
+let wrongCount=0;
+let score = 0;
+
+
+async function loadServerScore(){
+
+  try {
+
+    const response = await fetch("/me");
+
+    const data = await response.json();
+
+
+    if(data.loggedIn){
+
+      score = data.puan || 0;
+
+      updateScore();
+
+    }
+
+
+  } catch(err){
+
+    console.log(
+      "Puan yükleme hatası",
+      err
+    );
+
+  }
+
+}
+
+
+loadServerScore();    let usedWords = [];
 let missionData = {
   streak1: { progress: 0, goal: 1, done: false },
   streak2: { progress: 0, goal: 2, done: false },
@@ -574,14 +609,7 @@ let missionData = {
 let correctStreak = 0;
 let lastSkipped = false;
 
-window.addEventListener('load', () => {
-  const levelScore = localStorage.getItem('levelScore');
-  if (levelScore) {
-    score = parseInt(levelScore);
-    updateScore();
-    localStorage.removeItem('levelScore');
-  }
-});
+
 
 
     function cleanText(text) {
@@ -738,7 +766,7 @@ const targetWords = cleanText(selectedProverb).split(/\s+/);
   }
 
   if (correct) {
-    score += 100;
+    correctCount++;
     correctStreak++;
     updateScore();
     showToast('Doğru! +100 Puan');
@@ -748,6 +776,8 @@ const targetWords = cleanText(selectedProverb).split(/\s+/);
   } else {
     showToast('Yanlış! Doğru cümleyi oluşturmadın.');
     correctStreak = 0;
+     wrongCount++;
+
     updateMissions();
   }
 }
@@ -926,7 +956,21 @@ function showComboText() {
     method:"POST"
   });
 
+await fetch("/complete-level",{
 
+method:"POST",
+
+headers:{
+"Content-Type":"application/json"
+},
+
+body:JSON.stringify({
+
+level:3
+
+})
+
+});
   window.location.href = "/home";
 
 
