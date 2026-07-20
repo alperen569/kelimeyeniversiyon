@@ -288,7 +288,6 @@ app.get("/game/:token", requireAuth, async (req,res)=>{
         path.join(
             __dirname,
             "public",
-            "pc",
             current.file
         )
     );
