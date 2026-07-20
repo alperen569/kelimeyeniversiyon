@@ -702,6 +702,31 @@ let correctCount=0;
 
 let wrongCount=0;
 let score = 0;
+let scorePrimedFromPreviousLevel = false;
+
+function primeScoreFromStorage() {
+  try {
+    const rawScore = localStorage.getItem("levelScore");
+
+    if (rawScore === null) {
+      return false;
+    }
+
+    const savedScore = Number(rawScore);
+
+    if (Number.isFinite(savedScore)) {
+      score = savedScore;
+      scorePrimedFromPreviousLevel = true;
+      updateScore();
+      localStorage.removeItem("levelScore");
+      return true;
+    }
+  } catch (err) {
+    console.log("Yerel puan yükleme hatası:", err);
+  }
+
+  return false;
+}
 
 
 async function loadServerScore(){
@@ -713,7 +738,7 @@ async function loadServerScore(){
     const data = await response.json();
 
 
-    if(data.loggedIn){
+    if(data.loggedIn && !scorePrimedFromPreviousLevel){
 
       score = data.puan || 0;
 
@@ -734,6 +759,7 @@ async function loadServerScore(){
 }
 
 
+primeScoreFromStorage();
 loadServerScore();let timeRemaining = 75;
 let timerInterval = null;
 let missionData = {
@@ -741,15 +767,6 @@ let missionData = {
   streak2: { progress: 0, goal: 2, done: false },
   streak3: { progress: 0, goal: 3, done: false }
 };
-
-function loadSavedLevelScore() {
-  const saved = Number(localStorage.getItem('levelScore'));
-  if (Number.isFinite(saved) && saved > 0) {
-    score = saved;
-  }
-}
-
-loadSavedLevelScore();
 
 let correctStreak = 0;
 let lastSkipped = false;
@@ -765,6 +782,16 @@ function showStatusMessage(message, type = 'info') {
 }
 
 async function transitionToLevel(url, scoreToSave) {
+
+  const nextLevelScore = Number(scoreToSave);
+
+  if (Number.isFinite(nextLevelScore)) {
+    try {
+      localStorage.setItem("levelScore", String(nextLevelScore));
+    } catch (err) {
+      console.log("Yerel puan kaydetme hatası:", err);
+    }
+  }
 
   try {
 
@@ -1113,7 +1140,7 @@ function startGame() {
       timeExpired = true;
       showStatusMessage('Zaman bitti! Level 3\'e aktarılıyor...', 'warning');
       setTimeout(() => {
-        completeLevelAndGo('/game/ort3G55q', 1);
+        completeLevelAndGo('/game/ort3G55q', 2);
       }, 260);
       return;
     }
@@ -1121,6 +1148,11 @@ function startGame() {
 }
 async function completeLevelAndGo(url,level){
 
+ try {
+  localStorage.setItem("levelScore", String(Number(score) || 0));
+ } catch (err) {
+  console.log("Yerel puan kaydetme hatası:", err);
+ }
 
  await fetch("/complete-level",{
 
@@ -1136,11 +1168,11 @@ async function completeLevelAndGo(url,level){
 
 body:JSON.stringify({
 
- correct: correctCount,
+correct: correctCount,
 
- wrong: wrongCount,
+wrong: wrongCount,
 
- level:3
+level:Number(level) || 2
 
 })
 

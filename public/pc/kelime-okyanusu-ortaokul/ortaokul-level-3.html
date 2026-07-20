@@ -562,11 +562,36 @@
     const marketPanel = document.getElementById('market-panel');
 
     let selectedProverb = "";
-    let collectedWords = [];
-    let correctCount=0;
+let collectedWords = [];
+let correctCount=0;
 
 let wrongCount=0;
 let score = 0;
+let scorePrimedFromPreviousLevel = false;
+
+function primeScoreFromStorage() {
+  try {
+    const rawScore = localStorage.getItem("levelScore");
+
+    if (rawScore === null) {
+      return false;
+    }
+
+    const savedScore = Number(rawScore);
+
+    if (Number.isFinite(savedScore)) {
+      score = savedScore;
+      scorePrimedFromPreviousLevel = true;
+      updateScore();
+      localStorage.removeItem("levelScore");
+      return true;
+    }
+  } catch (err) {
+    console.log("Yerel puan yükleme hatası:", err);
+  }
+
+  return false;
+}
 
 
 async function loadServerScore(){
@@ -578,7 +603,7 @@ async function loadServerScore(){
     const data = await response.json();
 
 
-    if(data.loggedIn){
+    if(data.loggedIn && !scorePrimedFromPreviousLevel){
 
       score = data.puan || 0;
 
@@ -599,6 +624,7 @@ async function loadServerScore(){
 }
 
 
+primeScoreFromStorage();
 loadServerScore();    let usedWords = [];
 let missionData = {
   streak1: { progress: 0, goal: 1, done: false },

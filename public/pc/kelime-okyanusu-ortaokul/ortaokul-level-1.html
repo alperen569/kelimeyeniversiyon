@@ -700,6 +700,31 @@ let correctCount=0;
 
 let wrongCount=0;
 let score = 0;
+let scorePrimedFromPreviousLevel = false;
+
+function primeScoreFromStorage() {
+  try {
+    const rawScore = localStorage.getItem("levelScore");
+
+    if (rawScore === null) {
+      return false;
+    }
+
+    const savedScore = Number(rawScore);
+
+    if (Number.isFinite(savedScore)) {
+      score = savedScore;
+      scorePrimedFromPreviousLevel = true;
+      updateScore();
+      localStorage.removeItem("levelScore");
+      return true;
+    }
+  } catch (err) {
+    console.log("Yerel puan yükleme hatası:", err);
+  }
+
+  return false;
+}
 
 
 async function loadServerScore(){
@@ -711,7 +736,7 @@ async function loadServerScore(){
     const data = await response.json();
 
 
-    if(data.loggedIn){
+    if(data.loggedIn && !scorePrimedFromPreviousLevel){
 
       score = data.puan || 0;
 
@@ -732,6 +757,7 @@ async function loadServerScore(){
 }
 
 
+primeScoreFromStorage();
 loadServerScore();let timeRemaining = 90;
 let timerInterval = null;
 let missionData = {
@@ -754,6 +780,16 @@ function showStatusMessage(message, type = 'info') {
 }
 
 async function transitionToLevel(url, scoreToSave) {
+
+  const nextLevelScore = Number(scoreToSave);
+
+  if (Number.isFinite(nextLevelScore)) {
+    try {
+      localStorage.setItem("levelScore", String(nextLevelScore));
+    } catch (err) {
+      console.log("Yerel puan kaydetme hatası:", err);
+    }
+  }
 
   try {
 
@@ -1110,6 +1146,11 @@ function startGame() {
 }
 async function completeLevelAndGo(url,level){
 
+ try {
+  localStorage.setItem("levelScore", String(Number(score) || 0));
+ } catch (err) {
+  console.log("Yerel puan kaydetme hatası:", err);
+ }
 
  await fetch("/complete-level",{
 
@@ -1126,11 +1167,11 @@ async function completeLevelAndGo(url,level){
 
 body:JSON.stringify({
 
- correct: correctCount,
+correct: correctCount,
 
- wrong: wrongCount,
+wrong: wrongCount,
 
- level:3
+level:Number(level) || 1
 
 })
 
