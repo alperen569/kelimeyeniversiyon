@@ -126,12 +126,21 @@ async function upgradePlaintextPasswords() {
 
 async function updateUserScore(
   isim,
-  { score = 0, taskPoints = 0, correct = 0, wrong = 0, totalQuestions = 0 },
+  {
+    score = 0,
+    taskPoints = 0,
+    correct = 0,
+    wrong = 0,
+    totalQuestions = 0,
+    mode = "add",
+  },
 ) {
+  const scoreSql = mode === "absolute" ? "puan = ?" : "puan = puan + ?";
+
   await pool.execute(
     `
 UPDATE users SET
-puan = puan + ?,
+${scoreSql},
 taskPoints = taskPoints + ?,
 correct = correct + ?,
 wrong = wrong + ?,

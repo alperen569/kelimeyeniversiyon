@@ -547,27 +547,22 @@ app.post("/save-score", async (req, res) => {
     }
 
 
-    const current = await getUserSnapshot(username);
-
+    const scoreMode = String(req.body.scoreMode || "").toLowerCase();
+    const isAbsoluteScore = scoreMode === "absolute" || scoreMode === "replace";
+    const correct = Number(req.body.correct ?? req.body.dogruSayisi ?? 0) || 0;
+    const wrong = Number(req.body.wrong ?? req.body.yanlisSayisi ?? 0) || 0;
+    const totalQuestions = Number(
+      req.body.totalQuestions ?? req.body.toplamSoru ?? 0,
+    ) || 0;
+    const taskPoints = Number(req.body.taskPoints ?? 0) || 0;
 
     await updateUserScore(username, {
-
       score: levelScore,
-
-
-      taskPoints: current.taskPoints,
-
-correct:
- Number(req.body.correct) || 0,
-
-
-      wrong:
- Number(req.body.wrong) || 0,
-
-
-      totalQuestions:
-        current.totalQuestions + 1
-
+      taskPoints,
+      correct,
+      wrong,
+      totalQuestions,
+      mode: isAbsoluteScore ? "absolute" : "add",
     });
 
 

@@ -975,6 +975,7 @@ async function saveScoreAndReturnHome() {
     },
     body:JSON.stringify({
         score,
+        scoreMode: "absolute",
         correct:correctCount,
         wrong:wrongCount,
         level:3

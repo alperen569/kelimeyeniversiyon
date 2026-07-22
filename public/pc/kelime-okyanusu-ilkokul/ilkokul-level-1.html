@@ -741,6 +741,7 @@ async function transitionToLevel(url, scoreToSave) {
       body: JSON.stringify({
 
         score: Number(scoreToSave) || 0,
+        scoreMode: "absolute",
 
         // bu leveldeki bilgiler
         dogruSayisi: 0,
@@ -885,7 +886,8 @@ async function updateScore() {
       },
 
       body:JSON.stringify({
-        score:score
+        score:score,
+        scoreMode: "absolute"
       })
 
     });
@@ -1122,7 +1124,8 @@ async function completeLevelAndGo(url,level){
 
  level:level,
 
- score:score
+ score:score,
+ scoreMode: "absolute"
 
  })
 
