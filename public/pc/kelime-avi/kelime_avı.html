@@ -623,6 +623,52 @@
             'sevgi', 'aşk', 'dostluk', 'barış', 'özgürlük', 'adalet', 'umut'
         ];
 
+        const challengingWords = [
+            'sorumluluk', 'strateji', 'özgünlük', 'tutarlılık', 'merhamet', 'gelişim',
+            'değerlendirme', 'çözümleme', 'uygarlık', 'dayanışma', 'iletişim', 'inceleme',
+            'yönetişim', 'kavrayış', 'disiplin', 'farkındalık', 'katılım', 'dönüşüm',
+            'muhakeme', 'şeffaflık', 'öngörü', 'yorumlama', 'şekillendirme', 'uyarlanma'
+        ];
+
+        const expertWords = [
+            'medeniyet', 'sürdürülebilirlik', 'çoğulculuk', 'entegrasyon', 'gereksinim',
+            'örgütlenme', 'nitelik', 'anlamlandırma', 'kapsayıcılık', 'kararlılık',
+            'karmaşıklık', 'özdeşim', 'eşgüdüm', 'algoritma', 'hesaplaşma'
+        ];
+
+        function getWordPool() {
+            const baseWords = commonWords.filter((word) => word.length >= 4);
+            const total = Number(score.total) || 0;
+
+            if (total >= 200) {
+                return baseWords.concat(challengingWords, expertWords);
+            }
+
+            if (total >= 100) {
+                return baseWords.concat(challengingWords);
+            }
+
+            if (total >= 60) {
+                return baseWords.concat(challengingWords.slice(0, 14));
+            }
+
+            return baseWords.concat(challengingWords.slice(0, 8));
+        }
+
+        function getHintText(word) {
+            const total = Number(score.total) || 0;
+
+            if (total >= 180) {
+                return '';
+            }
+
+            if (total >= 100) {
+                return `💡 İpucu: ${word[0].toUpperCase()} harfiyle başlıyor`;
+            }
+
+            return `💡 İpucu: ${word.length} harfli bir kelime`;
+        }
+
         // Kullanıcı bilgilerini yükle
         async function loadUserInfo() {
             try {
@@ -733,7 +779,8 @@
         }
 
         async function fetchWord() {
-            const randomWord = commonWords[Math.floor(Math.random() * commonWords.length)];
+            const wordPool = getWordPool();
+            const randomWord = wordPool[Math.floor(Math.random() * wordPool.length)];
             
             try {
                 document.getElementById('definitionBox').innerHTML = '<div class="loading">Kelime yükleniyor...</div>';
@@ -747,7 +794,7 @@
                     const definition = data[0].anlamlarListe[0].anlam;
                     
                     document.getElementById('definitionBox').textContent = definition;
-                    document.getElementById('hint').textContent = `💡 İpucu: ${currentWord.length} harfli bir kelime`;
+                    document.getElementById('hint').textContent = getHintText(currentWord);
                     document.getElementById('wordInput').value = '';
                     document.getElementById('wordInput').focus();
                 } else {

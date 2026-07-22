@@ -552,7 +552,7 @@ app.post("/save-score", async (req, res) => {
     const correct = Number(req.body.correct ?? req.body.dogruSayisi ?? 0) || 0;
     const wrong = Number(req.body.wrong ?? req.body.yanlisSayisi ?? 0) || 0;
     const totalQuestions = Number(
-      req.body.totalQuestions ?? req.body.toplamSoru ?? 0,
+      req.body.totalQuestions ?? req.body.toplamSoru ?? (correct + wrong),
     ) || 0;
     const taskPoints = Number(req.body.taskPoints ?? 0) || 0;
 

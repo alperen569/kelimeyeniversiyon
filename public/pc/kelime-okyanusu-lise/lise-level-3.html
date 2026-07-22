@@ -121,6 +121,22 @@
       text-align: center;
       box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
       border: 2px solid rgba(255,255,255,0.5);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .collected-chip {
+      background: linear-gradient(180deg, #ffd77a, #ffb84d);
+      color: #001f3f;
+      padding: 8px 12px;
+      border-radius: 18px;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+      font-weight: 700;
+      cursor: pointer;
+      user-select: none;
+      font-size: 15px;
     }
 
     /* Score ve Timer - Top Panel */
@@ -696,8 +712,88 @@ let lastSkipped = false;
       });
     }
 
+    function createMovingWord(word) {
+      const wordEl = document.createElement("div");
+      wordEl.classList.add("word");
+      wordEl.textContent = word;
+      gameContainer.appendChild(wordEl);
+
+      const padding = 12;
+      const maxX = Math.max(0, gameContainer.clientWidth - wordEl.offsetWidth - padding);
+      const maxY = Math.max(0, gameContainer.clientHeight - wordEl.offsetHeight - padding);
+
+      const posX = Math.random() * maxX;
+      const posY = Math.random() * maxY;
+
+      wordEl.style.left = Math.max(padding, Math.min(posX, maxX)) + "px";
+      wordEl.style.top = Math.max(padding, Math.min(posY, maxY)) + "px";
+
+      const speedX = (Math.random() * 0.8 + 0.4) * (Math.random() > 0.5 ? 1 : -1);
+      const speedY = (Math.random() * 0.8 + 0.4) * (Math.random() > 0.5 ? 1 : -1);
+
+      let x = wordEl.offsetLeft;
+      let y = wordEl.offsetTop;
+      let dx = speedX;
+      let dy = speedY;
+
+      const moveWord = () => {
+        const width = gameContainer.clientWidth;
+        const height = gameContainer.clientHeight;
+        const wordWidth = wordEl.offsetWidth;
+        const wordHeight = wordEl.offsetHeight;
+
+        if (x <= 8 || x >= width - wordWidth - 8) dx *= -1;
+        if (y <= 8 || y >= height - wordHeight - 8) dy *= -1;
+
+        x += dx;
+        y += dy;
+        wordEl.style.left = `${Math.max(8, Math.min(x, width - wordWidth - 8))}px`;
+        wordEl.style.top = `${Math.max(8, Math.min(y, height - wordHeight - 8))}px`;
+      };
+
+      setInterval(moveWord, 40);
+
+      wordEl.addEventListener("click", () => {
+        if (!collectedWords.includes(word)) {
+          collectedWords.push(word);
+          updateCollectedWords();
+          wordEl.remove();
+        }
+      });
+    }
+
     function updateCollectedWords() {
-      collectedWordsDiv.textContent = "Toplanan Kelimeler: " + collectedWords.join(" ");
+      collectedWordsDiv.innerHTML = "";
+
+      if (collectedWords.length === 0) {
+        collectedWordsDiv.textContent = "Toplanan Kelimeler:";
+        return;
+      }
+
+      collectedWordsDiv.textContent = "Toplanan Kelimeler:";
+
+      const wrapper = document.createElement("div");
+      wrapper.style.display = "flex";
+      wrapper.style.flexWrap = "wrap";
+      wrapper.style.gap = "8px";
+      wrapper.style.justifyContent = "center";
+      wrapper.style.marginTop = "4px";
+
+      collectedWords.forEach((word, idx) => {
+        const chip = document.createElement("div");
+        chip.className = "collected-chip";
+        chip.textContent = word + " ✖";
+        chip.setAttribute("data-idx", idx);
+        chip.title = "Silmek için dokun";
+        chip.addEventListener("click", () => {
+          const removed = collectedWords.splice(idx, 1)[0];
+          updateCollectedWords();
+          createMovingWord(removed);
+        });
+        wrapper.appendChild(chip);
+      });
+
+      collectedWordsDiv.appendChild(wrapper);
     }
 
     function startGame() {
@@ -940,7 +1036,7 @@ function showComboText() {
       fetch('/save-score', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ score, ...buildLevel3Summary() })
+        body: JSON.stringify({ score, scoreMode: "absolute", ...buildLevel3Summary() })
       })
         .then(res => res.json())
         .then(data => {
@@ -987,21 +1083,7 @@ level:3
   if (collectedWords.length === 0) return;
   const lastWord = collectedWords.pop();
   updateCollectedWords();
-  
-  const wordEl = document.createElement("div");
-  wordEl.classList.add("word");
-  wordEl.style.left = Math.random() * 25 + "vw";
-  wordEl.textContent = lastWord;
-
-  wordEl.addEventListener("click", () => {
-    if (!collectedWords.includes(lastWord)) {
-      collectedWords.push(lastWord);
-      updateCollectedWords();
-      wordEl.remove();
-    }
-  });
-
-  gameContainer.appendChild(wordEl);
+  createMovingWord(lastWord);
 }
 
     function startCountdownAnimation() {
@@ -1041,7 +1123,7 @@ function skoruKaydet(scoreValue) {
   fetch('/save-score', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ score: scoreValue, ...buildLevel3Summary() })
+    body: JSON.stringify({ score: scoreValue, scoreMode: "absolute", ...buildLevel3Summary() })
   })
   .then(res => res.json())
   .then(data => {
