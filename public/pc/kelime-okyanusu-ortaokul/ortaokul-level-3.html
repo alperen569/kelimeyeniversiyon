@@ -584,6 +584,7 @@ let correctCount=0;
 let wrongCount=0;
 let score = 0;
 let scorePrimedFromPreviousLevel = false;
+let levelStartScore = 0;
 
 function primeScoreFromStorage() {
   try {
@@ -607,6 +608,10 @@ function primeScoreFromStorage() {
   }
 
   return false;
+}
+
+function getLevel3ScoreDelta(currentScore = score) {
+  return Number(currentScore) - Number(levelStartScore);
 }
 
 
@@ -641,8 +646,7 @@ async function loadServerScore(){
 }
 
 
-primeScoreFromStorage();
-loadServerScore();    let usedWords = [];
+let usedWords = [];
 let missionData = {
   streak1: { progress: 0, goal: 1, done: false },
   streak2: { progress: 0, goal: 2, done: false },
@@ -1067,7 +1071,7 @@ function showComboText() {
       fetch('/save-score', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ score, scoreMode: "absolute", ...buildLevel3Summary() })
+        body: JSON.stringify({ ...buildLevel3Summary(), score: getLevel3ScoreDelta(), scoreMode: "add" })
       })
         .then(res => res.json())
         .then(data => {
@@ -1153,7 +1157,7 @@ function skoruKaydet(scoreValue) {
   fetch('/save-score', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ score: scoreValue, scoreMode: "absolute", ...buildLevel3Summary() })
+    body: JSON.stringify({ ...buildLevel3Summary(), score: getLevel3ScoreDelta(scoreValue), scoreMode: "add" })
   })
   .then(res => res.json())
   .then(data => {
@@ -1192,7 +1196,10 @@ const proverbs = [
 
 
 
-    window.onload = () => {
+    window.onload = async () => {
+      primeScoreFromStorage();
+      await loadServerScore();
+      levelStartScore = score;
       startCountdownAnimation();
     };
   document.querySelectorAll(".market-item").forEach(item => {

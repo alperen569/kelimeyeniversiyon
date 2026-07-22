@@ -583,6 +583,7 @@
 let wrongCount=0;
 let score = 0;
 let scorePrimedFromPreviousLevel = false;
+let levelStartScore = 0;
 
 function primeScoreFromStorage() {
   try {
@@ -602,6 +603,10 @@ function primeScoreFromStorage() {
   }
 
   return false;
+}
+
+function getLevel3ScoreDelta(currentScore = score) {
+  return Number(currentScore) - Number(levelStartScore);
 }
 let usedWords = [];
 const proverbs = [
@@ -1091,8 +1096,8 @@ async function saveScoreAndReturnHome() {
         "Content-Type":"application/json"
     },
     body:JSON.stringify({
-        score,
-        scoreMode: "absolute",
+        score: getLevel3ScoreDelta(),
+        scoreMode: "add",
         correct:correctCount,
         wrong:wrongCount,
         level:3
@@ -1202,6 +1207,7 @@ window.onload = async () => {
   primeScoreFromStorage();
 
   await loadServerScore();
+  levelStartScore = score;
 
   startCountdownAnimation();
 
