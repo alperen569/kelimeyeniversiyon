@@ -582,6 +582,27 @@
 
 let wrongCount=0;
 let score = 0;
+let scorePrimedFromPreviousLevel = false;
+
+function primeScoreFromStorage() {
+  try {
+    const rawScore = localStorage.getItem("levelScore");
+    if (rawScore === null) return false;
+
+    const savedScore = Number(rawScore);
+    if (Number.isFinite(savedScore)) {
+      score = savedScore;
+      scorePrimedFromPreviousLevel = true;
+      updateScore();
+      localStorage.removeItem("levelScore");
+      return true;
+    }
+  } catch (err) {
+    console.log("Yerel puan yükleme hatası:", err);
+  }
+
+  return false;
+}
 let usedWords = [];
 const proverbs = [
   "Ağaç yaşken eğilir",
@@ -954,7 +975,7 @@ async function loadServerScore(){
     const data = await res.json();
 
 
-    if(data.success){
+    if(data.success && !scorePrimedFromPreviousLevel){
 
       score = Number(data.score) || 0;
 
@@ -1176,9 +1197,11 @@ const data = JSON.parse(text);
 
 
 
-window.onload = () => {
+window.onload = async () => {
 
-  loadServerScore();
+  primeScoreFromStorage();
+
+  await loadServerScore();
 
   startCountdownAnimation();
 
