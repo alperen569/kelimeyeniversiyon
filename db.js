@@ -30,6 +30,7 @@ async function initializeDatabase() {
       sifre VARCHAR(255) NOT NULL,
       puan INT NOT NULL DEFAULT 0,
       taskPoints INT NOT NULL DEFAULT 0,
+      levelScore INT NOT NULL DEFAULT 0,
       total_score INT NOT NULL DEFAULT 0,
       correct INT NOT NULL DEFAULT 0,
       wrong INT NOT NULL DEFAULT 0,
@@ -54,6 +55,17 @@ async function initializeDatabase() {
     await pool.query(`
       ALTER TABLE users
       ADD COLUMN total_score INT NOT NULL DEFAULT 0
+    `);
+  } catch (err) {
+    if (err?.code !== "ER_DUP_FIELDNAME") {
+      throw err;
+    }
+  }
+
+  try {
+    await pool.query(`
+      ALTER TABLE users
+      ADD COLUMN levelScore INT NOT NULL DEFAULT 0
     `);
   } catch (err) {
     if (err?.code !== "ER_DUP_FIELDNAME") {
@@ -244,6 +256,7 @@ async function getUsersWithRanks() {
     isim: user.isim,
     puan: Number(user.puan),
     taskPoints: Number(user.taskPoints),
+    levelScore: Number(user.levelScore) || 0,
     correct: Number(user.correct),
     wrong: Number(user.wrong),
     totalQuestions: Number(user.totalQuestions),
@@ -276,6 +289,8 @@ async function getUserSnapshot(isim) {
     maxLevel: Number(user.maxLevel)||1,
 
     taskPoints: Number(user.taskPoints) || 0,
+
+    levelScore: Number(user.levelScore) || 0,
 
     correct: Number(user.correct) || 0,
 
@@ -471,6 +486,41 @@ async function addUserScore(username, amount){
 
 }
 
+async function updateUserLevelScore(
+  isim,
+  {
+    levelScore = 0,
+    taskPoints = 0,
+    correct = 0,
+    wrong = 0,
+    totalQuestions = 0,
+  } = {},
+) {
+  await pool.execute(
+    `
+UPDATE users SET
+levelScore = ?,
+taskPoints = taskPoints + ?,
+correct = correct + ?,
+wrong = wrong + ?,
+totalQuestions = totalQuestions + ?
+WHERE isim = ?
+    `,
+    [levelScore, taskPoints, correct, wrong, totalQuestions, isim],
+  );
+}
+
+async function clearUserLevelScore(isim) {
+  await pool.execute(
+    `
+UPDATE users SET
+levelScore = 0
+WHERE isim = ?
+    `,
+    [isim],
+  );
+}
+
 async function query(...args) {
   if (!pool) {
     throw new Error("Veritabanı başlatılmadı");
@@ -566,10 +616,12 @@ isReservedUsername,
  containsBannedWord,
 getIPRegisterCount,
 resetUserLevel,
-incrementIPRegisterCount,
+  incrementIPRegisterCount,
   unlockNextLevel,
   addUserScore
   ,
+  updateUserLevelScore,
+  clearUserLevelScore,
   query,
   execute
 };

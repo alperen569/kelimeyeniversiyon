@@ -123,7 +123,6 @@
       <a
         href="/game/ilk1A8f3"
         class="level primary"
-        onclick="startGame(event, this.href)"
       >
         İLKOKUL
       </a>
@@ -131,7 +130,6 @@
       <a
         href="/game/ort1D82m"
         class="level middle"
-        onclick="startGame(event, this.href)"
       >
         ORTAOKUL
       </a>
@@ -139,7 +137,6 @@
       <a
         href="/game/lis1H91z"
         class="level high"
-        onclick="startGame(event, this.href)"
       >
         LİSE
       </a>
@@ -156,6 +153,7 @@
           });
 
           if (response.ok) {
+            localStorage.removeItem("levelScore");
             window.location.href = hedef;
           } else {
             alert("Oyuna girilemedi.");

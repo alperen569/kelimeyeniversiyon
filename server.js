@@ -17,6 +17,8 @@ const {
   findUser,
   getUsersWithRanks,
   updateUserScore,
+  updateUserLevelScore,
+  clearUserLevelScore,
   addClaimedRoadReward,
   getUserSnapshot,
   verifyPassword,
@@ -380,12 +382,22 @@ app.post("/login", authLimiter, async (req, res) => {
   }
 });
 
-app.post("/start-game", (req, res) => {
+app.post("/start-game", async (req, res) => {
   if (!req.session.loggedIn) {
     return res.sendStatus(401);
   }
 
   req.session.inGame = true;
+
+  const username = getCurrentUsername(req);
+
+  if (username) {
+    try {
+      await clearUserLevelScore(username);
+    } catch (err) {
+      console.log("LEVEL SCORE RESET HATASI:", err);
+    }
+  }
 
   res.json({
     success: true,
@@ -419,7 +431,9 @@ app.get("/game-score", async (req,res)=>{
 
       success:true,
 
-      score:user.puan || 0
+      score:user.levelScore || 0,
+
+      levelScore:user.levelScore || 0
 
     });
 
@@ -473,6 +487,8 @@ app.get("/me", async (req, res) => {
     wrong: snapshot.wrong,
 
     totalQuestions: snapshot.totalQuestions,
+
+    levelScore: snapshot.levelScore,
 
     title: snapshot.title,
 
@@ -548,7 +564,14 @@ app.post("/save-score", async (req, res) => {
 
 
     const scoreMode = String(req.body.scoreMode || "").toLowerCase();
+    const scoreScope = String(
+      req.body.scoreScope || req.body.scope || "",
+    ).toLowerCase();
+    const finalizeLevelScore =
+      req.body.finalizeLevelScore === true ||
+      String(req.body.finalizeLevelScore || "").toLowerCase() === "true";
     const isAbsoluteScore = scoreMode === "absolute" || scoreMode === "replace";
+    const isLevelScore = scoreScope === "level" || scoreScope === "level-score";
     const correct = Number(req.body.correct ?? req.body.dogruSayisi ?? 0) || 0;
     const wrong = Number(req.body.wrong ?? req.body.yanlisSayisi ?? 0) || 0;
     const totalQuestions = Number(
@@ -556,14 +579,28 @@ app.post("/save-score", async (req, res) => {
     ) || 0;
     const taskPoints = Number(req.body.taskPoints ?? 0) || 0;
 
-    await updateUserScore(username, {
-      score: levelScore,
-      taskPoints,
-      correct,
-      wrong,
-      totalQuestions,
-      mode: isAbsoluteScore ? "absolute" : "add",
-    });
+    if (isLevelScore) {
+      await updateUserLevelScore(username, {
+        levelScore,
+        taskPoints,
+        correct,
+        wrong,
+        totalQuestions,
+      });
+    } else {
+      await updateUserScore(username, {
+        score: levelScore,
+        taskPoints,
+        correct,
+        wrong,
+        totalQuestions,
+        mode: isAbsoluteScore ? "absolute" : "add",
+      });
+
+      if (finalizeLevelScore) {
+        await clearUserLevelScore(username);
+      }
+    }
 
 
 

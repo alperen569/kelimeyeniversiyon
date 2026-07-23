@@ -702,6 +702,7 @@ let correctCount=0;
 
 let wrongCount=0;
 let score = 0;
+let scorePrimedFromPreviousLevel = false;
 
 
 async function loadServerScore(){
@@ -713,9 +714,9 @@ async function loadServerScore(){
     const data = await response.json();
 
 
-    if(data.loggedIn){
+    if(data.loggedIn && !scorePrimedFromPreviousLevel){
 
-      score = data.puan || 0;
+      score = Number(data.levelScore ?? data.score ?? 0) || 0;
 
       updateScore();
 
@@ -743,10 +744,13 @@ let missionData = {
 };
 
 function loadSavedLevelScore() {
-  const saved = Number(localStorage.getItem('levelScore'));
-  if (Number.isFinite(saved) && saved > 0) {
-    score = saved;
-  }
+  const saved = Number(localStorage.getItem('levelScore'));
+  if (Number.isFinite(saved) && saved > 0) {
+    score = saved;
+    scorePrimedFromPreviousLevel = true;
+    localStorage.removeItem('levelScore');
+    updateScore();
+  }
 }
 
 loadSavedLevelScore();
@@ -780,6 +784,7 @@ async function transitionToLevel(url, scoreToSave) {
 
         score: Number(scoreToSave) || 0,
         scoreMode: "absolute",
+        scoreScope: "level",
 
         // bu leveldeki bilgiler
         dogruSayisi: 0,
@@ -1450,3 +1455,4 @@ updateTimerDisplay();
 </script>
 </body>
 </html>
+

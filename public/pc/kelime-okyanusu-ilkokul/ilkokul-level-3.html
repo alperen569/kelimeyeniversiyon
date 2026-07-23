@@ -982,7 +982,7 @@ async function loadServerScore(){
 
     if(data.success && !scorePrimedFromPreviousLevel){
 
-      score = Number(data.score) || 0;
+      score = Number(data.levelScore ?? data.score ?? 0) || 0;
 
       updateScore();
 
@@ -1098,6 +1098,8 @@ async function saveScoreAndReturnHome() {
     body:JSON.stringify({
         score: getLevel3ScoreDelta(),
         scoreMode: "add",
+        scoreScope: "main",
+        finalizeLevelScore: true,
         correct:correctCount,
         wrong:wrongCount,
         level:3

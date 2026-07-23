@@ -713,7 +713,7 @@ async function loadServerScore(){
 
     if(data.loggedIn){
 
-      score = data.puan || 0;
+      score = Number(data.levelScore ?? data.score ?? 0) || 0;
 
       updateScore();
 
@@ -769,6 +769,7 @@ async function transitionToLevel(url, scoreToSave) {
 
         score: Number(scoreToSave) || 0,
         scoreMode: "absolute",
+        scoreScope: "level",
 
         // bu leveldeki bilgiler
         dogruSayisi: 0,

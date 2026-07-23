@@ -627,7 +627,7 @@ async function loadServerScore(){
 
     if(data.loggedIn && !scorePrimedFromPreviousLevel){
 
-      score = data.puan || 0;
+      score = Number(data.levelScore ?? data.score ?? 0) || 0;
 
       updateScore();
 
@@ -1071,7 +1071,7 @@ function showComboText() {
       fetch('/save-score', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...buildLevel3Summary(), score: getLevel3ScoreDelta(), scoreMode: "add" })
+        body: JSON.stringify({ ...buildLevel3Summary(), score: getLevel3ScoreDelta(), scoreMode: "add", scoreScope: "main", finalizeLevelScore: true })
       })
         .then(res => res.json())
         .then(data => {
@@ -1157,7 +1157,7 @@ function skoruKaydet(scoreValue) {
   fetch('/save-score', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ ...buildLevel3Summary(), score: getLevel3ScoreDelta(scoreValue), scoreMode: "add" })
+    body: JSON.stringify({ ...buildLevel3Summary(), score: getLevel3ScoreDelta(scoreValue), scoreMode: "add", scoreScope: "main", finalizeLevelScore: true })
   })
   .then(res => res.json())
   .then(data => {

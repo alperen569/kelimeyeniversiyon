@@ -910,7 +910,7 @@ async function loadServerScore(){
 
     if(data.success){
 
-      score = Number(data.score) || 0;
+      score = Number(data.levelScore ?? data.score ?? 0) || 0;
 
       updateScore();
 
@@ -1148,10 +1148,11 @@ async function completeLevelAndGo(url,level){
 
  body:JSON.stringify({
 
- score: score,
+  score: score,
  scoreMode: "absolute",
+ scoreScope: "level",
 
- level: level,
+  level: level,
 
  correct: correctCount,
 
