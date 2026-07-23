@@ -30,6 +30,7 @@ async function initializeDatabase() {
       sifre VARCHAR(255) NOT NULL,
       puan INT NOT NULL DEFAULT 0,
       taskPoints INT NOT NULL DEFAULT 0,
+      total_score INT NOT NULL DEFAULT 0,
       correct INT NOT NULL DEFAULT 0,
       wrong INT NOT NULL DEFAULT 0,
       totalQuestions INT NOT NULL DEFAULT 0,
@@ -38,6 +39,27 @@ async function initializeDatabase() {
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )
   `);
+
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS game_scores (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      user_id INT NOT NULL,
+      game VARCHAR(100) NOT NULL,
+      score INT NOT NULL,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )
+  `);
+
+  try {
+    await pool.query(`
+      ALTER TABLE users
+      ADD COLUMN total_score INT NOT NULL DEFAULT 0
+    `);
+  } catch (err) {
+    if (err?.code !== "ER_DUP_FIELDNAME") {
+      throw err;
+    }
+  }
 
   await upgradePlaintextPasswords();
 
@@ -246,6 +268,8 @@ async function getUserSnapshot(isim) {
   if (!user) return null;
 
   return {
+    id: user.id,
+
     isim: user.isim,
 
     puan: Number(user.puan) || 0,
@@ -434,7 +458,7 @@ async function addUserScore(username, amount){
 
     `
     UPDATE users
-    SET puan =  ?
+    SET puan = puan + ?
     WHERE isim = ?
     `,
 
@@ -445,6 +469,22 @@ async function addUserScore(username, amount){
 
   );
 
+}
+
+async function query(...args) {
+  if (!pool) {
+    throw new Error("Veritabanı başlatılmadı");
+  }
+
+  return pool.query(...args);
+}
+
+async function execute(...args) {
+  if (!pool) {
+    throw new Error("Veritabanı başlatılmadı");
+  }
+
+  return pool.execute(...args);
 }
 async function containsBannedWord(text){
 
@@ -527,6 +567,9 @@ isReservedUsername,
 getIPRegisterCount,
 resetUserLevel,
 incrementIPRegisterCount,
-unlockNextLevel,
-addUserScore
+  unlockNextLevel,
+  addUserScore
+  ,
+  query,
+  execute
 };

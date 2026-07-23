@@ -2734,26 +2734,22 @@ assistantStatsBtn?.addEventListener('click', () => {
       });
 async function loadScore(){
 
+try {
+  const meResponse = await fetch("/me");
+  const meData = await meResponse.json();
 
-const res =
-await fetch(
-"/api/game/score/"
-+
-currentUser.id
-);
+  if (!meData.loggedIn || !meData.id) {
+    return;
+  }
 
+  const res = await fetch("/api/game/score/" + meData.id);
+  const data = await res.json();
+  const totalScore = data?.total_score ?? 0;
 
-
-const data =
-await res.json();
-
-
-
-document
-.getElementById("score")
-.textContent =
-data.total_score;
-
+  document.getElementById("score").textContent = totalScore;
+} catch (err) {
+  console.log("Oyun puanı yüklenemedi:", err);
+}
 
 }
 
