@@ -44,15 +44,25 @@ app.use(
     contentSecurityPolicy: {
       directives: {
         defaultSrc: ["'self'"],
-        scriptSrc: ["'self'", "'unsafe-inline'"],  // inline script'lere izin ver
-        styleSrc: ["'self'", "'unsafe-inline'"],   // inline CSS'lere izin ver
+        scriptSrc: [
+          "'self'",
+          "'unsafe-inline'",           // Tailwind ve inline script'ler için
+          "https://cdn.tailwindcss.com"
+        ],
+        styleSrc: [
+          "'self'",
+          "'unsafe-inline'",           // Tailwind ve inline CSS'ler için
+          "https://cdn.tailwindcss.com"
+        ],
         imgSrc: ["'self'", "data:"],
-        fontSrc: ["'self'"],
-        connectSrc: ["'self'"], // API istekleri için
+        fontSrc: ["'self'", "data:"],
+        connectSrc: ["'self'"],
+        // Eğer WebSocket veya başka bir bağlantı varsa onu da ekle
       },
     },
   })
-);app.use(
+);
+app.use(
   express.json({
     limit: "32kb",
   }),
