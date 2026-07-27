@@ -588,7 +588,7 @@ button:hover{transform:scale(1.05);}
     </div>
   
 
- <script>
+<script>
 // SES EFEKTLERİ (Web Audio API ile)
 const audioContext = new (window.AudioContext || window.webkitAudioContext)();
 
@@ -702,40 +702,9 @@ let correctCount=0;
 
 let wrongCount=0;
 let score = 0;
-let scorePrimedFromPreviousLevel = false;
 
 
-async function loadServerScore(){
 
-  try {
-
-    const response = await fetch("/me");
-
-    const data = await response.json();
-
-
-    if(data.loggedIn && !scorePrimedFromPreviousLevel){
-
-      score = Number(data.levelScore ?? data.score ?? 0) || 0;
-
-      updateScore();
-
-    }
-
-
-  } catch(err){
-
-    console.log(
-      "Puan yükleme hatası",
-      err
-    );
-
-  }
-
-}
-
-
-loadServerScore();let timeRemaining = 75;
 let timerInterval = null;
 let missionData = {
   streak1: { progress: 0, goal: 1, done: false },
@@ -743,17 +712,6 @@ let missionData = {
   streak3: { progress: 0, goal: 3, done: false }
 };
 
-function loadSavedLevelScore() {
-  const saved = Number(localStorage.getItem('levelScore'));
-  if (Number.isFinite(saved) && saved > 0) {
-    score = saved;
-    scorePrimedFromPreviousLevel = true;
-    localStorage.removeItem('levelScore');
-    updateScore();
-  }
-}
-
-loadSavedLevelScore();
 
 let correctStreak = 0;
 let lastSkipped = false;
@@ -768,73 +726,8 @@ function showStatusMessage(message, type = 'info') {
   statusStrip.textContent = message;
 }
 
-async function transitionToLevel(url, scoreToSave) {
-
-  try {
-
-    const response = await fetch("/save-score", {
-
-      method: "POST",
-
-      headers: {
-        "Content-Type": "application/json"
-      },
-
-      body: JSON.stringify({
-
-        score: Number(scoreToSave) || 0,
-        scoreMode: "absolute",
-        scoreScope: "level",
-
-        // bu leveldeki bilgiler
-        dogruSayisi: 0,
-
-        yanlisSayisi: 0,
-
-        toplamSoru: 0
-
-      })
-
-    });
 
 
-    const data = await response.json();
-
-
-    if (!data.success) {
-
-      console.log(
-        "Puan kaydedilemedi",
-        data.message
-      );
-
-    }
-
-
-  } catch(err) {
-
-    console.log(
-      "Server puan hatası:",
-      err
-    );
-
-  }
-
-
-  document.body.classList.add(
-    "is-transitioning"
-  );
-
-
-  setTimeout(()=>{
-
-    window.location.assign(
-      encodeURI(url)
-    );
-
-  },420);
-
-}
 function softRoundTransition(nextRoundFn) {
   gameArea.classList.remove('game-area-soft-enter');
   void gameArea.offsetWidth;
@@ -912,7 +805,31 @@ function shuffleArray(arr) {
 function normalizeArray(arr) {
   return arr.map(w => cleanPunctuation(String(w)).toLowerCase().trim());
 }
+async function loadServerScore(){
 
+  try{
+
+    const res = await fetch("/game-score");
+
+    const data = await res.json();
+
+
+    if(data.success){
+
+      score = Number(data.levelScore ?? data.score ?? 0) || 0;
+
+      updateScore();
+
+    }
+
+
+  }catch(err){
+
+    console.log("puan alınamadı",err);
+
+  }
+
+}
 function updateScore() {
   scoreDiv.textContent = 'Puan: ' + score;
 }
@@ -1117,9 +1034,9 @@ function startGame() {
       clearInterval(timerInterval);
       timeExpired = true;
       showStatusMessage('Zaman bitti! Level 3\'e aktarılıyor...', 'warning');
-      setTimeout(() => {
-        completeLevelAndGo('/game/lis3M44n', 1);
-      }, 260);
+setTimeout(() => {
+  completeLevelAndGo('/game/lis3M44n', 2); 
+}, 260);
       return;
     }
   }, 1000);
@@ -1127,32 +1044,29 @@ function startGame() {
 async function completeLevelAndGo(url,level){
 
 
- await fetch("/complete-level",{
-
+ await fetch("/save-score",{
 
  method:"POST",
 
-
  headers:{
-
  "Content-Type":"application/json"
-
  },
 
+ body:JSON.stringify({
 
-body:JSON.stringify({
+  score: score,
+ scoreMode: "absolute",
+ scoreScope: "level",
+
+  level: level,
 
  correct: correctCount,
 
- wrong: wrongCount,
+ wrong: wrongCount
 
- level:3
-
-})
-
+ })
 
  });
-
 
 
  document.body.classList.add(
@@ -1162,12 +1076,9 @@ body:JSON.stringify({
 
  setTimeout(()=>{
 
-
  window.location.assign(url);
 
-
  },420);
-
 
 }
 function updateTimerDisplay() {
@@ -1198,10 +1109,10 @@ function checkProverb() {
   }
 
 if (correct) {
-  correctCount++;
-  correctStreak++;
-      score += 100;
+   correctCount++;
+       score += 100;
 
+  correctStreak++;
   updateScore();
   playSuccessSound();
   updateMissions();
@@ -1450,7 +1361,9 @@ removeButton.addEventListener('click', removeLastWord);
 skipButton.addEventListener('click', skipProverb);
 
 createBubbles();
-updateScore();
+
+loadServerScore();
+
 updateTimerDisplay();
 </script>
 </body>

@@ -566,7 +566,7 @@
     </div>
   
 
-  <script>
+   <script>
     const gameContainer = document.getElementById("game-container");
     const collectedWordsDiv = document.getElementById("collected-words");
     const scoreDiv = document.getElementById("score");
@@ -578,75 +578,36 @@
     const marketPanel = document.getElementById('market-panel');
 
     let selectedProverb = "";
-let collectedWords = [];
-let correctCount=0;
+    let collectedWords = [];
+    let correctCount=0;
 
 let wrongCount=0;
 let score = 0;
 let scorePrimedFromPreviousLevel = false;
 let levelStartScore = 0;
 
-function primeScoreFromStorage() {
-  try {
-    const rawScore = localStorage.getItem("levelScore");
 
-    if (rawScore === null) {
-      return false;
-    }
-
-    const savedScore = Number(rawScore);
-
-    if (Number.isFinite(savedScore)) {
-      score = savedScore;
-      scorePrimedFromPreviousLevel = true;
-      updateScore();
-      localStorage.removeItem("levelScore");
-      return true;
-    }
-  } catch (err) {
-    console.log("Yerel puan yükleme hatası:", err);
-  }
-
-  return false;
-}
-
-function getLevel3ScoreDelta(currentScore = score) {
-  return Number(currentScore) - Number(levelStartScore);
-}
-
-
-async function loadServerScore(){
-
-  try {
-
-    const response = await fetch("/me");
-
-    const data = await response.json();
-    console.log("SUNUCU CEVABI:", data);
-
-
-    if(data.loggedIn && !scorePrimedFromPreviousLevel){
-
-      score = Number(data.levelScore ?? data.score ?? 0) || 0;
-
-      updateScore();
-
-    }
-
-
-  } catch(err){
-
-    console.log(
-      "Puan yükleme hatası",
-      err
-    );
-
-  }
-
-}
 
 
 let usedWords = [];
+const proverbs = [
+  "Ağaç yaşken eğilir",
+  "Taş yerinde ağırdır",
+  "Her işin başı sağlıktır",
+  "Sabırla başarı gelir",
+  "Güzel sözün gülü vardır",
+  "Dost kara günde belli olur",
+  "Zararın neresinden dönülse kârdır",
+  "Acele işe şeytan karışır",
+  "Ne oldum dememeli ne olacağım demeli",
+  "Bir fincan kahvenin kırk yıl hatırı vardır",
+  "Diş koklayan insanı burnu incitir",
+  "El çabuk kan koklasa unutmaz",
+  "Komşu komşunun külüne muhtaçtır",
+  "Çalışan bulur huzur",
+  "Eğlence çalışmanın arkasında gelir"
+];
+
 let missionData = {
   streak1: { progress: 0, goal: 1, done: false },
   streak2: { progress: 0, goal: 2, done: false },
@@ -663,14 +624,25 @@ let lastSkipped = false;
       return text.replace(/[.,!?;]/g, '');
     }
 
-    function selectNewProverb() {
-      let newProverb;
-      do {
-        newProverb = proverbs[Math.floor(Math.random() * proverbs.length)];
-      } while (usedWords.some(word => newProverb.includes(word)));
-      selectedProverb = newProverb;
-      usedWords = [...usedWords, ...cleanText(newProverb).split(" ")];
-    }
+let usedProverbs = [];
+
+function selectNewProverb() {
+
+  let index;
+
+  do {
+    index = Math.floor(Math.random() * proverbs.length);
+  } while (usedProverbs.includes(index));
+
+
+  usedProverbs.push(index);
+
+  if(usedProverbs.length >= proverbs.length){
+    usedProverbs = [];
+  }
+
+  selectedProverb = proverbs[index];
+}
 
     function shuffleArray(arr) {
       return arr.sort(() => Math.random() - 0.5);
@@ -871,6 +843,7 @@ let lastSkipped = false;
     }
 
     function checkProverb() {
+ 
   if (!selectedProverb) {
     showToast('Önce oyunu başlatmalısın!');
     return;
@@ -879,9 +852,8 @@ let lastSkipped = false;
 const targetWords = cleanText(selectedProverb).split(/\s+/);
   const gotWords = collectedWords;
 
-  lastSkipped = false; 
+  lastSkipped = false;
 
- 
   let correct = gotWords.length === targetWords.length;
   if (correct) {
     for (let i = 0; i < targetWords.length; i++) {
@@ -901,6 +873,7 @@ const targetWords = cleanText(selectedProverb).split(/\s+/);
     showToast('Doğru! +100 Puan');
 
     updateMissions(); 
+
    
   } else {
     showToast('Yanlış! Doğru cümleyi oluşturmadın.');
@@ -939,6 +912,7 @@ function updateMissions() {
     }
   }
 
+
 const streak3Mission = missionData.streak3;
 if (!streak3Mission.done) {
   streak3Mission.progress = Math.min(correctStreak, streak3Mission.goal);
@@ -953,6 +927,7 @@ if (!streak3Mission.done) {
     updateScore();
     showToast('Görev tamamlandı: COMBO - Üst üste 3 doğru!');
 
+
     showComboText();
   }
 }
@@ -965,9 +940,10 @@ function showComboText() {
   combo.textContent = 'COMBOO!';
   document.body.appendChild(combo);
 
+ 
   setTimeout(() => {
     combo.style.opacity = 1;
-    combo.style.transform = 'translate(-50%, -50%) scale(1.2)'; 
+    combo.style.transform = 'translate(-50%, -50%) scale(1.2)';
   }, 50);
 
   setTimeout(() => {
@@ -976,8 +952,18 @@ function showComboText() {
   }, 5000);
 }
 
-
-
+async function loadServerScore() {
+  try {
+    const res = await fetch("/game-score");
+    const data = await res.json();
+    if (data.success) {
+      score = Number(data.levelScore ?? 0) || 0;
+      updateScore();
+    }
+  } catch (err) {
+    console.log("Puan alınamadı", err);
+  }
+}
     function updateScore() {
       scoreDiv.textContent = `Puan: ${score}`;
     }
@@ -1060,59 +1046,43 @@ function showComboText() {
       };
     }
 
-    function saveScoreAndReturnHome() {
-      if (scoreSaved) return;
-      scoreSaved = true;
-      showToast('Zaman doldu. Skor kaydediliyor...');
-      try {
-        localStorage.setItem('level3Summary', JSON.stringify(buildLevel3Summary()));
-      } catch (e) {}
+async function saveScoreAndReturnHome() {
+  if (scoreSaved) return;
+  scoreSaved = true;
+  showToast("Skor kaydediliyor...");
 
-      fetch('/save-score', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...buildLevel3Summary(), score: getLevel3ScoreDelta(), scoreMode: "add", scoreScope: "main", finalizeLevelScore: true })
-      })
-        .then(res => res.json())
-        .then(data => {
-          if (data && data.success) {
-            showToast('Skor kaydedildi. Anasayfaya yönlendiriliyorsunuz...');
-            document.body.classList.add('is-transitioning');
-           setTimeout(async () => {
+  try {
+    const response = await fetch("/save-score", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        score: score,                // ← tüm birikmiş level puanı
+        scoreMode: "add",            // ana puana ekle
+        scoreScope: "main",          // users.puan sütunu
+        finalizeLevelScore: true,    // levelScore'u sıfırla
+        correct: correctCount,
+        wrong: wrongCount,
+        level: 3,
+      }),
+    });
 
+    const text = await response.text();
+    const data = JSON.parse(text);
 
-  await fetch("/reset-level", {
-    method:"POST"
-  });
-
-await fetch("/complete-level",{
-
-method:"POST",
-
-headers:{
-"Content-Type":"application/json"
-},
-
-body:JSON.stringify({
-
-level:3
-
-})
-
-});
-  window.location.href = "/home";
-
-
-},1200);
-          } else {
-            showToast('Skor kaydedilemedi. Lütfen tekrar deneyin.');
-          }
-        })
-        .catch(() => {
-          showToast('Sunucu hatası. Skor kaydedilemedi.');
-        });
+    if (data.success) {
+      showToast("Skor kaydedildi. Anasayfaya gidiliyor...");
+      document.body.classList.add("is-transitioning");
+      setTimeout(() => {
+        window.location.href = "/pc/anasayfa.html";
+      }, 1200);
+    } else {
+      showToast("Skor kaydedilemedi");
     }
-
+  } catch (err) {
+    console.log(err);
+    showToast("Sunucu hatası");
+  }
+}
     function removeLastWord() {
   if (collectedWords.length === 0) return;
   const lastWord = collectedWords.pop();
@@ -1126,7 +1096,7 @@ level:3
 
   const showCountdown = () => {
     countdownScreen.textContent = sequence[index];
-     countdownScreen.style.fontSize = "80px"; 
+    countdownScreen.style.fontSize = "80px";
     countdownScreen.style.animation = "scaleBounce 0.8s ease";
     countdownScreen.style.opacity = "1";
 
@@ -1149,106 +1119,65 @@ level:3
 
 
 
-function skoruKaydet(scoreValue) {
-  showToast('Skor kaydediliyor...');
-  try {
-    localStorage.setItem('level3Summary', JSON.stringify(buildLevel3Summary()));
-  } catch (e) {}
-  fetch('/save-score', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ ...buildLevel3Summary(), score: getLevel3ScoreDelta(scoreValue), scoreMode: "add", scoreScope: "main", finalizeLevelScore: true })
-  })
-  .then(res => res.json())
-  .then(data => {
-    if (data && data.success) {
-      showToast('Skor kaydedildi.');
-    } else {
-      showToast('Skor kaydedilemedi.');
-    }
-  })
-  .catch(() => {
-    showToast('Sunucu hatası. Skor kaydedilemedi.');
-  });
-}
 
     checkButton.addEventListener("click", checkProverb);
     resetButton.addEventListener("click", removeLastWord);
   
 
-const proverbs = [
-  "Güvenme varlığa, düşer oturur başına",
-  "İki karpuz bir koltuğa sığmaz",
-  "Atı alan Üsküdar'ı geçti",
-  "Bir elin nesi var, iki elin sesi var",
-  "Söz gümüşse sükût altındır",
-  "Dost acı söyleyen değil, gerçek söyleyendir",
-  "Ak akçe kara gün içindir",
-  "Sakla samanı, gelir zamanı",
-  "Damlaya damlaya göl olur",
-  "Bakarsan bağ olur, bakmazsan dağ olur",
-  "Vakit nakittir",
-  "Her işin başı sağlık",
-  "Ayağını yorganına göre uzat",
-  "İşleyen demir ışıldar",
-  "Gözden ırak olan gönülden de ırak olur"
-];
 
 
 
-    window.onload = async () => {
-      primeScoreFromStorage();
-      await loadServerScore();
-      levelStartScore = score;
-      startCountdownAnimation();
-    };
-  document.querySelectorAll(".market-item").forEach(item => {
-    item.addEventListener("click", () => {
-      const itemText = item.textContent;
 
-      if (itemText.includes("İpucu Al") && score >= 150) {
-    score -= 150;
-    updateScore();
+window.onload = async () => {
+  await loadServerScore();          // sunucudan levelScore'u al
+  startCountdownAnimation();
+};
+document.querySelectorAll(".market-item").forEach(item => {
+  item.addEventListener("click", () => {
+    const itemText = item.textContent;
 
-    
-    const correctWords = cleanText(selectedProverb).split(" ").filter(w => !collectedWords.includes(w));
-    if (correctWords.length > 0) {
-      const hintWord = correctWords[Math.floor(Math.random() * correctWords.length)];
+    if (itemText.includes("İpucu Al") && score >= 150) {
+  score -= 150;
+  updateScore();
 
-      const wordElements = document.querySelectorAll(".word");
-      wordElements.forEach(el => {
-        if (el.textContent === hintWord) {
-          el.style.border = "3px solid #00ff00";
-          el.style.backgroundColor = "#00e207";
-        }
-      });
-    }
-  }
-
-  if (itemText.includes("Büyük Şans") && score >= 400) {
-    score -= 400;
-    updateScore();
-    
-
-    const correctWords = cleanText(selectedProverb).split(" ").filter(w => !collectedWords.includes(w));
-
+  
+  const correctWords = cleanText(selectedProverb).split(" ").filter(w => !collectedWords.includes(w));
   if (correctWords.length > 0) {
-    const hintWords = correctWords.join(", ");
-    showToast(`İpucu: Henüz bulamadığın kelimeler: ${hintWords}`);
-  } else {
-    showToast("Zaten tüm kelimeleri buldun! Helal!");
-  }
+    const hintWord = correctWords[Math.floor(Math.random() * correctWords.length)];
 
-  }
-      
+    const wordElements = document.querySelectorAll(".word");
+    wordElements.forEach(el => {
+      if (el.textContent === hintWord) {
+        el.style.border = "3px solid #00ff00";
+        el.style.backgroundColor = "#00e207";
+      }
     });
+  }
+}
+
+if (itemText.includes("Büyük Şans") && score >= 400) {
+  score -= 400;
+  updateScore();
+  
+
+  const correctWords = cleanText(selectedProverb).split(" ").filter(w => !collectedWords.includes(w));
+
+if (correctWords.length > 0) {
+  const hintWords = correctWords.join(", ");  
+  showToast(`İpucu: Henüz bulamadığın kelimeler: ${hintWords}`);
+} else {
+  showToast("Zaten tüm kelimeleri buldun! Helal!");
+}
+
+}
     
   });
+  
+});
 
 marketButton.addEventListener("click", () => {
   marketPanel.classList.toggle("open");
 });
-
 
   </script>
 </body>

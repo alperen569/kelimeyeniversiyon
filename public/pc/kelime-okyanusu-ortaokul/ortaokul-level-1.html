@@ -700,65 +700,12 @@ let correctCount=0;
 
 let wrongCount=0;
 let score = 0;
-let scorePrimedFromPreviousLevel = false;
-
-function primeScoreFromStorage() {
-  try {
-    const rawScore = localStorage.getItem("levelScore");
-
-    if (rawScore === null) {
-      return false;
-    }
-
-    const savedScore = Number(rawScore);
-
-    if (Number.isFinite(savedScore)) {
-      score = savedScore;
-      scorePrimedFromPreviousLevel = true;
-      updateScore();
-      localStorage.removeItem("levelScore");
-      return true;
-    }
-  } catch (err) {
-    console.log("Yerel puan yükleme hatası:", err);
-  }
-
-  return false;
-}
 
 
-async function loadServerScore(){
-
-  try {
-
-    const response = await fetch("/me");
-
-    const data = await response.json();
 
 
-    if(data.loggedIn && !scorePrimedFromPreviousLevel){
 
-      score = Number(data.levelScore ?? data.score ?? 0) || 0;
-
-      updateScore();
-
-    }
-
-
-  } catch(err){
-
-    console.log(
-      "Puan yükleme hatası",
-      err
-    );
-
-  }
-
-}
-
-
-primeScoreFromStorage();
-loadServerScore();let timeRemaining = 90;
+let timeRemaining = 90;
 let timerInterval = null;
 let missionData = {
   streak1: { progress: 0, goal: 1, done: false },
@@ -780,16 +727,6 @@ function showStatusMessage(message, type = 'info') {
 }
 
 async function transitionToLevel(url, scoreToSave) {
-
-  const nextLevelScore = Number(scoreToSave);
-
-  if (Number.isFinite(nextLevelScore)) {
-    try {
-      localStorage.setItem("levelScore", String(nextLevelScore));
-    } catch (err) {
-      console.log("Yerel puan kaydetme hatası:", err);
-    }
-  }
 
   try {
 
@@ -870,7 +807,7 @@ function softRoundTransition(nextRoundFn) {
 function createBubbles() {
   if (!bubbleLayer) return;
   bubbleLayer.innerHTML = '';
-  const bubbleCount = 18; // Ekranda daha sakin ve yumuşak bir akış için azaltıldı
+  const bubbleCount = 18; 
 
   for (let i = 0; i < bubbleCount; i++) {
     const bubble = document.createElement('span');
@@ -878,7 +815,6 @@ function createBubbles() {
 
     const size = 20 + Math.random() * 60;
     const left = Math.random() * 100;
-  // Süreler uzatıldı, hareket daha yumuşak hale getirildi:
   const duration = 42 + Math.random() * 38; 
   const delay = Math.random() * 18;
     const drift = (Math.random() * 60 - 30).toFixed(1);
@@ -935,8 +871,35 @@ function normalizeArray(arr) {
   return arr.map(w => cleanPunctuation(String(w)).toLowerCase().trim());
 }
 
-function updateScore() {
-  scoreDiv.textContent = 'Puan: ' + score;
+async function updateScore() {
+
+  scoreDiv.textContent = 'Puan: ' + score;
+
+
+  try {
+
+    await fetch("/save-score", {
+
+      method:"POST",
+
+      headers:{
+        "Content-Type":"application/json"
+      },
+
+      body:JSON.stringify({
+        score:score,
+        scoreMode: "absolute",
+        scoreScope: "level"
+      })
+
+    });
+
+  } catch(err){
+
+    console.log("Puan kayıt hatası",err);
+
+  }
+
 }
 
 function updateCollectedWords() {
@@ -1125,7 +1088,6 @@ function startGame() {
   scrambledWords = shuffleArray([...selectedWords, ...extra]);
   displayWords();
 
-  // Timer başlat
   timeRemaining = 90;
   updateTimerDisplay();
   
@@ -1135,51 +1097,42 @@ function startGame() {
     
     updateTimerDisplay();
     
-    if (timeRemaining <= 0) {
-      clearInterval(timerInterval);
-      timeExpired = true;
-      showStatusMessage('Zaman bitti! Level 2\'ye aktarılıyor...', 'warning');
-      setTimeout(() => {
-        completeLevelAndGo('/game/ort2F71p', 1);
-      }, 260);
-      return;
-    }
+if (timeRemaining <= 0) {
+  clearInterval(timerInterval);
+  timeExpired = true;
+  showStatusMessage('Zaman bitti! Puanın kaydedilip Level 2\'ye geçiliyor...', 'warning');
+  setTimeout(() => {
+    transitionToLevel('/game/ort2F71p', score); 
+  }, 260);
+  return;
+}
   }, 1000);
 }
 async function completeLevelAndGo(url,level){
 
- try {
-  localStorage.setItem("levelScore", String(Number(score) || 0));
- } catch (err) {
-  console.log("Yerel puan kaydetme hatası:", err);
- }
-
  await fetch("/complete-level",{
-
 
  method:"POST",
 
-
  headers:{
-
  "Content-Type":"application/json"
-
  },
 
+ body:JSON.stringify({
 
-body:JSON.stringify({
+ correct: correctCount,
 
-correct: correctCount,
+ wrong: wrongCount,
 
-wrong: wrongCount,
+ level:level,
 
-level:Number(level) || 1
+ score:score,
+ scoreMode: "absolute",
+ scoreScope: "level"
 
-})
-
+ })
 
  });
-
 
 
  document.body.classList.add(
@@ -1189,12 +1142,9 @@ level:Number(level) || 1
 
  setTimeout(()=>{
 
-
  window.location.assign(url);
 
-
  },420);
-
 
 }
 function updateTimerDisplay() {
@@ -1225,7 +1175,7 @@ function checkProverb() {
   }
 
 if (correct) {
-   correctCount++;
+  correctCount++;
   correctStreak++;
       score += 100;
 
@@ -1242,9 +1192,8 @@ if (correct) {
   } else {
     showStatusMessage('Maalesef yanlış! Doğru cümleyi oluşturamadın.', 'error');
   }
-  correctStreak = 0;
    wrongCount++;
-
+  correctStreak = 0;
   updateMissions();
 }
 }

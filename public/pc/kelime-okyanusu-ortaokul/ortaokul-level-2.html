@@ -702,71 +702,16 @@ let correctCount=0;
 
 let wrongCount=0;
 let score = 0;
-let scorePrimedFromPreviousLevel = false;
-
-function primeScoreFromStorage() {
-  try {
-    const rawScore = localStorage.getItem("levelScore");
-
-    if (rawScore === null) {
-      return false;
-    }
-
-    const savedScore = Number(rawScore);
-
-    if (Number.isFinite(savedScore)) {
-      score = savedScore;
-      scorePrimedFromPreviousLevel = true;
-      updateScore();
-      localStorage.removeItem("levelScore");
-      return true;
-    }
-  } catch (err) {
-    console.log("Yerel puan yükleme hatası:", err);
-  }
-
-  return false;
-}
 
 
-async function loadServerScore(){
 
-  try {
-
-    const response = await fetch("/me");
-
-    const data = await response.json();
-
-
-    if(data.loggedIn && !scorePrimedFromPreviousLevel){
-
-      score = Number(data.levelScore ?? data.score ?? 0) || 0;
-
-      updateScore();
-
-    }
-
-
-  } catch(err){
-
-    console.log(
-      "Puan yükleme hatası",
-      err
-    );
-
-  }
-
-}
-
-
-primeScoreFromStorage();
-loadServerScore();let timeRemaining = 75;
 let timerInterval = null;
 let missionData = {
   streak1: { progress: 0, goal: 1, done: false },
   streak2: { progress: 0, goal: 2, done: false },
   streak3: { progress: 0, goal: 3, done: false }
 };
+
 
 let correctStreak = 0;
 let lastSkipped = false;
@@ -781,83 +726,7 @@ function showStatusMessage(message, type = 'info') {
   statusStrip.textContent = message;
 }
 
-async function transitionToLevel(url, scoreToSave) {
 
-  const nextLevelScore = Number(scoreToSave);
-
-  if (Number.isFinite(nextLevelScore)) {
-    try {
-      localStorage.setItem("levelScore", String(nextLevelScore));
-    } catch (err) {
-      console.log("Yerel puan kaydetme hatası:", err);
-    }
-  }
-
-  try {
-
-    const response = await fetch("/save-score", {
-
-      method: "POST",
-
-      headers: {
-        "Content-Type": "application/json"
-      },
-
-      body: JSON.stringify({
-
-        score: Number(scoreToSave) || 0,
-        scoreMode: "absolute",
-        scoreScope: "level",
-
-        // bu leveldeki bilgiler
-        dogruSayisi: 0,
-
-        yanlisSayisi: 0,
-
-        toplamSoru: 0
-
-      })
-
-    });
-
-
-    const data = await response.json();
-
-
-    if (!data.success) {
-
-      console.log(
-        "Puan kaydedilemedi",
-        data.message
-      );
-
-    }
-
-
-  } catch(err) {
-
-    console.log(
-      "Server puan hatası:",
-      err
-    );
-
-  }
-
-
-  document.body.classList.add(
-    "is-transitioning"
-  );
-
-
-  setTimeout(()=>{
-
-    window.location.assign(
-      encodeURI(url)
-    );
-
-  },420);
-
-}
 
 function softRoundTransition(nextRoundFn) {
   gameArea.classList.remove('game-area-soft-enter');
@@ -936,7 +805,31 @@ function shuffleArray(arr) {
 function normalizeArray(arr) {
   return arr.map(w => cleanPunctuation(String(w)).toLowerCase().trim());
 }
+async function loadServerScore(){
 
+  try{
+
+    const res = await fetch("/game-score");
+
+    const data = await res.json();
+
+
+    if(data.success){
+
+      score = Number(data.levelScore ?? data.score ?? 0) || 0;
+
+      updateScore();
+
+    }
+
+
+  }catch(err){
+
+    console.log("puan alınamadı",err);
+
+  }
+
+}
 function updateScore() {
   scoreDiv.textContent = 'Puan: ' + score;
 }
@@ -1141,46 +1034,39 @@ function startGame() {
       clearInterval(timerInterval);
       timeExpired = true;
       showStatusMessage('Zaman bitti! Level 3\'e aktarılıyor...', 'warning');
-      setTimeout(() => {
-        completeLevelAndGo('/game/ort3G55q', 2);
-      }, 260);
+setTimeout(() => {
+  completeLevelAndGo('/game/ort3G55q', 2); 
+}, 260);
       return;
     }
   }, 1000);
 }
 async function completeLevelAndGo(url,level){
 
- try {
-  localStorage.setItem("levelScore", String(Number(score) || 0));
- } catch (err) {
-  console.log("Yerel puan kaydetme hatası:", err);
- }
 
- await fetch("/complete-level",{
-
+ await fetch("/save-score",{
 
  method:"POST",
 
-
  headers:{
-
  "Content-Type":"application/json"
-
  },
 
-body:JSON.stringify({
+ body:JSON.stringify({
 
-correct: correctCount,
+  score: score,
+ scoreMode: "absolute",
+ scoreScope: "level",
 
-wrong: wrongCount,
+  level: level,
 
-level:Number(level) || 2
+ correct: correctCount,
 
-})
+ wrong: wrongCount
 
+ })
 
  });
-
 
 
  document.body.classList.add(
@@ -1190,12 +1076,9 @@ level:Number(level) || 2
 
  setTimeout(()=>{
 
-
  window.location.assign(url);
 
-
  },420);
-
 
 }
 function updateTimerDisplay() {
@@ -1226,10 +1109,10 @@ function checkProverb() {
   }
 
 if (correct) {
-  correctCount++;
-  correctStreak++;
-      score += 100;
+   correctCount++;
+       score += 100;
 
+  correctStreak++;
   updateScore();
   playSuccessSound();
   updateMissions();
@@ -1478,7 +1361,9 @@ removeButton.addEventListener('click', removeLastWord);
 skipButton.addEventListener('click', skipProverb);
 
 createBubbles();
-updateScore();
+
+loadServerScore();
+
 updateTimerDisplay();
 </script>
 </body>
