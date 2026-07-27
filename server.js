@@ -39,29 +39,8 @@ const sessionSecret = process.env.SESSION_SECRET || "gelisme_secret_key";
 
 app.set("trust proxy", isProduction ? 1 : 0);
 
-app.use(
-  helmet({
-    contentSecurityPolicy: {
-      directives: {
-        defaultSrc: ["'self'"],
-        scriptSrc: [
-          "'self'",
-          "'unsafe-inline'",           // Tailwind ve inline script'ler için
-          "https://cdn.tailwindcss.com"
-        ],
-        styleSrc: [
-          "'self'",
-          "'unsafe-inline'",           // Tailwind ve inline CSS'ler için
-          "https://cdn.tailwindcss.com"
-        ],
-        imgSrc: ["'self'", "data:"],
-        fontSrc: ["'self'", "data:"],
-        connectSrc: ["'self'"],
-        // Eğer WebSocket veya başka bir bağlantı varsa onu da ekle
-      },
-    },
-  })
-);
+app.use(helmet({ contentSecurityPolicy: false }));
+
 app.use(
   express.json({
     limit: "32kb",
