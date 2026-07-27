@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  
+  <!-- Ana Sayfa -->
+  <url>
+    <loc>https://kelimeokyanusu.com.tr/</loc>
+    <lastmod>2025-01-15</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>1.0</priority>
+  </url>
+
+  <!-- Giriş / Kayıt -->
+  <url>
+    <loc>https://kelimeokyanusu.com.tr/pc/login.html</loc>
+    <lastmod>2025-01-15</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.9</priority>
+  </url>
+
+  <!-- Ana Sayfa (giriş sonrası) -->
+  <url>
+    <loc>https://kelimeokyanusu.com.tr/pc/anasayfa.html</loc>
+    <lastmod>2025-01-15</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>1.0</priority>
+  </url>
+
+  <!-- Seviye Seçimi -->
+  <url>
+    <loc>https://kelimeokyanusu.com.tr/Kelime-Okyanusu-Seviye-Seçimi.html</loc>
+    <lastmod>2025-01-15</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+
+  <!-- Kelime Okyanusu - İlkokul -->
+  <url>
+    <loc>https://kelimeokyanusu.com.tr/game/ilk1A8f3</loc>
+    <lastmod>2025-01-15</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://kelimeokyanusu.com.tr/game/ilk2B7k9</loc>
+    <lastmod>2025-01-15</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://kelimeokyanusu.com.tr/game/ilk3C91x</loc>
+    <lastmod>2025-01-15</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+  <!-- Kelime Okyanusu - Ortaokul -->
+  <url>
+    <loc>https://kelimeokyanusu.com.tr/game/ort1D82m</loc>
+    <lastmod>2025-01-15</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://kelimeokyanusu.com.tr/game/ort2F71p</loc>
+    <lastmod>2025-01-15</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://kelimeokyanusu.com.tr/game/ort3G55q</loc>
+    <lastmod>2025-01-15</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+  <!-- Kelime Okyanusu - Lise -->
+  <url>
+    <loc>https://kelimeokyanusu.com.tr/game/lis1H91z</loc>
+    <lastmod>2025-01-15</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://kelimeokyanusu.com.tr/game/lis2K82v</loc>
+    <lastmod>2025-01-15</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://kelimeokyanusu.com.tr/game/lis3M44n</loc>
+    <lastmod>2025-01-15</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+  <!-- Diğer Oyunlar -->
+  <url>
+    <loc>https://kelimeokyanusu.com.tr/Sözcük Zinciri/sözcük zinciri.html</loc>
+    <lastmod>2025-01-15</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://kelimeokyanusu.com.tr/Quizler/anasayfaquiz.html</loc>
+    <lastmod>2025-01-15</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://kelimeokyanusu.com.tr/Kelime Avı/kelime_avı.html</loc>
+    <lastmod>2025-01-15</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+
+</urlset>

@@ -1,0 +1,19 @@
+# Kelime Okyanusu - robots.txt
+# https://kelimeokyanusu.com.tr/
+
+User-agent: *
+Allow: /
+
+# Admin ve özel dizinleri engelle
+Disallow: /admin/
+Disallow: /api/
+Disallow: /node_modules/
+Disallow: /.env
+Disallow: /package.json
+Disallow: /package-lock.json
+
+# Sitemap konumu
+Sitemap: https://kelimeokyanusu.com.tr/sitemap.xml
+
+# Crawl gecikmesi (sunucuyu yormamak için)
+Crawl-delay: 5
