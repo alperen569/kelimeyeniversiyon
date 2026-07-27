@@ -11,6 +11,7 @@ const session = require("express-session");
 const path = require("path");
 const http = require("http");
 
+
 const {
   initializeDatabase,
   createUser,
@@ -38,8 +39,7 @@ const sessionSecret = process.env.SESSION_SECRET || "gelisme_secret_key";
 
 app.set("trust proxy", isProduction ? 1 : 0);
 
-app.use(helmet({ contentSecurityPolicy: false }));
-
+app.use(helmet());
 app.use(
   express.json({
     limit: "32kb",
@@ -106,6 +106,7 @@ const generalLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
 });
+const registerIPs = new Map();
 const authLimiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 dakika
     max: 5,                   // En fazla 5 giriş denemesi
@@ -154,6 +155,19 @@ function validatePassword(sifre) {
   if (result.score < 3) return false;
 
   return true;
+}
+
+// Kullanıcı adı doğrulama (sadece harf, rakam, Türkçe karakter ve alt çizgi, 3-20 karakter)
+function validateUsername(username) {
+  if (typeof username !== 'string') return false;
+  // Sadece güvenli karakterlere izin ver (XSS/enjeksiyon önlemi)
+  return /^[a-zA-Z0-9çğıöşüÇĞİÖŞÜ_]{3,20}$/.test(username);
+}
+
+// Küfür/uygunsuz kelime kontrolü (leo-profanity ile)
+function containsBadWord(text) {
+  if (!text || typeof text !== 'string') return false;
+  return Filter.check(text); // Filter zaten yukarıda tanımlanmıştı
 }
 function requireAuth(req, res, next) {
   if (!req.session.loggedIn || !getCurrentUsername(req)) {
@@ -315,8 +329,7 @@ app.post("/register", authLimiter, async (req, res) => {
       return res.json({
         success: false,
 
-        message:
-          "Şifre en az 8 karakter olmalı, büyük harf, küçük harf ve sayı içermeli",
+       message: "Şifre en az 10 karakter olmalı, büyük/küçük harf, rakam ve özel karakter (!@#$%^&*) içermeli",
       });
     }
 
