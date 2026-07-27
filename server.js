@@ -38,21 +38,7 @@ const sessionSecret = process.env.SESSION_SECRET || "gelisme_secret_key";
 
 app.set("trust proxy", isProduction ? 1 : 0);
 
-app.use(
-  helmet({
-    contentSecurityPolicy: {
-      directives: {
-        defaultSrc: ["'self'"],
-        scriptSrc: ["'self'", "https://cdn.tailwindcss.com", "https://cdnjs.cloudflare.com", "https://www.soundhelix.com"],
-        styleSrc: ["'self'", "'unsafe-inline'", "https://cdnjs.cloudflare.com", "https://fonts.googleapis.com"],
-        fontSrc: ["'self'", "https://cdnjs.cloudflare.com", "https://fonts.gstatic.com"],
-        imgSrc: ["'self'", "data:", "https://images.unsplash.com"],
-        connectSrc: ["'self'"],
-        mediaSrc: ["'self'", "https://www.soundhelix.com"],
-      },
-    },
-  })
-);
+app.use(helmet({ contentSecurityPolicy: false }));
 
 app.use(
   express.json({
