@@ -39,8 +39,20 @@ const sessionSecret = process.env.SESSION_SECRET || "gelisme_secret_key";
 
 app.set("trust proxy", isProduction ? 1 : 0);
 
-app.use(helmet());
 app.use(
+  helmet({
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: ["'self'"],
+        scriptSrc: ["'self'", "'unsafe-inline'"],  // inline script'lere izin ver
+        styleSrc: ["'self'", "'unsafe-inline'"],   // inline CSS'lere izin ver
+        imgSrc: ["'self'", "data:"],
+        fontSrc: ["'self'"],
+        connectSrc: ["'self'"], // API istekleri için
+      },
+    },
+  })
+);app.use(
   express.json({
     limit: "32kb",
   }),
