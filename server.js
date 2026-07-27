@@ -2,6 +2,9 @@ require("dotenv").config();
 
 const express = require("express");
 const validator = require("validator");
+const Filter = require("leo-profanity");
+const { zxcvbn } = require("@zxcvbn-ts/core");
+Filter.loadDictionary("en", "tr");
 const helmet = require("helmet");
 const rateLimit = require("express-rate-limit");
 const session = require("express-session");
@@ -28,39 +31,21 @@ const {
 const app = express();
 
 const isProduction = process.env.NODE_ENV === "production";
+
 const PORT = Number(process.env.PORT) || 3000;
+
 const sessionSecret = process.env.SESSION_SECRET || "gelisme_secret_key";
 
-// ========================
-// GÜVENLİK AYARLARI
-// ========================
-
-// Proxy güveni
 app.set("trust proxy", isProduction ? 1 : 0);
 
-// Helmet + CSP
 app.use(
   helmet({
     contentSecurityPolicy: {
       directives: {
         defaultSrc: ["'self'"],
-        scriptSrc: [
-          "'self'",
-          "https://cdn.tailwindcss.com",
-          "https://cdnjs.cloudflare.com",
-          "https://www.soundhelix.com",
-        ],
-        styleSrc: [
-          "'self'",
-          "'unsafe-inline'",
-          "https://cdnjs.cloudflare.com",
-          "https://fonts.googleapis.com",
-        ],
-        fontSrc: [
-          "'self'",
-          "https://cdnjs.cloudflare.com",
-          "https://fonts.gstatic.com",
-        ],
+        scriptSrc: ["'self'", "https://cdn.tailwindcss.com", "https://cdnjs.cloudflare.com", "https://www.soundhelix.com"],
+        styleSrc: ["'self'", "'unsafe-inline'", "https://cdnjs.cloudflare.com", "https://fonts.googleapis.com"],
+        fontSrc: ["'self'", "https://cdnjs.cloudflare.com", "https://fonts.gstatic.com"],
         imgSrc: ["'self'", "data:", "https://images.unsplash.com"],
         connectSrc: ["'self'"],
         mediaSrc: ["'self'", "https://www.soundhelix.com"],
@@ -69,63 +54,84 @@ app.use(
   })
 );
 
-// Ek güvenlik başlıkları
-app.use((req, res, next) => {
-  res.setHeader("X-Content-Type-Options", "nosniff");
-  res.setHeader("X-Frame-Options", "DENY");
-  res.setHeader("X-XSS-Protection", "1; mode=block");
-  res.setHeader("Referrer-Policy", "strict-origin-when-cross-origin");
-  res.setHeader(
-    "Permissions-Policy",
-    "geolocation=(), microphone=(), camera=()"
-  );
-  next();
-});
+app.use(
+  express.json({
+    limit: "32kb",
+  }),
+);
 
-// Body parser
-app.use(express.json({ limit: "32kb" }));
-
-// Session
 app.use(
   session({
     secret: sessionSecret,
+
     resave: false,
-    saveUninitialized: true,
+
+    saveUninitialized: false,
+
     cookie: {
       maxAge: 1000 * 60 * 60,
       httpOnly: true,
       secure: isProduction,
       sameSite: "lax",
     },
-  })
+  }),
 );
+app.post("/reset-level", async (req, res) => {
+  const username = getCurrentUsername(req);
 
-// ========================
-// RATE LIMITERS
-// ========================
+  if (!username) {
+    return res.json({
+      success: false,
+    });
+  }
 
-const authLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 20,
-  standardHeaders: true,
-  legacyHeaders: false,
+  await resetUserLevel(username);
+
+  res.json({
+    success: true,
+  });
 });
+app.post("/complete-level", async (req, res) => {
+  const username = getCurrentUsername(req);
 
+  if (!username) {
+    return res.json({
+      success: false,
+    });
+  }
+
+  const level = Number(req.body.level);
+
+  if (!level) {
+    return res.json({
+      success: false,
+    });
+  }
+
+  await unlockNextLevel(username, level);
+
+  res.json({
+    success: true,
+  });
+});
 const generalLimiter = rateLimit({
   windowMs: 1 * 60 * 1000,
   max: 60,
   standardHeaders: true,
   legacyHeaders: false,
 });
+app.use("/save-score", generalLimiter);
+app.use("/road-claim", generalLimiter);
 
-// ========================
-// YARDIMCI FONKSİYONLAR
-// ========================
+async function start() {
+  await initializeDatabase();
+
+  console.log("MySQL bağlantısı hazır");
+}
 
 function getCurrentUsername(req) {
   return req.session?.username || null;
 }
-
 function getClientIP(req) {
   return (
     req.headers["x-forwarded-for"]?.split(",")[0] ||
@@ -134,31 +140,37 @@ function getClientIP(req) {
   );
 }
 
+function validatePassword(sifre) {
+  if (!validator.isLength(sifre, { min: 10, max: 64 })) return false;
+
+  if (!/[A-Z]/.test(sifre)) return false;
+
+  if (!/[a-z]/.test(sifre)) return false;
+
+  if (!/[0-9]/.test(sifre)) return false;
+
+  if (!/[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]/.test(sifre)) return false;
+
+  if (/\s/.test(sifre)) return false;
+
+  const result = zxcvbn(sifre);
+
+  if (result.score < 3) return false;
+
+  return true;
+}
 function requireAuth(req, res, next) {
   if (!req.session.loggedIn || !getCurrentUsername(req)) {
     return res.redirect("/pc/login.html");
   }
+
   next();
 }
 
-// ========================
-// VERİTABANI BAŞLATMA
-// ========================
-
-async function start() {
-  await initializeDatabase();
-  console.log("MySQL bağlantısı hazır");
-}
-
-// ========================
-// ROUTE'LAR
-// ========================
-
-// Oyun route'ları
 const gameRoutes = require("./routes/game");
+
 app.use("/api/game", gameRoutes);
 
-// Ana sayfa - girişe yönlendir
 app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "pc", "login.html"));
 });
@@ -167,157 +179,432 @@ app.get("/pc", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "pc", "login.html"));
 });
 
-// Statik dosyalar - /pc
 app.use("/pc", express.static(path.join(__dirname, "public", "pc")));
 
-// Oyun seviyeleri
 app.get("/game/:token", requireAuth, async (req, res) => {
   const levels = {
-    ilk1A8f3: { file: "kelime-okyanusu-ilkokul/ilkokul-level-1.html", level: 1, type: "ilkokul" },
-    ilk2B7k9: { file: "kelime-okyanusu-ilkokul/ilkokul-level-2.html", level: 2, type: "ilkokul" },
-    ilk3C91x: { file: "kelime-okyanusu-ilkokul/ilkokul-level-3.html", level: 3, type: "ilkokul" },
-    ort1D82m: { file: "kelime-okyanusu-ortaokul/ortaokul-level-1.html", level: 1, type: "ortaokul" },
-    ort2F71p: { file: "kelime-okyanusu-ortaokul/ortaokul-level-2.html", level: 2, type: "ortaokul" },
-    ort3G55q: { file: "kelime-okyanusu-ortaokul/ortaokul-level-3.html", level: 3, type: "ortaokul" },
-    lis1H91z: { file: "kelime-okyanusu-lise/lise-level-1.html", level: 1, type: "lise" },
-    lis2K82v: { file: "kelime-okyanusu-lise/lise-level-2.html", level: 2, type: "lise" },
-    lis3M44n: { file: "kelime-okyanusu-lise/lise-level-3.html", level: 3, type: "lise" },
+    // İLKOKUL
+
+    ilk1A8f3: {
+      file: "kelime-okyanusu-ilkokul/ilkokul-level-1.html",
+      level: 1,
+      type: "ilkokul",
+    },
+
+    ilk2B7k9: {
+      file: "kelime-okyanusu-ilkokul/ilkokul-level-2.html",
+      level: 2,
+      type: "ilkokul",
+    },
+
+    ilk3C91x: {
+      file: "kelime-okyanusu-ilkokul/ilkokul-level-3.html",
+      level: 3,
+      type: "ilkokul",
+    },
+
+    // ORTAOKUL
+
+    ort1D82m: {
+      file: "kelime-okyanusu-ortaokul/ortaokul-level-1.html",
+      level: 1,
+      type: "ortaokul",
+    },
+
+    ort2F71p: {
+      file: "kelime-okyanusu-ortaokul/ortaokul-level-2.html",
+      level: 2,
+      type: "ortaokul",
+    },
+
+    ort3G55q: {
+      file: "kelime-okyanusu-ortaokul/ortaokul-level-3.html",
+      level: 3,
+      type: "ortaokul",
+    },
+
+    // LİSE
+
+    lis1H91z: {
+      file: "kelime-okyanusu-lise/lise-level-1.html",
+      level: 1,
+      type: "lise",
+    },
+
+    lis2K82v: {
+      file: "kelime-okyanusu-lise/lise-level-2.html",
+      level: 2,
+      type: "lise",
+    },
+
+    lis3M44n: {
+      file: "kelime-okyanusu-lise/lise-level-3.html",
+      level: 3,
+      type: "lise",
+    },
   };
 
   const current = levels[req.params.token];
+
   if (!current) {
     return res.status(404).send("Geçersiz oyun bağlantısı");
   }
 
   const username = req.session.username;
+
   const user = await getUserSnapshot(username);
+
   const maxLevel = user.maxLevel || 1;
 
   if (current.level > maxLevel) {
     let redirectToken;
-    if (current.type === "ilkokul") redirectToken = "ilk1A8f3";
-    else if (current.type === "ortaokul") redirectToken = "ort1D82m";
-    else redirectToken = "lis1H91z";
+
+    if (current.type === "ilkokul") {
+      redirectToken = "ilk1A8f3";
+    } else if (current.type === "ortaokul") {
+      redirectToken = "ort1D82m";
+    } else {
+      redirectToken = "lis1H91z";
+    }
+
     return res.redirect("/game/" + redirectToken);
   }
 
   res.sendFile(path.join(__dirname, "public", "pc", current.file));
 });
 
-// Genel statik dosyalar (en son)
 app.use(express.static(path.join(__dirname, "public")));
-
-// Ana sayfa (giriş sonrası)
-app.get("/pc/anasayfa.html", (req, res) => {
-  res.sendFile(path.join(__dirname, "public", "pc", "anasayfa.html"));
+app.use((req, res, next) => {
+  res.setHeader("X-Content-Type-Options", "nosniff");
+  res.setHeader("X-Frame-Options", "DENY");
+  res.setHeader("X-XSS-Protection", "1; mode=block");
+  res.setHeader("Referrer-Policy", "strict-origin-when-cross-origin");
+  res.setHeader("Permissions-Policy", "geolocation=(), microphone=(), camera=()");
+  next();
 });
 
-// Kayıt
 app.post("/register", authLimiter, async (req, res) => {
   try {
     const isim = String(req.body.isim ?? req.body.username ?? "").trim();
+
     const sifre = String(req.body.sifre ?? req.body.password ?? "");
+    const ip = getClientIP(req);
+
+    const ipCount = registerIPs.get(ip) || 0;
+
+    if (ipCount >= 3) {
+      return res.json({
+        success: false,
+
+        message: "Bu IP adresinden maksimum 3 hesap oluşturabilirsiniz",
+      });
+    }
 
     if (!isim || !sifre) {
-      return res.json({ success: false, message: "Eksik bilgi" });
+      return res.json({
+        success: false,
+
+        message: "Eksik bilgi",
+      });
+    }
+
+    if (!validateUsername(isim)) {
+      return res.json({
+        success: false,
+
+        message: "Geçersiz kullanıcı adı",
+      });
+    }
+
+    if (containsBadWord(isim)) {
+      return res.json({
+        success: false,
+        message: "Kullanıcı adı uygun değil",
+      });
+    }
+    if (!validatePassword(sifre)) {
+      return res.json({
+        success: false,
+
+        message:
+          "Şifre en az 8 karakter olmalı, büyük harf, küçük harf ve sayı içermeli",
+      });
     }
 
     const old = await findUser(isim);
+
     if (old) {
-      return res.json({ success: false, message: "Kullanıcı zaten var" });
+      return res.json({
+        success: false,
+
+        message: "Kullanıcı zaten var",
+      });
     }
 
-    await createUser({ isim, sifre });
-    res.json({ success: true });
+    await createUser({
+      isim,
+
+      sifre,
+    });
+    registerIPs.set(ip, ipCount + 1);
+    res.json({
+      success: true,
+    });
   } catch (err) {
     console.log(err);
-    res.json({ success: false, message: "Sunucu hatası" });
+
+    res.json({
+      success: false,
+
+      message: "Sunucu hatası",
+    });
   }
 });
 
-// Giriş
+/*
+ LOGIN
+*/
+
 app.post("/login", authLimiter, async (req, res) => {
   try {
     const isim = String(req.body.isim ?? req.body.username ?? "").trim();
+
     const sifre = String(req.body.sifre ?? req.body.password ?? "");
 
     const user = await findUser(isim);
+
     if (!user || !verifyPassword(sifre, user.sifre)) {
-      return res.json({ success: false, message: "Hatalı giriş" });
+      return res.json({
+        success: false,
+
+        message: "Hatalı giriş",
+      });
     }
 
     await upgradePasswordHashIfNeeded(user.isim, user.sifre, sifre);
 
     req.session.loggedIn = true;
+
     req.session.username = user.isim;
-    res.json({ success: true });
+
+    res.json({
+      success: true,
+    });
   } catch (err) {
     console.log(err);
-    res.json({ success: false, message: "Sunucu hatası" });
+
+    res.json({
+      success: false,
+    });
   }
 });
 
-// Çıkış
-app.post("/logout", (req, res) => {
-  req.session.destroy((err) => {
-    if (err) return res.status(500).json({ success: false });
-    res.clearCookie("connect.sid");
-    res.json({ success: true });
+app.post("/start-game", async (req, res) => {
+  if (!req.session.loggedIn) {
+    return res.sendStatus(401);
+  }
+
+  req.session.inGame = true;
+
+  const username = getCurrentUsername(req);
+
+  if (username) {
+    try {
+      await clearUserLevelScore(username);
+    } catch (err) {
+      console.log("LEVEL SCORE RESET HATASI:", err);
+    }
+  }
+
+  res.json({
+    success: true,
   });
 });
 
-// Kullanıcı bilgisi
+app.get("/pc/anasayfa.html", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "pc", "anasayfa.html"));
+});
+/*
+ ME
+*/
+app.get("/game-score", async (req,res)=>{
+
+  try {
+
+    const username = getCurrentUsername(req);
+
+    if(!username){
+      return res.json({
+        success:false,
+        score:0
+      });
+    }
+
+
+    const user = await getUserSnapshot(username);
+
+
+    res.json({
+
+      success:true,
+
+      score:user.levelScore || 0,
+
+      levelScore:user.levelScore || 0
+
+    });
+
+
+  } catch(err){
+
+    console.log(err);
+
+    res.json({
+      success:false,
+      score:0
+    });
+
+  }
+
+});
 app.get("/me", async (req, res) => {
   const username = getCurrentUsername(req);
-  if (!username) return res.json({ loggedIn: false });
+
+  if (!username) {
+    return res.json({
+      loggedIn: false,
+    });
+  }
 
   const snapshot = await getUserSnapshot(username);
-  if (!snapshot) return res.json({ loggedIn: false });
+
+  if (!snapshot) {
+    return res.json({
+      loggedIn: false,
+    });
+  }
 
   const users = await getUsersWithRanks();
+
   const rank = users.findIndex((u) => u.isim === username) + 1;
 
   res.json({
     loggedIn: true,
+
     isim: snapshot.isim,
+
     puan: snapshot.puan,
+
     taskPoints: snapshot.taskPoints,
+
     rank,
+
     correct: snapshot.correct,
+
     wrong: snapshot.wrong,
+
     totalQuestions: snapshot.totalQuestions,
+
     levelScore: snapshot.levelScore,
+
     title: snapshot.title,
+
     roadProgressPercent: snapshot.roadProgressPercent,
+
     roadProgressValue: snapshot.roadProgressValue,
+
     roadProgressTotal: snapshot.roadProgressTotal,
+
     rotationIndex: snapshot.rotationIndex,
+
     rotationLabel: snapshot.rotationLabel,
+
     nextMilestone: snapshot.nextMilestone,
+
     currentMilestones: snapshot.currentMilestones || [],
+
     claimedRoadRewards: snapshot.claimedRoadRewards || [],
   });
 });
 
-// Skor kaydet
-app.post("/save-score", generalLimiter, async (req, res) => {
-  try {
-    const username = getCurrentUsername(req);
-    if (!username) return res.json({ success: false, message: "Giriş yok" });
+/*
+ LEADERBOARD
+*/
 
-    const levelScore = Math.max(0, Math.min(Number(req.body.score) || 0, 99999));
+app.get("/leaderboard", async (req, res) => {
+  const limit = Number(req.query.limit) || 10;
+
+  const users = await getUsersWithRanks();
+
+  res.json({
+    success: true,
+
+    users: users.slice(0, limit).map((user) => ({
+      isim: user.isim,
+
+      puan: user.puan,
+
+      rank: user.rank,
+    })),
+  });
+});
+
+/*
+ SAVE SCORE
+*/
+
+app.post("/save-score", async (req, res) => {
+  try {
+
+    const username = getCurrentUsername(req);
+
+
+    if (!username) {
+      return res.json({
+        success:false,
+        message:"Giriş yok"
+      });
+    }
+
+
+const levelScore = Math.max(0, Math.min(Number(req.body.score) || 0, 99999));
+
+    if (Number.isNaN(levelScore)) {
+
+      return res.json({
+        success:false,
+        message:"Geçersiz puan"
+      });
+
+    }
+
+
     const scoreMode = String(req.body.scoreMode || "").toLowerCase();
-    const scoreScope = String(req.body.scoreScope || "").toLowerCase();
-    const finalizeLevelScore = req.body.finalizeLevelScore === true;
+    const scoreScope = String(
+      req.body.scoreScope || req.body.scope || "",
+    ).toLowerCase();
+    const finalizeLevelScore =
+      req.body.finalizeLevelScore === true ||
+      String(req.body.finalizeLevelScore || "").toLowerCase() === "true";
     const isAbsoluteScore = scoreMode === "absolute" || scoreMode === "replace";
     const isLevelScore = scoreScope === "level" || scoreScope === "level-score";
-    const correct = Math.max(0, Math.min(Number(req.body.correct ?? 0) || 0, 999));
-    const wrong = Math.max(0, Math.min(Number(req.body.wrong ?? 0) || 0, 999));
-    const totalQuestions = Math.max(0, Math.min(Number(req.body.totalQuestions ?? (correct + wrong)) || 0, 999));
-    const taskPoints = Math.max(0, Math.min(Number(req.body.taskPoints ?? 0) || 0, 999));
+   const correct = Math.max(0, Math.min(Number(req.body.correct) || 0, 999));
+
+    const wrong = Math.max(0, Math.min(Number(req.body.wrong) || 0, 999));
+
+    const totalQuestions = Number(
+      req.body.totalQuestions ?? req.body.toplamSoru ?? (correct + wrong),
+    ) || 0;
+    const taskPoints = Number(req.body.taskPoints ?? 0) || 0;
 
     if (isLevelScore) {
-      await updateUserLevelScore(username, { levelScore, taskPoints, correct, wrong, totalQuestions });
+      await updateUserLevelScore(username, {
+        levelScore,
+        taskPoints,
+        correct,
+        wrong,
+        totalQuestions,
+      });
     } else {
       await updateUserScore(username, {
         score: levelScore,
@@ -327,118 +614,198 @@ app.post("/save-score", generalLimiter, async (req, res) => {
         totalQuestions,
         mode: isAbsoluteScore ? "absolute" : "add",
       });
-      if (finalizeLevelScore) await clearUserLevelScore(username);
+
+      if (finalizeLevelScore) {
+        await clearUserLevelScore(username);
+      }
     }
 
-    const user = await getUserSnapshot(username);
-    res.json({ success: true, toplamPuan: user.puan });
-  } catch (err) {
-    console.log("SAVE SCORE HATASI:", err);
-    res.json({ success: false, message: err.message });
-  }
-});
 
-// Oyun skoru getir
-app.get("/game-score", async (req, res) => {
-  try {
-    const username = getCurrentUsername(req);
-    if (!username) return res.json({ success: false, score: 0, levelScore: 0 });
 
     const user = await getUserSnapshot(username);
-    res.json({ success: true, score: user.levelScore || 0, levelScore: user.levelScore || 0 });
-  } catch (err) {
-    console.log(err);
-    res.json({ success: false, score: 0, levelScore: 0 });
+
+
+
+    res.json({
+
+      success:true,
+
+      toplamPuan:user.puan
+
+    });
+
+
+
+  } catch(err){
+
+    console.log("SAVE SCORE HATASI:",err);
+
+
+    res.json({
+
+      success:false,
+
+      message:err.message
+
+    });
+
   }
+
+});
+app.get("/home", (req,res)=>{
+  res.sendFile(
+    path.join(__dirname,"public","pc","anasayfa.html")
+  );
 });
 
-// Liderlik tablosu
-app.get("/leaderboard", async (req, res) => {
-  const limit = Number(req.query.limit) || 10;
-  const users = await getUsersWithRanks();
-  res.json({
-    success: true,
-    users: users.slice(0, limit).map((u) => ({ isim: u.isim, puan: u.puan, rank: u.rank })),
-  });
-});
-
-// Yol durumu
 app.get("/road-state", async (req, res) => {
   const username = getCurrentUsername(req);
-  if (!username) return res.json({ loggedIn: false });
+
+  if (!username) {
+    return res.json({
+      loggedIn: false,
+    });
+  }
 
   const snapshot = await getUserSnapshot(username);
-  if (!snapshot) return res.json({ loggedIn: false });
+
+  if (!snapshot) {
+    return res.json({
+      loggedIn: false,
+    });
+  }
 
   res.json({
     loggedIn: true,
+
     score: snapshot.puan,
+
     taskPoints: snapshot.taskPoints,
+
     title: snapshot.title,
+
     progressPercent: snapshot.roadProgressPercent,
+
     roadProgressPercent: snapshot.roadProgressPercent,
+
     roadProgressValue: snapshot.roadProgressValue,
+
     roadProgressTotal: snapshot.roadProgressTotal,
+
     rotationIndex: snapshot.rotationIndex,
+
     rotationLabel: snapshot.rotationLabel,
+
     nextMilestone: snapshot.nextMilestone,
+
     currentMilestones: snapshot.currentMilestones || [],
+
     claimedRoadRewards: snapshot.claimedRoadRewards || [],
   });
 });
 
-// Yol ödülü topla
-app.post("/road-claim", generalLimiter, async (req, res) => {
+
+app.post("/road-claim", async (req, res) => {
   const username = getCurrentUsername(req);
-  if (!username) return res.json({ success: false, message: "Giriş gerekli" });
 
-  const { milestoneId } = req.body;
-  if (!milestoneId) return res.json({ success: false, message: "Geçersiz ödül" });
-
-  const snapshot = await getUserSnapshot(username);
-  const milestone = (snapshot.currentMilestones || []).find((m) => m.id === milestoneId);
-  if (!milestone) return res.json({ success: false, message: "Geçersiz milestone" });
-  if (!milestone.unlocked) return res.json({ success: false, message: "Bu ödül henüz açılmadı" });
-  if ((snapshot.claimedRoadRewards || []).includes(milestoneId)) {
-    return res.json({ success: false, message: "Bu ödül zaten alındı" });
+  if (!username) {
+    return res.json({
+      success: false,
+      message: "Giriş gerekli",
+    });
   }
 
-  await addClaimedRoadReward(username, milestoneId);
+  const { milestoneId } = req.body;
+
+  if (!milestoneId || typeof milestoneId !== "string") {
+    return res.json({
+      success: false,
+      message: "Geçersiz ödül",
+    });
+  }
+
+  const snapshot = await getUserSnapshot(username);
+
+  if (!snapshot) {
+    return res.json({
+      success: false,
+      message: "Kullanıcı bulunamadı",
+    });
+  }
+
+  // Kullanıcının açtığı yolları kontrol et
+  const milestone = (snapshot.currentMilestones || []).find(
+    (m) => m.id === milestoneId,
+  );
+
+  if (!milestone) {
+    return res.json({
+      success: false,
+      message: "Geçersiz milestone",
+    });
+  }
+
+  if (!milestone.unlocked) {
+    return res.json({
+      success: false,
+      message: "Bu ödül henüz açılmadı",
+    });
+  }
+
+  if (
+    snapshot.claimedRoadRewards &&
+    snapshot.claimedRoadRewards.includes(milestoneId)
+  ) {
+    return res.json({
+      success: false,
+      message: "Bu ödül zaten alındı",
+    });
+  }
+
+  const ok = await addClaimedRoadReward(username, milestoneId);
+
+  if (!ok) {
+    return res.json({
+      success: false,
+      message: "Kaydedilemedi",
+    });
+  }
+
   const updated = await getUserSnapshot(username);
-  res.json({ success: true, claimedRoadRewards: updated.claimedRoadRewards || [] });
+
+  res.json({
+    success: true,
+
+    claimedRoadRewards: updated.claimedRoadRewards || [],
+
+    currentMilestones: updated.currentMilestones || [],
+  });
 });
 
-// Seviye tamamlama
-app.post("/complete-level", async (req, res) => {
-  const username = getCurrentUsername(req);
-  if (!username) return res.json({ success: false });
+/*
+ LOGOUT
+*/
 
-  const level = Number(req.body.level);
-  if (!level) return res.json({ success: false });
+app.post("/logout", (req, res) => {
+  req.session.destroy((err) => {
+    if (err) {
+      return res.status(500).json({
+        success: false,
+      });
+    }
 
-  await unlockNextLevel(username, level);
-  res.json({ success: true });
+    res.clearCookie("connect.sid");
+
+    res.json({
+      success: true,
+    });
+  });
 });
-
-// Seviye sıfırlama (debug)
-app.post("/reset-level", async (req, res) => {
-  const username = getCurrentUsername(req);
-  if (!username) return res.json({ success: false });
-  await resetUserLevel(username);
-  res.json({ success: true });
-});
-
-// 404 - En sonda olmalı
-app.use((req, res) => {
-  res.status(404).sendFile(path.join(__dirname, "public", "pc", "404.html"));
-});
-
-// ========================
-// SUNUCU BAŞLATMA
-// ========================
 
 const server = http.createServer(app);
-
+app.use((req, res) => {
+  res.status(404).sendFile(path.join(__dirname, 'public', 'pc', '404.html'));
+});
 start()
   .then(() => {
     server.listen(PORT, "0.0.0.0", () => {
@@ -447,5 +814,6 @@ start()
   })
   .catch((err) => {
     console.error("MySQL başlatma hatası:", err);
+
     process.exit(1);
   });
