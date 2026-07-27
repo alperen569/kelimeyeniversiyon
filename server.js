@@ -40,8 +40,18 @@ app.set("trust proxy", isProduction ? 1 : 0);
 
 app.use(
   helmet({
-    contentSecurityPolicy: false,
-  }),
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: ["'self'"],
+        scriptSrc: ["'self'", "https://cdn.tailwindcss.com", "https://cdnjs.cloudflare.com", "https://www.soundhelix.com"],
+        styleSrc: ["'self'", "'unsafe-inline'", "https://cdnjs.cloudflare.com", "https://fonts.googleapis.com"],
+        fontSrc: ["'self'", "https://cdnjs.cloudflare.com", "https://fonts.gstatic.com"],
+        imgSrc: ["'self'", "data:", "https://images.unsplash.com"],
+        connectSrc: ["'self'"],
+        mediaSrc: ["'self'", "https://www.soundhelix.com"],
+      },
+    },
+  })
 );
 
 app.use(
@@ -104,15 +114,14 @@ app.post("/complete-level", async (req, res) => {
     success: true,
   });
 });
-const authLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-
-  max: 20,
-
+const generalLimiter = rateLimit({
+  windowMs: 1 * 60 * 1000,
+  max: 60,
   standardHeaders: true,
-
   legacyHeaders: false,
 });
+app.use("/save-score", generalLimiter);
+app.use("/road-claim", generalLimiter);
 
 async function start() {
   await initializeDatabase();
@@ -265,6 +274,14 @@ app.get("/game/:token", requireAuth, async (req, res) => {
 });
 
 app.use(express.static(path.join(__dirname, "public")));
+app.use((req, res, next) => {
+  res.setHeader("X-Content-Type-Options", "nosniff");
+  res.setHeader("X-Frame-Options", "DENY");
+  res.setHeader("X-XSS-Protection", "1; mode=block");
+  res.setHeader("Referrer-Policy", "strict-origin-when-cross-origin");
+  res.setHeader("Permissions-Policy", "geolocation=(), microphone=(), camera=()");
+  next();
+});
 
 app.post("/register", authLimiter, async (req, res) => {
   try {
@@ -550,8 +567,7 @@ app.post("/save-score", async (req, res) => {
     }
 
 
-    const levelScore = Number(req.body.score);
-
+const levelScore = Math.max(0, Math.min(Number(req.body.score) || 0, 99999));
 
     if (Number.isNaN(levelScore)) {
 
@@ -572,8 +588,10 @@ app.post("/save-score", async (req, res) => {
       String(req.body.finalizeLevelScore || "").toLowerCase() === "true";
     const isAbsoluteScore = scoreMode === "absolute" || scoreMode === "replace";
     const isLevelScore = scoreScope === "level" || scoreScope === "level-score";
-    const correct = Number(req.body.correct ?? req.body.dogruSayisi ?? 0) || 0;
-    const wrong = Number(req.body.wrong ?? req.body.yanlisSayisi ?? 0) || 0;
+   const correct = Math.max(0, Math.min(Number(req.body.correct) || 0, 999));
+
+    const wrong = Math.max(0, Math.min(Number(req.body.wrong) || 0, 999));
+
     const totalQuestions = Number(
       req.body.totalQuestions ?? req.body.toplamSoru ?? (correct + wrong),
     ) || 0;
