@@ -1,0 +1,19 @@
+{
+  "name": "Kelime Okyanusu",
+  "short_name": "KelimeOkyanusu",
+  "description": "Atasözleri ve deyimleri eğlenceli oyunlarla öğreten ücretsiz eğitim platformu",
+  "start_url": "/pc/anasayfa.html",
+  "display": "standalone",
+  "background_color": "#0f172a",
+  "theme_color": "#0f172a",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "lang": "tr-TR"
+}

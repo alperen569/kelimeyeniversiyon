@@ -785,7 +785,9 @@ app.post("/logout", (req, res) => {
 });
 
 const server = http.createServer(app);
-
+app.use((req, res) => {
+  res.status(404).sendFile(path.join(__dirname, 'public', 'pc', '404.html'));
+});
 start()
   .then(() => {
     server.listen(PORT, "0.0.0.0", () => {

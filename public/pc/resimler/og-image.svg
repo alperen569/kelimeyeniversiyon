@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#0f172a"/>
+      <stop offset="50%" style="stop-color:#1e3a8a"/>
+      <stop offset="100%" style="stop-color:#0369a1"/>
+    </linearGradient>
+  </defs>
+  
+  <!-- Arka plan -->
+  <rect width="1200" height="630" fill="url(#bg)"/>
+  
+  <!-- Dalgalar -->
+  <path d="M0 450 Q200 380 400 450 Q600 520 800 450 Q1000 380 1200 450 L1200 630 L0 630 Z" 
+        fill="#0ea5e9" opacity="0.3"/>
+  <path d="M0 500 Q300 440 600 500 Q900 560 1200 500 L1200 630 L0 630 Z" 
+        fill="#38bdf8" opacity="0.2"/>
+  
+  <!-- Logo alanı -->
+  <circle cx="220" cy="280" r="120" fill="#1e3a8a" stroke="#38bdf8" stroke-width="6"/>
+  <text x="220" y="330" font-family="Arial Black, sans-serif" font-size="120" font-weight="900" 
+        fill="#ffffff" text-anchor="middle">KO</text>
+  
+  <!-- Başlık -->
+  <text x="440" y="240" font-family="Arial Black, sans-serif" font-size="64" font-weight="900" 
+        fill="#ffffff">KELİME OKYANUSU</text>
+  
+  <!-- Açıklama -->
+  <text x="440" y="310" font-family="Arial, sans-serif" font-size="28" fill="#7dd3fc">
+    Atasözleri ve Deyimleri Eğlenerek Öğren
+  </text>
+  
+  <!-- Alt bilgi -->
+  <text x="440" y="380" font-family="Arial, sans-serif" font-size="22" fill="#94a3b8">
+    🌊 İlkokul • Ortaokul • Lise
+  </text>
+  
+  <!-- URL -->
+  <text x="600" y="580" font-family="Arial, sans-serif" font-size="20" fill="#64748b" 
+        text-anchor="middle">kelimeokyanusu.com.tr</text>
+</svg>
