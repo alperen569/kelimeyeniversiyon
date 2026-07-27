@@ -530,7 +530,6 @@
     <div class="button-container">
       <button class="game-button" id="check-button">Kontrol Et</button>
       <button class="game-button" id="reset-button">Sil</button>
-      <button onclick="skoruKaydet(score)" class="game-button">Skoru Kaydet</button>
       <button class="game-button" id="market-button">Market</button>
       
     </div>
@@ -585,29 +584,9 @@ let score = 0;
 let scorePrimedFromPreviousLevel = false;
 let levelStartScore = 0;
 
-function primeScoreFromStorage() {
-  try {
-    const rawScore = localStorage.getItem("levelScore");
-    if (rawScore === null) return false;
 
-    const savedScore = Number(rawScore);
-    if (Number.isFinite(savedScore)) {
-      score = savedScore;
-      scorePrimedFromPreviousLevel = true;
-      updateScore();
-      localStorage.removeItem("levelScore");
-      return true;
-    }
-  } catch (err) {
-    console.log("Yerel puan yükleme hatası:", err);
-  }
 
-  return false;
-}
 
-function getLevel3ScoreDelta(currentScore = score) {
-  return Number(currentScore) - Number(levelStartScore);
-}
 let usedWords = [];
 const proverbs = [
   "Ağaç yaşken eğilir",
@@ -971,30 +950,17 @@ function showComboText() {
   }, 5000);
 }
 
-async function loadServerScore(){
-
-  try{
-
+async function loadServerScore() {
+  try {
     const res = await fetch("/game-score");
-
     const data = await res.json();
-
-
-    if(data.success && !scorePrimedFromPreviousLevel){
-
-      score = Number(data.levelScore ?? data.score ?? 0) || 0;
-
+    if (data.success) {
+      score = Number(data.levelScore ?? 0) || 0;
       updateScore();
-
     }
-
-
-  }catch(err){
-
-    console.log(err);
-
+  } catch (err) {
+    console.log("Puan alınamadı", err);
   }
-
 }
     function updateScore() {
       scoreDiv.textContent = `Puan: ${score}`;
@@ -1079,85 +1045,41 @@ async function loadServerScore(){
     }
 
 async function saveScoreAndReturnHome() {
-
-  if(scoreSaved) return;
-
+  if (scoreSaved) return;
   scoreSaved = true;
-
   showToast("Skor kaydediliyor...");
 
-
   try {
+    const response = await fetch("/save-score", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        score: score,                // ← tüm birikmiş level puanı
+        scoreMode: "add",            // ana puana ekle
+        scoreScope: "main",          // users.puan sütunu
+        finalizeLevelScore: true,    // levelScore'u sıfırla
+        correct: correctCount,
+        wrong: wrongCount,
+        level: 3,
+      }),
+    });
 
+    const text = await response.text();
+    const data = JSON.parse(text);
 
-  const response = await fetch("/save-score",{
-    method:"POST",
-    headers:{
-        "Content-Type":"application/json"
-    },
-    body:JSON.stringify({
-        score: getLevel3ScoreDelta(),
-        scoreMode: "add",
-        scoreScope: "main",
-        finalizeLevelScore: true,
-        correct:correctCount,
-        wrong:wrongCount,
-        level:3
-    })
-});
-
-console.log(response.status);
-
-const text = await response.text();
-
-console.log(text);
-
-const data = JSON.parse(text);
-
-
-
-
-
-
-    if(data.success){
-
-
+    if (data.success) {
       showToast("Skor kaydedildi. Anasayfaya gidiliyor...");
-
-
-      document.body.classList.add(
-        "is-transitioning"
-      );
-
-
-      setTimeout(()=>{
-
-        window.location.href="/pc/anasayfa.html";
-
-      },1200);
-
-
-
-    }else{
-
-
+      document.body.classList.add("is-transitioning");
+      setTimeout(() => {
+        window.location.href = "/pc/anasayfa.html";
+      }, 1200);
+    } else {
       showToast("Skor kaydedilemedi");
-
-
     }
-
-
-  }catch(err){
-
-
+  } catch (err) {
     console.log(err);
-
     showToast("Sunucu hatası");
-
-
   }
-
-
 }
     function removeLastWord() {
   if (collectedWords.length === 0) return;
@@ -1205,14 +1127,8 @@ const data = JSON.parse(text);
 
 
 window.onload = async () => {
-
-  primeScoreFromStorage();
-
-  await loadServerScore();
-  levelStartScore = score;
-
+  await loadServerScore();          // sunucudan levelScore'u al
   startCountdownAnimation();
-
 };
 document.querySelectorAll(".market-item").forEach(item => {
   item.addEventListener("click", () => {

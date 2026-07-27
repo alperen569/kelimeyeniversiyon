@@ -1097,15 +1097,15 @@ function startGame() {
     
     updateTimerDisplay();
     
-    if (timeRemaining <= 0) {
-      clearInterval(timerInterval);
-      timeExpired = true;
-      showStatusMessage('Zaman bitti! Level 2\'ye aktarılıyor...', 'warning');
-      setTimeout(() => {
-        completeLevelAndGo('/game/ilk2B7k9', 2);
-      }, 260);
-      return;
-    }
+if (timeRemaining <= 0) {
+  clearInterval(timerInterval);
+  timeExpired = true;
+  showStatusMessage('Zaman bitti! Puanın kaydedilip Level 2\'ye geçiliyor...', 'warning');
+  setTimeout(() => {
+    transitionToLevel('/game/ilk2B7k9', score); 
+  }, 260);
+  return;
+}
   }, 1000);
 }
 async function completeLevelAndGo(url,level){

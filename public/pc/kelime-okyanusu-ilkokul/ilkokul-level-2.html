@@ -1128,9 +1128,9 @@ function startGame() {
       clearInterval(timerInterval);
       timeExpired = true;
       showStatusMessage('Zaman bitti! Level 3\'e aktarılıyor...', 'warning');
-      setTimeout(() => {
-        completeLevelAndGo('/game/ilk3C91x', 1);
-      }, 260);
+setTimeout(() => {
+  completeLevelAndGo('/game/ilk3C91x', 2); // ✅ doğru level
+}, 260);
       return;
     }
   }, 1000);
