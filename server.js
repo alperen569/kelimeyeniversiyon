@@ -120,6 +120,16 @@ const generalLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
 });
+const authLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 dakika
+    max: 5,                   // En fazla 5 giriş denemesi
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: {
+        success: false,
+        message: "Çok fazla giriş denemesi yaptınız. 15 dakika bekleyin."
+    }
+});
 app.use("/save-score", generalLimiter);
 app.use("/road-claim", generalLimiter);
 
