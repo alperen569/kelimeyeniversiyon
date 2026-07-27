@@ -274,16 +274,9 @@ app.get("/game/:token", requireAuth, async (req, res) => {
 });
 
 app.use(express.static(path.join(__dirname, "public")));
-app.use((req, res, next) => {
-  res.setHeader("X-Content-Type-Options", "nosniff");
-  res.setHeader("X-Frame-Options", "DENY");
-  res.setHeader("X-XSS-Protection", "1; mode=block");
-  res.setHeader("Referrer-Policy", "strict-origin-when-cross-origin");
-  res.setHeader("Permissions-Policy", "geolocation=(), microphone=(), camera=()");
-  next();
-});
 
-app.post("/register", generalLimiter, async (req, res) => {
+
+app.post("/register", authLimiter, async (req, res) => {
   try {
     const isim = String(req.body.isim ?? req.body.username ?? "").trim();
 
@@ -365,7 +358,7 @@ app.post("/register", generalLimiter, async (req, res) => {
  LOGIN
 */
 
-app.post("/login", generalLimiter, async (req, res) => {
+app.post("/login", authLimiter, async (req, res) => {
   try {
     const isim = String(req.body.isim ?? req.body.username ?? "").trim();
 
