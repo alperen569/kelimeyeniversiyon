@@ -3,7 +3,7 @@ require("dotenv").config();
 const express = require("express");
 const validator = require("validator");
 const Filter = require("leo-profanity");
-const { zxcvbn } = require("@zxcvbn-ts/core");
+const zxcvbn = require("@zxcvbn-ts/core").zxcvbn;
 Filter.loadDictionary("en", "tr");
 const helmet = require("helmet");
 const rateLimit = require("express-rate-limit");
@@ -126,7 +126,7 @@ const generalLimiter = rateLimit({
 const registerIPs = new Map();
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 dakika
-  max: 5, // En fazla 5 giriş denemesi
+  max: 20, // En fazla 5 giriş denemesi
   standardHeaders: true,
   legacyHeaders: false,
   message: {
