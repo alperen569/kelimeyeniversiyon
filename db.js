@@ -2,26 +2,47 @@ const mysql = require("mysql2/promise");
 const bcrypt = require("bcrypt");
 require("dotenv").config();
 
+
 let pool;
 
 async function initializeDatabase() {
-  pool = mysql.createPool({
-    host: process.env.DB_HOST,
+  await pool.query(`
+CREATE TABLE IF NOT EXISTS users (
+    id INT AUTO_INCREMENT PRIMARY KEY,
 
-    user: process.env.DB_USER,
+    isim VARCHAR(32) NOT NULL UNIQUE,
 
-    password: process.env.DB_PASSWORD,
+    email VARCHAR(255) NOT NULL UNIQUE,
 
-    database: process.env.DB_NAME,
+    sifre VARCHAR(255) NOT NULL,
 
-    port: Number(process.env.DB_PORT) || 3306,
+    puan INT NOT NULL DEFAULT 0,
 
-    waitForConnections: true,
+    taskPoints INT NOT NULL DEFAULT 0,
 
-    connectionLimit: 10,
+    levelScore INT NOT NULL DEFAULT 0,
 
-    charset: "utf8mb4",
-  });
+    total_score INT NOT NULL DEFAULT 0,
+
+    correct INT NOT NULL DEFAULT 0,
+
+    wrong INT NOT NULL DEFAULT 0,
+
+    totalQuestions INT NOT NULL DEFAULT 0,
+
+    maxLevel INT NOT NULL DEFAULT 1,
+
+    claimedRoadRewards TEXT NOT NULL,
+
+    email_verified BOOLEAN NOT NULL DEFAULT FALSE,
+
+    verification_token VARCHAR(128),
+
+    verification_expires DATETIME,
+
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+)
+`);
 
   await pool.query(`
     CREATE TABLE IF NOT EXISTS users (
@@ -61,7 +82,46 @@ async function initializeDatabase() {
       throw err;
     }
   }
-
+  try {
+    await pool.query(`
+        ALTER TABLE users
+        ADD COLUMN email VARCHAR(255) NULL
+    `);
+  } catch (err) {
+    if (err.code !== "ER_DUP_FIELDNAME") {
+      throw err;
+    }
+  }
+  try {
+    await pool.query(`
+        ALTER TABLE users
+        ADD COLUMN email_verified BOOLEAN NOT NULL DEFAULT FALSE
+    `);
+  } catch (err) {
+    if (err.code !== "ER_DUP_FIELDNAME") {
+      throw err;
+    }
+  }
+  try {
+    await pool.query(`
+        ALTER TABLE users
+        ADD COLUMN verification_token VARCHAR(128)
+    `);
+  } catch (err) {
+    if (err.code !== "ER_DUP_FIELDNAME") {
+      throw err;
+    }
+  }
+  try {
+    await pool.query(`
+        ALTER TABLE users
+        ADD COLUMN verification_expires DATETIME
+    `);
+  } catch (err) {
+    if (err.code !== "ER_DUP_FIELDNAME") {
+      throw err;
+    }
+  }
   try {
     await pool.query(`
       ALTER TABLE users
@@ -78,32 +138,137 @@ async function initializeDatabase() {
   return pool;
 }
 
-async function createUser({ isim, sifre }) {
+async function createUser({
+  isim,
+
+  email,
+
+  sifre,
+
+  verificationToken,
+
+  verificationExpires,
+}) {
   const hashedPassword = hashPassword(sifre);
 
   await pool.execute(
     `
-    INSERT INTO users 
-    (isim, sifre, claimedRoadRewards)
-    VALUES (?, ?, ?)
-    `,
-    [isim, hashedPassword, ""],
+INSERT INTO users(
+
+isim,
+
+email,
+
+sifre,
+
+claimedRoadRewards,
+
+email_verified,
+
+verification_token,
+
+verification_expires
+
+)
+
+VALUES(
+
+?,
+
+?,
+
+?,
+
+?,
+
+0,
+
+?,
+
+?
+
+)
+`,
+
+    [isim, email, hashedPassword, "", verificationToken, verificationExpires],
   );
 
   return {
     isim,
-    sifre: hashedPassword,
+
+    email,
   };
 }
 
-async function findUser(isim) {
-  const [rows] = await pool.execute("SELECT * FROM users WHERE isim = ?", [
-    isim,
-  ]);
+async function findUser(login) {
+  const [rows] = await pool.execute(
+    `
+SELECT *
+
+FROM users
+
+WHERE isim=?
+
+OR email=?
+
+LIMIT 1
+`,
+
+    [login, login],
+  );
 
   return rows[0] || null;
 }
+async function findEmail(email) {
+  const [rows] = await pool.execute(
+    "SELECT * FROM users WHERE email=? LIMIT 1",
 
+    [email],
+  );
+
+  return rows[0] || null;
+}
+async function verifyUserEmail(token) {
+  const [rows] = await pool.execute(
+    `
+SELECT *
+
+FROM users
+
+WHERE verification_token=?
+
+AND verification_expires>NOW()
+
+LIMIT 1
+`,
+
+    [token],
+  );
+
+  if (rows.length === 0) {
+    return false;
+  }
+
+  await pool.execute(
+    `
+UPDATE users
+
+SET
+
+email_verified=1,
+
+verification_token=NULL,
+
+verification_expires=NULL
+
+WHERE id=?
+`,
+
+    [rows[0].id],
+  );
+
+  return true;
+}
 function hashPassword(password) {
   return bcrypt.hashSync(String(password), 10);
 }
@@ -276,7 +441,7 @@ async function getUsersWithRanks() {
 }
 
 async function getUserSnapshot(isim) {
-  const user = await findUser(isim);
+  const user = await findUser(login);
 
   if (!user) return null;
 
@@ -286,7 +451,7 @@ async function getUserSnapshot(isim) {
     isim: user.isim,
 
     puan: Number(user.puan) || 0,
-    maxLevel: Number(user.maxLevel)||1,
+    maxLevel: Number(user.maxLevel) || 1,
 
     taskPoints: Number(user.taskPoints) || 0,
 
@@ -430,60 +595,45 @@ function getProgressSnapshot(score, claimedRoadRewards = [], taskPoints = 0) {
 async function getSetting(key) {
   const [rows] = await pool.execute(
     "SELECT setting_value FROM settings WHERE setting_key=?",
-    [key]
+    [key],
   );
 
   return rows.length ? rows[0].setting_value : null;
 }
 
 async function isReservedUsername(username) {
-
   const [rows] = await pool.execute(
     "SELECT 1 FROM reserved_usernames WHERE username=? LIMIT 1",
-    [username.toLowerCase()]
+    [username.toLowerCase()],
   );
 
   return rows.length > 0;
-
 }
-async function resetUserLevel(username){
-
+async function resetUserLevel(username) {
   await pool.execute(
     `
     UPDATE users
     SET maxLevel = 1
     WHERE isim = ?
     `,
-    [username]
+    [username],
   );
-
 }
-async function getBannedWords(){
+async function getBannedWords() {
+  const [rows] = await pool.query("SELECT word FROM banned_words");
 
-    const [rows]=await pool.query(
-        "SELECT word FROM banned_words"
-    );
-
-    return rows.map(x=>x.word.toLowerCase());
-
+  return rows.map((x) => x.word.toLowerCase());
 }
-async function addUserScore(username, amount){
-
+async function addUserScore(username, amount) {
   await pool.execute(
-
     `
     UPDATE users
     SET puan = puan + ?
     WHERE isim = ?
     `,
 
-    [
-      amount,
-      username
-    ]
-
+    [amount, username],
   );
-
 }
 
 async function updateUserLevelScore(
@@ -536,48 +686,34 @@ async function execute(...args) {
 
   return pool.execute(...args);
 }
-async function containsBannedWord(text){
+async function containsBannedWord(text) {
+  const words = await getBannedWords();
 
-    const words=await getBannedWords();
+  const clean = text.toLowerCase().replace(/[^a-z0-9çğıöşü]/gi, "");
 
-    const clean=text
-        .toLowerCase()
-        .replace(/[^a-z0-9çğıöşü]/gi,"");
-
-    return words.some(w=>clean.includes(w));
-
+  return words.some((w) => clean.includes(w));
 }
-async function getIPRegisterCount(ip){
+async function getIPRegisterCount(ip) {
+  const [rows] = await pool.execute(
+    "SELECT account_count FROM ip_registers WHERE ip=?",
 
-    const [rows]=await pool.execute(
+    [ip],
+  );
 
-        "SELECT account_count FROM ip_registers WHERE ip=?",
-
-        [ip]
-
-    );
-
-    return rows.length ? rows[0].account_count : 0;
-
+  return rows.length ? rows[0].account_count : 0;
 }
-async function incrementIPRegisterCount(ip){
-
-    await pool.execute(
-
-`INSERT INTO ip_registers(ip,account_count)
+async function incrementIPRegisterCount(ip) {
+  await pool.execute(
+    `INSERT INTO ip_registers(ip,account_count)
 VALUES(?,1)
 ON DUPLICATE KEY UPDATE
 account_count=account_count+1`,
 
-[ip]
-
-);
-
+    [ip],
+  );
 }
-async function unlockNextLevel(username, level){
-
+async function unlockNextLevel(username, level) {
   const nextLevel = Number(level) + 1;
-
 
   await pool.execute(
     `
@@ -585,26 +721,18 @@ async function unlockNextLevel(username, level){
     SET maxLevel = GREATEST(maxLevel, ?)
     WHERE isim = ?
     `,
-    [
-      nextLevel,
-      username
-    ]
+    [nextLevel, username],
   );
-
 }
 module.exports = {
   initializeDatabase,
-
   createUser,
-
   findUser,
-
   updateUserScore,
-
   getUsersWithRanks,
-
   getUserSnapshot,
-
+  findEmail,
+  verifyUserEmail,
   addClaimedRoadReward,
   hashPassword,
   verifyPassword,
@@ -612,16 +740,15 @@ module.exports = {
   getScoreTitle,
   getProgressSnapshot,
   getSetting,
-isReservedUsername,
- containsBannedWord,
-getIPRegisterCount,
-resetUserLevel,
+  isReservedUsername,
+  containsBannedWord,
+  getIPRegisterCount,
+  resetUserLevel,
   incrementIPRegisterCount,
   unlockNextLevel,
-  addUserScore
-  ,
+  addUserScore,
   updateUserLevelScore,
   clearUserLevelScore,
   query,
-  execute
+  execute,
 };

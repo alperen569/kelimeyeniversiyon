@@ -10,12 +10,15 @@ const rateLimit = require("express-rate-limit");
 const session = require("express-session");
 const path = require("path");
 const http = require("http");
-
+const crypto = require("crypto");
+const nodemailer = require("nodemailer");
 
 const {
   initializeDatabase,
   createUser,
   findUser,
+  findEmail,
+  verifyUserEmail,
   getUsersWithRanks,
   updateUserScore,
   updateUserLevelScore,
@@ -30,6 +33,19 @@ const {
 } = require("./db");
 
 const app = express();
+const transporter = nodemailer.createTransport({
+  host: process.env.MAIL_HOST,
+
+  port: Number(process.env.MAIL_PORT),
+
+  secure: false,
+
+  auth: {
+    user: process.env.MAIL_USER,
+
+    pass: process.env.MAIL_PASS,
+  },
+});
 
 const isProduction = process.env.NODE_ENV === "production";
 
@@ -109,14 +125,14 @@ const generalLimiter = rateLimit({
 });
 const registerIPs = new Map();
 const authLimiter = rateLimit({
-    windowMs: 15 * 60 * 1000, // 15 dakika
-    max: 5,                   // En fazla 5 giriş denemesi
-    standardHeaders: true,
-    legacyHeaders: false,
-    message: {
-        success: false,
-        message: "Çok fazla giriş denemesi yaptınız. 15 dakika bekleyin."
-    }
+  windowMs: 15 * 60 * 1000, // 15 dakika
+  max: 5, // En fazla 5 giriş denemesi
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: {
+    success: false,
+    message: "Çok fazla giriş denemesi yaptınız. 15 dakika bekleyin.",
+  },
 });
 app.use("/save-score", generalLimiter);
 app.use("/road-claim", generalLimiter);
@@ -137,7 +153,57 @@ function getClientIP(req) {
     "unknown"
   );
 }
+async function sendVerificationMail(email, token) {
+  const link = `${process.env.SITE_URL}/verify-email?token=${token}`;
 
+  await transporter.sendMail({
+    from: process.env.MAIL_FROM,
+
+    to: email,
+
+    subject: "Kelime Okyanusu Hesap Doğrulama",
+
+    html: `
+
+<h2>Kelime Okyanusu</h2>
+
+<p>Hesabını doğrulamak için aşağıdaki butona tıkla.</p>
+
+<p>
+
+<a href="${link}"
+
+style="
+
+display:inline-block;
+
+padding:12px 20px;
+
+background:#1565c0;
+
+color:white;
+
+text-decoration:none;
+
+border-radius:8px;
+
+">
+
+Hesabı Doğrula
+
+</a>
+
+</p>
+
+<p>
+
+Bu bağlantı 24 saat geçerlidir.
+
+</p>
+
+`,
+  });
+}
 function validatePassword(sifre) {
   if (!validator.isLength(sifre, { min: 10, max: 64 })) return false;
 
@@ -160,14 +226,14 @@ function validatePassword(sifre) {
 
 // Kullanıcı adı doğrulama (sadece harf, rakam, Türkçe karakter ve alt çizgi, 3-20 karakter)
 function validateUsername(username) {
-  if (typeof username !== 'string') return false;
+  if (typeof username !== "string") return false;
   // Sadece güvenli karakterlere izin ver (XSS/enjeksiyon önlemi)
   return /^[a-zA-Z0-9çğıöşüÇĞİÖŞÜ_]{3,20}$/.test(username);
 }
 
 // Küfür/uygunsuz kelime kontrolü (leo-profanity ile)
 function containsBadWord(text) {
-  if (!text || typeof text !== 'string') return false;
+  if (!text || typeof text !== "string") return false;
   return Filter.check(text); // Filter zaten yukarıda tanımlanmıştı
 }
 function requireAuth(req, res, next) {
@@ -286,12 +352,16 @@ app.get("/game/:token", requireAuth, async (req, res) => {
 
 app.use(express.static(path.join(__dirname, "public")));
 
-
 app.post("/register", authLimiter, async (req, res) => {
   try {
-    const isim = String(req.body.isim ?? req.body.username ?? "").trim();
+    const isim = String(req.body.isim ?? "").trim();
 
-    const sifre = String(req.body.sifre ?? req.body.password ?? "");
+    const email = String(req.body.email ?? "")
+      .trim()
+      .toLowerCase();
+
+    const sifre = String(req.body.sifre ?? "");
+
     const ip = getClientIP(req);
 
     const ipCount = registerIPs.get(ip) || 0;
@@ -300,15 +370,23 @@ app.post("/register", authLimiter, async (req, res) => {
       return res.json({
         success: false,
 
-        message: "Bu IP adresinden maksimum 3 hesap oluşturabilirsiniz",
+        message: "Bu IP adresinden en fazla 3 hesap oluşturabilirsiniz.",
       });
     }
 
-    if (!isim || !sifre) {
+    if (!isim || !email || !sifre) {
       return res.json({
         success: false,
 
-        message: "Eksik bilgi",
+        message: "Lütfen bütün alanları doldurun.",
+      });
+    }
+
+    if (!validator.isEmail(email)) {
+      return res.json({
+        success: false,
+
+        message: "Geçerli bir e-posta adresi girin.",
       });
     }
 
@@ -316,42 +394,74 @@ app.post("/register", authLimiter, async (req, res) => {
       return res.json({
         success: false,
 
-        message: "Geçersiz kullanıcı adı",
+        message: "Geçersiz kullanıcı adı.",
       });
     }
 
     if (containsBadWord(isim)) {
       return res.json({
         success: false,
-        message: "Kullanıcı adı uygun değil",
+
+        message: "Bu kullanıcı adı kullanılamaz.",
       });
     }
+
     if (!validatePassword(sifre)) {
       return res.json({
         success: false,
 
-       message: "Şifre en az 10 karakter olmalı, büyük/küçük harf, rakam ve özel karakter (!@#$%^&*) içermeli",
+        message: "Şifre yeterince güçlü değil.",
       });
     }
 
-    const old = await findUser(isim);
+    const oldUser = await findUser(isim);
 
-    if (old) {
+    if (oldUser) {
       return res.json({
         success: false,
 
-        message: "Kullanıcı zaten var",
+        message: "Bu kullanıcı adı zaten kullanılıyor.",
       });
     }
+
+    const oldEmail = await findEmail(email);
+
+    if (oldEmail) {
+      return res.json({
+        success: false,
+
+        message: "Bu e-posta zaten kayıtlı.",
+      });
+    }
+
+    const verificationToken = require("crypto").randomBytes(32).toString("hex");
+
+    const verificationExpires = new Date(Date.now() + 24 * 60 * 60 * 1000);
 
     await createUser({
       isim,
 
+      email,
+
       sifre,
+
+      verificationToken,
+
+      verificationExpires,
     });
+
+    await sendVerificationMail(
+      email,
+
+      verificationToken,
+    );
+
     registerIPs.set(ip, ipCount + 1);
+
     res.json({
       success: true,
+
+      message: "Kayıt başarılı. Lütfen e-posta adresinizi doğrulayın.",
     });
   } catch (err) {
     console.log(err);
@@ -359,14 +469,10 @@ app.post("/register", authLimiter, async (req, res) => {
     res.json({
       success: false,
 
-      message: "Sunucu hatası",
+      message: "Sunucu hatası.",
     });
   }
 });
-
-/*
- LOGIN
-*/
 
 app.post("/login", authLimiter, async (req, res) => {
   try {
@@ -374,15 +480,43 @@ app.post("/login", authLimiter, async (req, res) => {
 
     const sifre = String(req.body.sifre ?? req.body.password ?? "");
 
-    const user = await findUser(isim);
+const user = await findUser(isim);
 
-    if (!user || !verifyPassword(sifre, user.sifre)) {
-      return res.json({
-        success: false,
+if(!user){
 
-        message: "Hatalı giriş",
-      });
-    }
+    return res.json({
+
+        success:false,
+
+        message:"Kullanıcı bulunamadı."
+
+    });
+
+}
+
+if(!verifyPassword(sifre,user.sifre)){
+
+    return res.json({
+
+        success:false,
+
+        message:"Şifre yanlış."
+
+    });
+
+}
+
+if(!user.email_verified){
+
+    return res.json({
+
+        success:false,
+
+        message:"Lütfen önce e-posta adresinizi doğrulayın."
+
+    });
+
+}
 
     await upgradePasswordHashIfNeeded(user.isim, user.sifre, sifre);
 
@@ -401,7 +535,104 @@ app.post("/login", authLimiter, async (req, res) => {
     });
   }
 });
+app.get("/verify-email",async(req,res)=>{
 
+    try{
+
+        const token=String(req.query.token || "");
+
+        if(!token){
+
+            return res.send("<h2>Geçersiz bağlantı.</h2>");
+
+        }
+
+        const ok=await verifyUserEmail(token);
+
+        if(!ok){
+
+            return res.send(`
+
+<h2>
+
+Bağlantı geçersiz veya süresi dolmuş.
+
+</h2>
+
+`);
+
+        }
+
+        res.send(`
+
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<meta charset="UTF-8">
+
+<title>Doğrulandı</title>
+
+</head>
+
+<body
+style="
+
+font-family:Arial;
+
+background:#081321;
+
+color:white;
+
+display:flex;
+
+justify-content:center;
+
+align-items:center;
+
+height:100vh;
+
+flex-direction:column;
+
+">
+
+<h1>
+
+✅ Hesabınız doğrulandı.
+
+</h1>
+
+<p>
+
+Artık giriş yapabilirsiniz.
+
+</p>
+
+<a href="/pc/login.html">
+
+Giriş Yap
+
+</a>
+
+</body>
+
+</html>
+
+`);
+
+    }
+
+    catch(err){
+
+        console.log(err);
+
+        res.send("Sunucu hatası.");
+
+    }
+
+});
 app.post("/start-game", async (req, res) => {
   if (!req.session.loggedIn) {
     return res.sendStatus(401);
@@ -430,45 +661,34 @@ app.get("/pc/anasayfa.html", (req, res) => {
 /*
  ME
 */
-app.get("/game-score", async (req,res)=>{
-
+app.get("/game-score", async (req, res) => {
   try {
-
     const username = getCurrentUsername(req);
 
-    if(!username){
+    if (!username) {
       return res.json({
-        success:false,
-        score:0
+        success: false,
+        score: 0,
       });
     }
 
-
     const user = await getUserSnapshot(username);
 
-
     res.json({
+      success: true,
 
-      success:true,
+      score: user.levelScore || 0,
 
-      score:user.levelScore || 0,
-
-      levelScore:user.levelScore || 0
-
+      levelScore: user.levelScore || 0,
     });
-
-
-  } catch(err){
-
+  } catch (err) {
     console.log(err);
 
     res.json({
-      success:false,
-      score:0
+      success: false,
+      score: 0,
     });
-
   }
-
 });
 app.get("/me", async (req, res) => {
   const username = getCurrentUsername(req);
@@ -558,29 +778,26 @@ app.get("/leaderboard", async (req, res) => {
 
 app.post("/save-score", async (req, res) => {
   try {
-
     const username = getCurrentUsername(req);
-
 
     if (!username) {
       return res.json({
-        success:false,
-        message:"Giriş yok"
+        success: false,
+        message: "Giriş yok",
       });
     }
 
-
-const levelScore = Math.max(0, Math.min(Number(req.body.score) || 0, 99999));
+    const levelScore = Math.max(
+      0,
+      Math.min(Number(req.body.score) || 0, 99999),
+    );
 
     if (Number.isNaN(levelScore)) {
-
       return res.json({
-        success:false,
-        message:"Geçersiz puan"
+        success: false,
+        message: "Geçersiz puan",
       });
-
     }
-
 
     const scoreMode = String(req.body.scoreMode || "").toLowerCase();
     const scoreScope = String(
@@ -591,13 +808,14 @@ const levelScore = Math.max(0, Math.min(Number(req.body.score) || 0, 99999));
       String(req.body.finalizeLevelScore || "").toLowerCase() === "true";
     const isAbsoluteScore = scoreMode === "absolute" || scoreMode === "replace";
     const isLevelScore = scoreScope === "level" || scoreScope === "level-score";
-   const correct = Math.max(0, Math.min(Number(req.body.correct) || 0, 999));
+    const correct = Math.max(0, Math.min(Number(req.body.correct) || 0, 999));
 
     const wrong = Math.max(0, Math.min(Number(req.body.wrong) || 0, 999));
 
-    const totalQuestions = Number(
-      req.body.totalQuestions ?? req.body.toplamSoru ?? (correct + wrong),
-    ) || 0;
+    const totalQuestions =
+      Number(
+        req.body.totalQuestions ?? req.body.toplamSoru ?? correct + wrong,
+      ) || 0;
     const taskPoints = Number(req.body.taskPoints ?? 0) || 0;
 
     if (isLevelScore) {
@@ -623,42 +841,25 @@ const levelScore = Math.max(0, Math.min(Number(req.body.score) || 0, 99999));
       }
     }
 
-
-
     const user = await getUserSnapshot(username);
 
+    res.json({
+      success: true,
 
+      toplamPuan: user.puan,
+    });
+  } catch (err) {
+    console.log("SAVE SCORE HATASI:", err);
 
     res.json({
+      success: false,
 
-      success:true,
-
-      toplamPuan:user.puan
-
+      message: err.message,
     });
-
-
-
-  } catch(err){
-
-    console.log("SAVE SCORE HATASI:",err);
-
-
-    res.json({
-
-      success:false,
-
-      message:err.message
-
-    });
-
   }
-
 });
-app.get("/home", (req,res)=>{
-  res.sendFile(
-    path.join(__dirname,"public","pc","anasayfa.html")
-  );
+app.get("/home", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "pc", "anasayfa.html"));
 });
 
 app.get("/road-state", async (req, res) => {
@@ -706,7 +907,6 @@ app.get("/road-state", async (req, res) => {
     claimedRoadRewards: snapshot.claimedRoadRewards || [],
   });
 });
-
 
 app.post("/road-claim", async (req, res) => {
   const username = getCurrentUsername(req);
@@ -807,7 +1007,7 @@ app.post("/logout", (req, res) => {
 
 const server = http.createServer(app);
 app.use((req, res) => {
-  res.status(404).sendFile(path.join(__dirname, 'public', 'pc', '404.html'));
+  res.status(404).sendFile(path.join(__dirname, "public", "pc", "404.html"));
 });
 start()
   .then(() => {
