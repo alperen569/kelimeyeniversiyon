@@ -3,7 +3,7 @@ require("dotenv").config();
 const express = require("express");
 const validator = require("validator");
 const Filter = require("leo-profanity");
-const zxcvbn = require("@zxcvbn-ts/core").zxcvbn;
+const zxcvbn = require("zxcvbn");
 Filter.loadDictionary("en", "tr");
 const helmet = require("helmet");
 const rateLimit = require("express-rate-limit");
