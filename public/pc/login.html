@@ -472,15 +472,15 @@
                   placeholder="Yeni kullanıcı adını yaz"
                 />
               </div>
-<div class="field">
-  <label for="registerEmail">E-posta</label>
-  <input
-    class="input"
-    type="email"
-    id="registerEmail"
-    placeholder="ornek@mail.com"
-  />
-</div>
+              <div class="field">
+                <label for="registerEmail">E-posta</label>
+                <input
+                  class="input"
+                  type="email"
+                  id="registerEmail"
+                  placeholder="ornek@mail.com"
+                />
+              </div>
               <div class="field">
                 <label for="regPass">Şifre</label>
                 <input
@@ -531,10 +531,9 @@
 
       async function login() {
         const isim = document.getElementById("loginName").value.trim();
-        const email = document.getElementById("regEmail").value.trim();
         const sifre = document.getElementById("loginPass").value;
 
-        if(!isim  || !sifre){ 
+        if (!isim || !sifre) {
           alert("Lütfen boş alan bırakma.");
           return;
         }
@@ -566,27 +565,28 @@
       }
 
       async function register() {
-const isim = document.getElementById("regName").value.trim();
-const email = document.getElementById("registerEmail").value.trim();
-const sifre = document.getElementById("regPass").value;
+        const isim = document.getElementById("regName").value.trim();
+        const email = document.getElementById("registerEmail").value.trim();
+        const sifre = document.getElementById("regPass").value;
 
-if (!isim || !email || !sifre) {
-    alert("Lütfen bütün alanları doldurun.");
-    return;
-}
+        if (!isim || !email || !sifre) {
+          alert("Lütfen bütün alanları doldurun.");
+          return;
+        }
 
-const res = await fetch("/register", {
-    method: "POST",
-    headers: {
-        "Content-Type": "application/json"
-    },
-    credentials: "same-origin",
-    body: JSON.stringify({
-        isim,
-        email,
-        sifre
-    })
-});
+        try {
+          const res = await fetch("/register", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json"
+            },
+            credentials: "same-origin",
+            body: JSON.stringify({
+              isim,
+              email,
+              sifre
+            })
+          });
           const data = await res.json();
 
           alert(
@@ -605,4 +605,4 @@ const res = await fetch("/register", {
       }
     </script>
   </body>
-</html> 
+</html>
