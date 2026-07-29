@@ -461,32 +461,35 @@ async function getUsersWithRanks() {
 }
 
 async function getUserSnapshot(isim) {
-  const user = await findUser(isim);
-
-  if (!user) return null;
-
-  return {
-    id: user.id,
-
-    isim: user.isim,
-
-    puan: Number(user.puan) || 0,
-    maxLevel: Number(user.maxLevel) || 1,
-    taskPoints: Number(user.taskPoints) || 0,
-    levelScore: Number(user.levelScore) || 0,
-    correct: Number(user.correct) || 0,
-    wrong: Number(user.wrong) || 0,
-    onTestTamamlandi: Boolean(user.onTestTamamlandi),
-    totalQuestions: Number(user.totalQuestions) || 0,
-    claimedRoadRewards: parseClaimedRoadRewards(user.claimedRoadRewards),
-    title: getScoreTitle(Number(user.puan) || 0),
-    ...getProgressSnapshot(
-      Number(user.puan) || 0,
-      parseClaimedRoadRewards(user.claimedRoadRewards),
-
-      Number(user.taskPoints) || 0,
-    ),
-  };
+  try {
+    const user = await findUser(isim);
+    
+    if (!user) return null;
+    
+    // SADECE TEMEL ALANLAR
+    return {
+      id: user.id,
+      isim: user.isim,
+      puan: Number(user.puan) || 0,
+      maxLevel: Number(user.maxLevel) || 1,
+      taskPoints: Number(user.taskPoints) || 0,
+      levelScore: Number(user.levelScore) || 0,
+      correct: Number(user.correct) || 0,
+      wrong: Number(user.wrong) || 0,
+      totalQuestions: Number(user.totalQuestions) || 0,
+      onTestTamamlandi: Boolean(user.onTestTamamlandi),
+      claimedRoadRewards: parseClaimedRoadRewards(user.claimedRoadRewards),
+      title: getScoreTitle(Number(user.puan) || 0),
+      ...getProgressSnapshot(
+        Number(user.puan) || 0,
+        parseClaimedRoadRewards(user.claimedRoadRewards),
+        Number(user.taskPoints) || 0,
+      ),
+    };
+  } catch (err) {
+    console.log("getUserSnapshot HATASI:", err.message);
+    return null;
+  }
 }
 function getRoadRotationIndex(taskPoints) {
   const size = 1000;

@@ -691,47 +691,48 @@ app.get("/game-score", async (req, res) => {
   }
 });
 app.get("/me", async (req, res) => {
-  const username = getCurrentUsername(req);
+  try {
+    const username = getCurrentUsername(req);
 
-  if (!username) {
-    return res.json({
-      loggedIn: false,
-    });
+    if (!username) {
+      return res.json({ loggedIn: false });
+    }
+
+// Bu kısmı komple böyle değiştir:
+const snapshot = await getUserSnapshot(username);
+
+if (!snapshot) {
+  return res.json({ loggedIn: false });
+}
+
+const users = await getUsersWithRanks();
+const rank = users.findIndex((u) => u.isim === username) + 1;
+
+res.json({
+  loggedIn: true,
+  isim: snapshot.isim,
+  puan: snapshot.puan,
+  taskPoints: snapshot.taskPoints,
+  rank,
+  correct: snapshot.correct,
+  wrong: snapshot.wrong,
+  totalQuestions: snapshot.totalQuestions,
+  levelScore: snapshot.levelScore,
+  title: snapshot.title,
+  roadProgressPercent: snapshot.roadProgressPercent,
+  roadProgressValue: snapshot.roadProgressValue,
+  roadProgressTotal: snapshot.roadProgressTotal,
+  rotationIndex: snapshot.rotationIndex,
+  rotationLabel: snapshot.rotationLabel,
+  nextMilestone: snapshot.nextMilestone,
+  currentMilestones: snapshot.currentMilestones || [],
+  claimedRoadRewards: snapshot.claimedRoadRewards || [],
+});
+  } catch (err) {
+    console.log("/me HATASI:", err.message);
+    console.log("Stack:", err.stack);
+    res.json({ loggedIn: false });
   }
-
-  const snapshot = await getUserSnapshot(username);
-
-  if (!snapshot) {
-    return res.json({
-      loggedIn: false,
-    });
-  }
-
-  const users = await getUsersWithRanks();
-
-  const rank = users.findIndex((u) => u.isim === username) + 1;
-
-  res.json({
-    loggedIn: true,
-    isim: snapshot.isim,
-    puan: snapshot.puan,
-    onTestTamamlandi: Boolean(user.onTestTamamlandi),
-    taskPoints: snapshot.taskPoints,
-    rank,
-    correct: snapshot.correct,
-    wrong: snapshot.wrong,
-    totalQuestions: snapshot.totalQuestions,
-    levelScore: snapshot.levelScore,
-    title: snapshot.title,
-    roadProgressPercent: snapshot.roadProgressPercent,
-    roadProgressValue: snapshot.roadProgressValue,
-    roadProgressTotal: snapshot.roadProgressTotal,
-    rotationIndex: snapshot.rotationIndex,
-    rotationLabel: snapshot.rotationLabel,
-    nextMilestone: snapshot.nextMilestone,
-    currentMilestones: snapshot.currentMilestones || [],
-    claimedRoadRewards: snapshot.claimedRoadRewards || [],
-  });
 });
 
 /*
@@ -801,12 +802,7 @@ app.post("/save-score", async (req, res) => {
         req.body.totalQuestions ?? req.body.toplamSoru ?? correct + wrong,
       ) || 0;
     const taskPoints = Number(req.body.taskPoints ?? 0) || 0;
-if (req.body.unvan && req.body.toplamSoru) {
-  await pool.execute(
-    `UPDATE users SET onTestTamamlandi = TRUE WHERE isim = ?`,
-    [username]
-  );
-}
+
     if (isLevelScore) {
       await updateUserLevelScore(username, {
         levelScore,
