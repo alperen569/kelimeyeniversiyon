@@ -133,6 +133,16 @@ CREATE TABLE IF NOT EXISTS users (
   }
   try {
     await pool.query(`
+        ALTER TABLE users
+        ADD COLUMN onTestTamamlandi BOOLEAN NOT NULL DEFAULT FALSE
+    `);
+} catch (err) {
+    if (err.code !== "ER_DUP_FIELDNAME") {
+        throw err;
+    }
+}
+  try {
+    await pool.query(`
       ALTER TABLE users
       ADD COLUMN levelScore INT NOT NULL DEFAULT 0
     `);
@@ -433,6 +443,7 @@ async function getUsersWithRanks() {
     levelScore: Number(user.levelScore) || 0,
     correct: Number(user.correct),
     wrong: Number(user.wrong),
+    onTestTamamlandi: Boolean(user.onTestTamamlandi),
     totalQuestions: Number(user.totalQuestions),
     title: getScoreTitle(Number(user.puan) || 0),
 
@@ -450,7 +461,7 @@ async function getUsersWithRanks() {
 }
 
 async function getUserSnapshot(isim) {
-  const user = await findUser(login);
+  const user = await findUser(isim);
 
   if (!user) return null;
 
@@ -461,24 +472,16 @@ async function getUserSnapshot(isim) {
 
     puan: Number(user.puan) || 0,
     maxLevel: Number(user.maxLevel) || 1,
-
     taskPoints: Number(user.taskPoints) || 0,
-
     levelScore: Number(user.levelScore) || 0,
-
     correct: Number(user.correct) || 0,
-
     wrong: Number(user.wrong) || 0,
-
+    onTestTamamlandi: Boolean(user.onTestTamamlandi),
     totalQuestions: Number(user.totalQuestions) || 0,
-
     claimedRoadRewards: parseClaimedRoadRewards(user.claimedRoadRewards),
-
     title: getScoreTitle(Number(user.puan) || 0),
-
     ...getProgressSnapshot(
       Number(user.puan) || 0,
-
       parseClaimedRoadRewards(user.claimedRoadRewards),
 
       Number(user.taskPoints) || 0,

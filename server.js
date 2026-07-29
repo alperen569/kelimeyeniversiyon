@@ -713,39 +713,23 @@ app.get("/me", async (req, res) => {
 
   res.json({
     loggedIn: true,
-
     isim: snapshot.isim,
-
     puan: snapshot.puan,
-
+    onTestTamamlandi: Boolean(user.onTestTamamlandi),
     taskPoints: snapshot.taskPoints,
-
     rank,
-
     correct: snapshot.correct,
-
     wrong: snapshot.wrong,
-
     totalQuestions: snapshot.totalQuestions,
-
     levelScore: snapshot.levelScore,
-
     title: snapshot.title,
-
     roadProgressPercent: snapshot.roadProgressPercent,
-
     roadProgressValue: snapshot.roadProgressValue,
-
     roadProgressTotal: snapshot.roadProgressTotal,
-
     rotationIndex: snapshot.rotationIndex,
-
     rotationLabel: snapshot.rotationLabel,
-
     nextMilestone: snapshot.nextMilestone,
-
     currentMilestones: snapshot.currentMilestones || [],
-
     claimedRoadRewards: snapshot.claimedRoadRewards || [],
   });
 });
@@ -817,7 +801,12 @@ app.post("/save-score", async (req, res) => {
         req.body.totalQuestions ?? req.body.toplamSoru ?? correct + wrong,
       ) || 0;
     const taskPoints = Number(req.body.taskPoints ?? 0) || 0;
-
+if (req.body.unvan && req.body.toplamSoru) {
+  await pool.execute(
+    `UPDATE users SET onTestTamamlandi = TRUE WHERE isim = ?`,
+    [username]
+  );
+}
     if (isLevelScore) {
       await updateUserLevelScore(username, {
         levelScore,

@@ -1,11 +1,14 @@
 <!doctype html>
 <html lang="tr">
   <head>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
-<link rel="icon" type="image/png" sizes="32x32" href="/favicon.svg">
-<link rel="icon" type="image/png" sizes="16x16" href="/favicon.svg">
-<link rel="apple-touch-icon" sizes="180x180" href="/favicon.svg">
-<link rel="manifest" href="/site.webmanifest">
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
+    />
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon.svg" />
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon.svg" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/favicon.svg" />
+    <link rel="manifest" href="/site.webmanifest" />
 
     <link rel="stylesheet" href="/shared/ocean-loader.css" />
     <script src="/shared/ocean-loader.js"></script>
@@ -70,30 +73,30 @@
       content="https://kelimeokyanusu.com.tr/resimler/logo-of-okyansus.png"
     />
     <script src="https://cdn.tailwindcss.com"></script>
-<script type="application/ld+json">
-{
-  "@context": "https://schema.org",
-  "@type": "WebApplication",
-  "name": "Kelime Okyanusu",
-  "url": "https://kelimeokyanusu.com.tr/",
-  "description": "Türkçe atasözleri ve deyimleri eğlenceli oyunlarla öğreten ücretsiz eğitim platformu.",
-  "applicationCategory": "EducationalApplication",
-  "operatingSystem": "Web",
-  "author": {
-    "@type": "Organization",
-    "name": "Kelime Okyanusu",
-    "url": "https://kelimeokyanusu.com.tr/"
-  },
-  "offers": {
-    "@type": "Offer",
-    "price": "0",
-    "priceCurrency": "TRY"
-  },
-  "inLanguage": "tr-TR",
-  "educationalLevel": ["İlkokul", "Ortaokul", "Lise"],
-  "educationalUse": ["Öğrenme", "Pratik", "Eğlence"]
-}
-</script>
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "Kelime Okyanusu",
+        "url": "https://kelimeokyanusu.com.tr/",
+        "description": "Türkçe atasözleri ve deyimleri eğlenceli oyunlarla öğreten ücretsiz eğitim platformu.",
+        "applicationCategory": "EducationalApplication",
+        "operatingSystem": "Web",
+        "author": {
+          "@type": "Organization",
+          "name": "Kelime Okyanusu",
+          "url": "https://kelimeokyanusu.com.tr/"
+        },
+        "offers": {
+          "@type": "Offer",
+          "price": "0",
+          "priceCurrency": "TRY"
+        },
+        "inLanguage": "tr-TR",
+        "educationalLevel": ["İlkokul", "Ortaokul", "Lise"],
+        "educationalUse": ["Öğrenme", "Pratik", "Eğlence"]
+      }
+    </script>
     <style>
       :root {
         --bg: #020617;
@@ -949,7 +952,7 @@
       }
     </style>
   </head>
-  
+
   <body class="bg-slate-950 text-slate-100 min-h-screen relative">
     <nav
       class="fixed w-full z-40 px-6 py-4 flex items-center justify-between glass border-b border-slate-800"
@@ -1357,7 +1360,6 @@
         </div>
       </div>
     </div>
-
 
     <main class="pt-32 px-6 max-w-7xl mx-auto pb-16">
       <header class="mb-12">
@@ -1963,8 +1965,7 @@
             </h3>
           </div>
 
-          <div id="preTestOptions" class="grid grid-cols-1 gap-3">
-          </div>
+          <div id="preTestOptions" class="grid grid-cols-1 gap-3"></div>
         </div>
 
         <div id="preTestResultScreen" class="hidden text-center space-y-6">
@@ -2032,7 +2033,7 @@
     </div>
 
     <script>
-            const preTestQuestions = [
+      const preTestQuestions = [
         {
           id: 1,
           question:
@@ -3112,7 +3113,6 @@
           }
         });
 
-
       let currentQuestionIndex = 0;
       let userAnswers = [];
       let score = 0;
@@ -3342,6 +3342,14 @@
           }
 
           document.getElementById("preTestModal").classList.add("hidden");
+          fetch("/me")
+            .then((res) => res.json())
+            .then((data) => {
+              if (data.loggedIn) {
+                applyUserData(data);
+              }
+            })
+            .catch(() => {});
         });
     </script>
   </body>
