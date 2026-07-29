@@ -3,8 +3,9 @@ require("dotenv").config();
 const express = require("express");
 const validator = require("validator");
 const Filter = require("leo-profanity");
+Filter.loadDictionary("en");
+Filter.loadDictionary("tr");
 const zxcvbn = require("zxcvbn");
-Filter.loadDictionary("en", "tr");
 const helmet = require("helmet");
 const rateLimit = require("express-rate-limit");
 const session = require("express-session");
@@ -225,8 +226,8 @@ function validateUsername(username) {
 }
 
 function containsBadWord(text) {
-  if (!text || typeof text !== "string") return false;
-  return Filter.check(text); 
+    if (!text || typeof text !== "string") return false;
+    return Filter.hasBadWord(text);  
 }
 function requireAuth(req, res, next) {
   if (!req.session.loggedIn || !getCurrentUsername(req)) {
