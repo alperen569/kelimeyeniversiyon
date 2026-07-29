@@ -125,13 +125,12 @@ const generalLimiter = rateLimit({
 });
 const registerIPs = new Map();
 const authLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 dakika
-  max: 20, // En fazla 5 giriş denemesi
+windowMs: 2 * 60 * 1000, 
   standardHeaders: true,
   legacyHeaders: false,
   message: {
     success: false,
-    message: "Çok fazla giriş denemesi yaptınız. 15 dakika bekleyin.",
+    message: "Çok fazla giriş denemesi yaptınız. Birkaç dakika bekleyin.",
   },
 });
 app.use("/save-score", generalLimiter);
@@ -548,7 +547,93 @@ app.get("/verify-email",async(req,res)=>{
         }
 
         const ok=await verifyUserEmail(token);
+await transporter.sendMail({
 
+    from: `"Kelime Okyanusu" <${process.env.EMAIL_USER}>`,
+
+    to: user.email,
+
+    subject: "🎉 Kelime Okyanusu'na Hoş Geldin!",
+
+    html: `
+
+<div style="max-width:650px;margin:auto;background:#081321;padding:40px;border-radius:20px;color:#ffffff;font-family:Arial,sans-serif;">
+
+<h1 style="text-align:center;color:#4da3ff;">
+🌊 Kelime Okyanusu'na Hoş Geldin!
+</h1>
+
+<p>Merhaba <b>${user.isim}</b>,</p>
+
+<p>
+E-posta adresini başarıyla doğruladığın için teşekkür ederiz.
+Artık hesabın tamamen aktif.
+</p>
+
+<hr style="border:none;border-top:1px solid #244a8a;margin:30px 0;">
+
+<h2>🎮 Seni Neler Bekliyor?</h2>
+
+<ul>
+<li>🧩 Eğlenceli kelime bulmacaları</li>
+<li>🏆 Puan sistemi</li>
+<li>📚 Kelime hazneni geliştirecek yüzlerce kelime</li>
+<li>⭐ Zorluk seviyesi artan bölümler</li>
+<li>🎯 Kendini geliştirebileceğin eğitici içerikler</li>
+</ul>
+
+<p>
+Her bölümde yeni kelimeler keşfedecek,
+puan kazanacak ve seviyeni yükselteceksin.
+</p>
+
+<div style="text-align:center;margin:40px 0;">
+
+<a href="https://kelimeokyanusu.com.tr/pc/login.html"
+
+style="
+
+background:#2563eb;
+
+color:white;
+
+padding:16px 35px;
+
+text-decoration:none;
+
+border-radius:10px;
+
+font-weight:bold;
+
+display:inline-block;
+
+">
+
+Oyuna Başla
+
+</a>
+
+</div>
+
+<p style="color:#b8c7e8;">
+
+Herhangi bir sorun yaşarsan bizimle iletişime geçebilirsin.
+
+</p>
+
+<p>
+
+İyi eğlenceler! 🌊<br>
+
+<b>Kelime Okyanusu Ekibi</b>
+
+</p>
+
+</div>
+
+`
+
+});
         if(!ok){
 
             return res.send(`
@@ -563,63 +648,270 @@ Bağlantı geçersiz veya süresi dolmuş.
 
         }
 
-        res.send(`
-
+res.send(`
 <!DOCTYPE html>
-
-<html>
+<html lang="tr">
 
 <head>
 
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<title>Doğrulandı</title>
+<title>E-posta Doğrulandı</title>
+
+<style>
+
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+    font-family:Arial,Helvetica,sans-serif;
+}
+
+body{
+
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    min-height:100vh;
+    overflow:hidden;
+
+    background:linear-gradient(
+        -45deg,
+        #020617,
+        #0b1638,
+        #123a7a,
+        #0b1638,
+        #020617
+    );
+
+    background-size:400% 400%;
+    animation:bg 15s ease infinite;
+
+}
+
+.card{
+
+    width:90%;
+    max-width:500px;
+
+    background:rgba(11,22,56,.75);
+
+    backdrop-filter:blur(18px);
+
+    border:1px solid rgba(255,255,255,.08);
+
+    border-radius:24px;
+
+    padding:40px 30px;
+
+    text-align:center;
+
+    box-shadow:0 20px 60px rgba(0,0,0,.45);
+
+    animation:popup .7s ease;
+
+}
+
+.icon{
+
+    width:95px;
+    height:95px;
+
+    margin:auto;
+
+    border-radius:50%;
+
+    background:#22c55e;
+
+    display:flex;
+    justify-content:center;
+    align-items:center;
+
+    font-size:52px;
+
+    animation:success 1s ease;
+
+}
+
+h1{
+
+    margin-top:25px;
+    font-size:2rem;
+
+    color:white;
+
+}
+
+p{
+
+    margin-top:18px;
+    color:#b9c7ea;
+    line-height:1.7;
+
+}
+
+.btn{
+
+    display:inline-block;
+
+    margin-top:35px;
+
+    padding:14px 35px;
+
+    background:#2563eb;
+
+    color:white;
+
+    text-decoration:none;
+
+    font-weight:bold;
+
+    border-radius:12px;
+
+    transition:.25s;
+
+}
+
+.btn:hover{
+
+    background:#3b82f6;
+    transform:translateY(-2px);
+
+}
+
+body::before,
+body::after{
+
+    content:"";
+
+    position:absolute;
+
+    width:700px;
+    height:700px;
+
+    border-radius:50%;
+
+    filter:blur(120px);
+
+    opacity:.18;
+
+}
+
+body::before{
+
+    background:#2563eb;
+
+    top:-250px;
+    left:-250px;
+
+    animation:float 14s infinite;
+
+}
+
+body::after{
+
+    background:#06b6d4;
+
+    bottom:-250px;
+    right:-250px;
+
+    animation:float 14s infinite reverse;
+
+}
+
+@keyframes bg{
+
+0%{background-position:0% 50%;}
+50%{background-position:100% 50%;}
+100%{background-position:0% 50%;}
+
+}
+
+@keyframes popup{
+
+from{
+
+opacity:0;
+transform:scale(.8);
+
+}
+
+to{
+
+opacity:1;
+transform:scale(1);
+
+}
+
+}
+
+@keyframes success{
+
+0%{transform:scale(0);}
+70%{transform:scale(1.15);}
+100%{transform:scale(1);}
+
+}
+
+@keyframes float{
+
+0%,100%{
+
+transform:translate(0,0);
+
+}
+
+50%{
+
+transform:translate(80px,-40px);
+
+}
+
+}
+
+</style>
 
 </head>
 
-<body
-style="
+<body>
 
-font-family:Arial;
+<div class="card">
 
-background:#081321;
+<div class="icon">
+✔
+</div>
 
-color:white;
-
-display:flex;
-
-justify-content:center;
-
-align-items:center;
-
-height:100vh;
-
-flex-direction:column;
-
-">
-
-<h1>
-
-✅ Hesabınız doğrulandı.
-
-</h1>
+<h1>E-posta Doğrulandı</h1>
 
 <p>
 
-Artık giriş yapabilirsiniz.
+Tebrikler! Hesabınız başarıyla doğrulandı.
+
+<br><br>
+
+Artık <b>Kelime Okyanusu</b>'na giriş yapabilir ve
+kelime maceranıza başlayabilirsiniz.
 
 </p>
 
-<a href="/pc/login.html">
+<a class="btn" href="/pc/login.html">
 
 Giriş Yap
 
 </a>
+<p style="margin-top:18px;font-size:14px;color:#8ea5d8;">
+5 saniye içinde otomatik olarak giriş sayfasına yönlendirileceksiniz...
+</p>
+</div>
 
 </body>
-
+<script>
+setTimeout(() => {
+    window.location.href = "/pc/login.html";
+}, 5000);
+</script>
 </html>
-
 `);
 
     }

@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Kelime Okyanusu — Türkçe Quiz</title>
+  <title>Kelime Okyanusu — Fen Bilimleri Quiz</title>
   <style>
     * {
       margin: 0;
@@ -17,9 +17,9 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      background: #0f1a2e;
+      background: #120c1f;
       padding: 20px;
-      color: #d6e0f0;
+      color: #e0d6f0;
     }
 
     .wrap {
@@ -28,7 +28,7 @@
     }
 
     .card {
-      background: #1a2940;
+      background: #1e1630;
       border-radius: 16px;
       padding: 24px;
       border: 1px solid rgba(255, 255, 255, 0.06);
@@ -59,12 +59,12 @@
     .logo h1 {
       font-size: 1.2rem;
       font-weight: 600;
-      color: #e8edf5;
+      color: #e8dff5;
     }
 
     .logo .small {
       font-size: 0.8rem;
-      color: #8fa0b8;
+      color: #9a8ab8;
     }
 
     .stats {
@@ -84,12 +84,12 @@
     .stat .num {
       font-weight: 700;
       font-size: 1.3rem;
-      color: #60a5fa;
+      color: #a78bfa;
     }
 
     .stat .small {
       font-size: 0.7rem;
-      color: #8fa0b8;
+      color: #9a8ab8;
     }
 
     .badges {
@@ -102,21 +102,21 @@
     .badge {
       padding: 4px 10px;
       border-radius: 8px;
-      background: rgba(96, 165, 250, 0.1);
-      color: #60a5fa;
+      background: rgba(167, 139, 250, 0.1);
+      color: #a78bfa;
       font-size: 0.75rem;
       font-weight: 500;
-      border: 1px solid rgba(96, 165, 250, 0.2);
+      border: 1px solid rgba(167, 139, 250, 0.2);
     }
 
     .small {
       font-size: 0.8rem;
-      color: #8fa0b8;
+      color: #9a8ab8;
     }
 
     .btn {
-      background: #3b82f6;
-      color: #f0f4ff;
+      background: #7c3aed;
+      color: #f5f0ff;
       font-weight: 600;
       padding: 8px 14px;
       border-radius: 8px;
@@ -127,13 +127,13 @@
     }
 
     .btn:hover {
-      background: #2563eb;
+      background: #6d28d9;
     }
 
     .btn.ghost {
       background: transparent;
       border: 1px solid rgba(255, 255, 255, 0.12);
-      color: #c8d6e5;
+      color: #cdbde8;
     }
 
     .btn.ghost:hover {
@@ -159,30 +159,30 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      background: #0f1a2e;
-      border: 2px solid #2a3f5a;
+      background: #120c1f;
+      border: 2px solid #3a2a5a;
       font-weight: 700;
       font-size: 1.1rem;
-      color: #60a5fa;
+      color: #a78bfa;
     }
 
     .question-card {
-      background: #0f1a2e;
+      background: #120c1f;
       padding: 18px;
       border-radius: 12px;
-      border: 1px solid #2a3f5a;
+      border: 1px solid #3a2a5a;
     }
 
     .q-title {
       font-size: 1.1rem;
       font-weight: 600;
       margin-bottom: 8px;
-      color: #e8edf5;
+      color: #e8dff5;
     }
 
     .q-meta {
       font-size: 0.8rem;
-      color: #6b7d95;
+      color: #7b6a95;
       margin-bottom: 16px;
     }
 
@@ -193,31 +193,31 @@
     }
 
     .answer {
-      background: #1a2940;
+      background: #1e1630;
       padding: 12px;
       border-radius: 10px;
-      border: 1px solid #2a3f5a;
+      border: 1px solid #3a2a5a;
       cursor: pointer;
       display: flex;
       align-items: center;
       gap: 10px;
       transition: background 0.2s, border-color 0.2s;
       font-size: 0.9rem;
-      color: #c8d6e5;
+      color: #cdbde8;
     }
 
     .answer:hover {
-      background: #223656;
-      border-color: #3b5998;
+      background: #2a1f42;
+      border-color: #5b3e8a;
     }
 
     .answer .letter {
       font-weight: 700;
-      color: #60a5fa;
+      color: #a78bfa;
       width: 28px;
       height: 28px;
       border-radius: 6px;
-      background: rgba(96, 165, 250, 0.1);
+      background: rgba(167, 139, 250, 0.1);
       display: flex;
       align-items: center;
       justify-content: center;
@@ -247,13 +247,13 @@
       align-items: center;
       margin-top: 12px;
       font-size: 0.8rem;
-      color: #6b7d95;
+      color: #7b6a95;
     }
 
     .progress-wrap {
       width: 100%;
       height: 4px;
-      background: #2a3f5a;
+      background: #3a2a5a;
       border-radius: 4px;
       overflow: hidden;
       margin-bottom: 4px;
@@ -261,7 +261,7 @@
 
     .progress-fill {
       height: 100%;
-      background: #60a5fa;
+      background: #a78bfa;
       width: 0%;
       transition: width 0.3s;
     }
@@ -275,7 +275,7 @@
 
     .hint {
       font-size: 0.7rem;
-      color: #6b7d95;
+      color: #7b6a95;
       margin-top: auto;
     }
 
@@ -284,8 +284,8 @@
       bottom: 30px;
       left: 50%;
       transform: translateX(-50%) translateY(100px);
-      background: #1e3a5f;
-      color: #e8edf5;
+      background: #2a1f42;
+      color: #e8dff5;
       padding: 12px 24px;
       border-radius: 30px;
       font-weight: 500;
@@ -326,7 +326,7 @@
         <img src="logo of okyanus.png" alt="Logo" />
         <div>
           <h1>Kelime Okyanusu</h1>
-          <div class="small">Türkçe Quiz · 10 Soru</div>
+          <div class="small">Fen Bilimleri Quiz · 10 Soru</div>
         </div>
       </div>
 
@@ -375,21 +375,21 @@
 <div class="toast" id="toast"></div>
 
 <audio id="bg-music" loop preload="auto">
-  <source src="pc/Quizler/türkçe müzik.mp3" type="audio/mpeg">
+  <source src="https://cdn.pixabay.com/audio/2022/10/25/audio_9f6b5d0b18.mp3" type="audio/mpeg">
 </audio>
 
 <script>
   const QUESTIONS = [
-    { q: "Hangisi yazım yanlışı içerir?", cat: "Yazım", opts: ["herkeze", "herkese", "herkesin", "herkesle"], a: 0 },
-    { q: "'Gözden ırak olan ...' atasözünün tamamı nedir?", cat: "Atasözü", opts: ["yok olur", "yok olur mu", "gözden ırak gamdan uzak", "gözden ırak gönülden ırak"], a: 3 },
-    { q: "Aşağıdakilerden hangisi eş anlamlıdır?", cat: "Anlam", opts: ["salkım", "demet", "küme", "yığın"], a: 1 },
-    { q: "'-ki' bağlacının doğru yazımı hangisinde farklıdır?", cat: "Dilbilgisi", opts: ["baktıki", "bildiğimki", "söylediği ki", "sandığıki"], a: 2 },
-    { q: "Hangi kelime bitişik yazılır?", cat: "Yazım", opts: ["her zaman", "herşey", "bilgi paylaşımı", "gün doğumu"], a: 3 },
-    { q: "'İki karpuz bir koltuğa sığmaz' sözü hangi türdendir?", cat: "Atasözü", opts: ["Mecaz", "Doğrudan", "Atasözü", "Öykü"], a: 2 },
-    { q: "Aşağıdaki sözcüklerden hangisi yabancı kökenlidir?", cat: "Dil", opts: ["kalem", "masa", "defter", "pencere"], a: 3 },
-    { q: "'mecaz' kelimesinin anlamı hangisine en yakındır?", cat: "Anlam", opts: ["gerçek", "benzetme", "ikili", "türev"], a: 1 },
-    { q: "Hangi cümlede yazım yanlışı yoktur?", cat: "Yazım", opts: ["Ona haber verdim.", "On'a haber verdim.", "Ona haber verdim mi?", "On a haber verdim."], a: 0 },
-    { q: "Aşağıdakilerden hangisi deyim değildir?", cat: "Deyimler", opts: ["Kulağına küpe olsun", "İşin içinden çıkmak", "Gözünü kırpmak", "Bıçak sırtı"], a: 1 }
+    { q: "Hangisi bir hücrenin temel yapı birimidir?", cat: "Biyoloji", opts: ["Doku", "Organ", "Hücre", "Sistem"], a: 2 },
+    { q: "Su kaç derecede kaynar?", cat: "Fizik", opts: ["90°C", "100°C", "110°C", "80°C"], a: 1 },
+    { q: "Hangi gezegen Güneş'e en yakındır?", cat: "Astronomi", opts: ["Venüs", "Mars", "Merkür", "Jüpiter"], a: 2 },
+    { q: "Bir cismin kütlesi ile ağırlığı arasındaki fark nedir?", cat: "Fizik", opts: ["Hiçbir fark yoktur", "Kütle değişmez, ağırlık değişir", "İkisi de değişir", "Ağırlık her zaman sabittir"], a: 1 },
+    { q: "Fotosentez hangi canlılarda görülür?", cat: "Biyoloji", opts: ["Hayvanlar", "Mantarlar", "Bitkiler", "Virüsler"], a: 2 },
+    { q: "Hangi elementin simgesi O'dur?", cat: "Kimya", opts: ["Oksijen", "Osmium", "Oganesson", "Altın"], a: 0 },
+    { q: "İnsan vücudundaki en büyük organ hangisidir?", cat: "Biyoloji", opts: ["Kalp", "Beyin", "Deri", "Akciğer"], a: 2 },
+    { q: "Bir maddenin erime noktası ile donma noktası aynı mıdır?", cat: "Fizik", opts: ["Her zaman farklıdır", "Aynıdır", "Bazen aynıdır", "Bilmiyorum"], a: 1 },
+    { q: "Dünya'nın uydusu nedir?", cat: "Astronomi", opts: ["Güneş", "Mars", "Ay", "Jüpiter"], a: 2 },
+    { q: "Asitler ile bazların karışmasıyla ne oluşur?", cat: "Kimya", opts: ["Patlama", "Tuz ve su", "Sadece su", "Gaz"], a: 1 }
   ];
 
   QUESTIONS.forEach(q => {
@@ -608,7 +608,7 @@
   });
 
   shareBtn.addEventListener('click', () => {
-    navigator.clipboard.writeText(`Kelime Okyanusu Türkçe Quiz Skoru: ${score}/10`);
+    navigator.clipboard.writeText(`Kelime Okyanusu Fen Bilimleri Quiz Skoru: ${score}/10`);
     showToast('Skor kopyalandı!');
   });
 
