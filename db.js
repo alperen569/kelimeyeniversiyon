@@ -248,45 +248,27 @@ async function findEmail(email) {
   return rows[0] || null;
 }
 async function verifyUserEmail(token) {
-  const [rows] = await pool.execute(
-    `
-SELECT *
-
-FROM users
-
-WHERE verification_token=?
-
-AND verification_expires>NOW()
-
-LIMIT 1
-`,
-
-    [token],
+  const [rows] = await pool.query(
+    `SELECT * FROM users 
+     WHERE verification_token = ? 
+       AND verification_expires > NOW()`,
+    [token]
   );
 
-  if (rows.length === 0) {
-    return false;
-  }
+  if (rows.length === 0) return null;
 
-  await pool.execute(
-    `
-UPDATE users
+  const user = rows[0];
 
-SET
-
-email_verified=1,
-
-verification_token=NULL,
-
-verification_expires=NULL
-
-WHERE id=?
-`,
-
-    [rows[0].id],
+  await pool.query(
+    `UPDATE users 
+     SET email_verified = 1, 
+         verification_token = NULL, 
+         verification_expires = NULL 
+     WHERE id = ?`,
+    [user.id]
   );
 
-  return true;
+  return user; 
 }
 function hashPassword(password) {
   return bcrypt.hashSync(String(password), 10);
@@ -466,7 +448,6 @@ async function getUserSnapshot(isim) {
     
     if (!user) return null;
     
-    // SADECE TEMEL ALANLAR
     return {
       id: user.id,
       isim: user.isim,
