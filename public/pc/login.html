@@ -237,8 +237,45 @@
           min-height: 480px; /* Mobilde biraz daha yükseklik */
         }
       }
+      .toast {
+  position: fixed;
+  top: 25px;
+  left: 50%;
+  transform: translateX(-50%) translateY(-30px);
+  background: #0b1638;
+  color: #fff;
+  padding: 15px 22px;
+  border-radius: 12px;
+  border: 1px solid #2d4f94;
+  font-weight: 600;
+  box-shadow: 0 10px 30px rgba(0,0,0,.35);
+  opacity: 0;
+  pointer-events: none;
+  transition: .35s;
+  z-index: 9999;
+  max-width: 420px;
+  text-align: center;
+}
+
+.toast.show{
+  opacity:1;
+  transform:translateX(-50%) translateY(0);
+}
+
+.toast.success{
+  border-color:#34d399;
+}
+
+.toast.error{
+  border-color:#ef4444;
+}
+
+.toast.info{
+  border-color:#60a5fa;
+}
     </style>
   </head>
+  <div id="toast" class="toast"></div>
   <body>
     <main class="page">
       <section class="card">
@@ -375,6 +412,19 @@
         loginTab.classList.remove("active");
       }
 
+      function showToast(message, type = "info") {
+  const toast = document.getElementById("toast");
+
+  toast.textContent = message;
+  toast.className = `toast show ${type}`;
+
+  clearTimeout(toast.timer);
+
+  toast.timer = setTimeout(() => {
+    toast.classList.remove("show");
+  }, 4500);
+}
+
       async function login() {
         const isim = document.getElementById("loginName").value.trim();
         const sifre = document.getElementById("loginPass").value;
@@ -406,7 +456,7 @@
             window.location.href = "/pc/anasayfa.html";
           }
         } catch (err) {
-          alert("Sunucuya bağlanılamadı.");
+         showToast("Sunucuya bağlanılamadı.", "error");
         }
       }
 
@@ -435,10 +485,23 @@
           });
           const data = await res.json();
 
-          alert(
-            data.message ||
-              (data.success ? "Kayıt başarılı." : "Kayıt başarısız."),
-          );
+      if (data.success) {
+
+    showToast(
+        "✅ Hesabın oluşturuldu.\n\nE-posta adresine bir doğrulama bağlantısı gönderdik. Hesabını kullanabilmek için lütfen e-postanı kontrol edip doğrulama işlemini tamamla.",
+        "success"
+    );
+
+    document.getElementById("loginName").value = isim;
+    document.getElementById("loginPass").value = "";
+    showLogin();
+    document.getElementById("loginPass").focus();
+
+} else {
+
+    showToast(data.message || "Kayıt oluşturulamadı.", "error");
+
+}
           if (data.success) {
             document.getElementById("loginName").value = isim;
             document.getElementById("loginPass").value = "";
@@ -446,7 +509,7 @@
             document.getElementById("loginPass").focus();
           }
         } catch (err) {
-          alert("Sunucuya bağlanılamadı.");
+         showToast("Sunucuya bağlanılamadı.", "error");
         }
       }
     </script>
