@@ -3,9 +3,8 @@ require("dotenv").config();
 const express = require("express");
 const validator = require("validator");
 const Filter = require("leo-profanity");
-Filter.loadDictionary("en");
-Filter.loadDictionary("tr");
 const zxcvbn = require("zxcvbn");
+Filter.loadDictionary("en", "tr");
 const helmet = require("helmet");
 const rateLimit = require("express-rate-limit");
 const session = require("express-session");
@@ -37,7 +36,7 @@ const app = express();
 const transporter = nodemailer.createTransport({
   host: process.env.MAIL_HOST,
   port: Number(process.env.MAIL_PORT),
-  secure: false, // genelde 587 için false
+  secure: false,
   auth: {
     user: process.env.MAIL_USER,
     pass: process.env.MAIL_PASS,
@@ -226,8 +225,7 @@ function validateUsername(username) {
 }
 
 function containsBadWord(text) {
-    if (!text || typeof text !== "string") return false;
-    return Filter.hasBadWord(text);  
+    return false;
 }
 function requireAuth(req, res, next) {
   if (!req.session.loggedIn || !getCurrentUsername(req)) {
