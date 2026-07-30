@@ -8,10 +8,12 @@ Filter.loadDictionary("en", "tr");
 const helmet = require("helmet");
 const rateLimit = require("express-rate-limit");
 const session = require("express-session");
+const MySQLStore = require("express-mysql-session")(session);
 const path = require("path");
 const http = require("http");
 const crypto = require("crypto");
 const nodemailer = require("nodemailer");
+const mysql = require("mysql2/promise"); // session store için havuz oluşturacağız
 
 const {
   initializeDatabase,
@@ -44,75 +46,73 @@ const transporter = nodemailer.createTransport({
 });
 
 const isProduction = process.env.NODE_ENV === "production";
-
 const PORT = Number(process.env.PORT) || 3000;
-
 const sessionSecret = process.env.SESSION_SECRET || "gelisme_secret_key";
 
 app.set("trust proxy", isProduction ? 1 : 0);
-
 app.use(helmet({ contentSecurityPolicy: false }));
-
-app.use(
-  express.json({
-    limit: "32kb",
-  }),
+app.use(express.json({ limit: "32kb" }));
+const sessionPool = mysql.createPool({
+  host: process.env.DB_HOST,
+  port: Number(process.env.DB_PORT),
+  user: process.env.DB_USER,
+  password: process.env.DB_PASSWORD,
+  database: process.env.DB_NAME,
+  waitForConnections: true,
+  connectionLimit: 10,
+  queueLimit: 0,
+});
+const sessionStore = new MySQLStore(
+  {
+    // Oturum tablosu otomatik oluşturulur
+    createDatabaseTable: true,
+    schema: {
+      tableName: "sessions",
+      columnNames: {
+        session_id: "session_id",
+        expires: "expires",
+        data: "data",
+      },
+    },
+  },
+  sessionPool
 );
-
 app.use(
   session({
     secret: sessionSecret,
-
     resave: false,
-
     saveUninitialized: false,
-
+    store: sessionStore, // <-- artık oturumlar MySQL'de saklanıyor
     cookie: {
       maxAge: 1000 * 60 * 60,
       httpOnly: true,
       secure: isProduction,
       sameSite: "lax",
     },
-  }),
+  })
 );
 app.post("/reset-level", async (req, res) => {
   const username = getCurrentUsername(req);
-
   if (!username) {
-    return res.json({
-      success: false,
-    });
+    return res.json({ success: false });
   }
-
   await resetUserLevel(username);
-
-  res.json({
-    success: true,
-  });
+  res.json({ success: true });
 });
+
 app.post("/complete-level", async (req, res) => {
   const username = getCurrentUsername(req);
-
   if (!username) {
-    return res.json({
-      success: false,
-    });
+    return res.json({ success: false });
   }
-
   const level = Number(req.body.level);
-
   if (!level) {
-    return res.json({
-      success: false,
-    });
+    return res.json({ success: false });
   }
-
   await unlockNextLevel(username, level);
-
-  res.json({
-    success: true,
-  });
+  res.json({ success: true });
 });
+
 const generalLimiter = rateLimit({
   windowMs: 1 * 60 * 1000,
   max: 60,
@@ -1007,6 +1007,7 @@ const server = http.createServer(app);
 app.use((req, res) => {
   res.status(404).sendFile(path.join(__dirname, "public", "pc", "404.html"));
 });
+
 start()
   .then(() => {
     server.listen(PORT, "0.0.0.0", () => {
@@ -1015,6 +1016,5 @@ start()
   })
   .catch((err) => {
     console.error("MySQL başlatma hatası:", err);
-
     process.exit(1);
   });
