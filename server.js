@@ -295,7 +295,6 @@ app.get("/game/:token", requireAuth, async (req, res) => {
       level: 1,
       type: "lise",
     },
-
     lis2K82v: {
       file: "kelime-okyanusu-lise/lise-level-2.html",
       level: 2,

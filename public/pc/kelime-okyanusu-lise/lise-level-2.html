@@ -589,7 +589,6 @@ button:hover{transform:scale(1.05);}
   
 
 <script>
-// SES EFEKTLERİ (Web Audio API ile)
 const audioContext = new (window.AudioContext || window.webkitAudioContext)();
 
 function resumeAudioContext() {
@@ -598,7 +597,6 @@ function resumeAudioContext() {
   }
 }
 
-// 🎵 Müzik Otomatik Başlatma Sistemi
 function startBackgroundMusic() {
   resumeAudioContext();
   const music = document.getElementById('bg-music');
@@ -609,7 +607,6 @@ function startBackgroundMusic() {
   }
 }
 
-// Sayfadaki ilk tıklamada müziği ve ses motorunu başlat
 document.addEventListener('click', startBackgroundMusic, { once: false });
 
 function playClickSound() {
@@ -660,7 +657,6 @@ function playFailSound() {
   o.stop(now + 0.5);
 }
 
-// DOM referansları
 const gameArea = document.getElementById('game-area');
 const collectedWordsDiv = document.getElementById('collected-words');
 const scoreDiv = document.getElementById('score');
@@ -680,7 +676,6 @@ const closeTutorial = document.getElementById('close-tutorial');
 const statusStrip = document.getElementById('game-status-strip');
 const bubbleLayer = document.getElementById('bubble-layer');
 
-// Veri
 const proverbs = [
   "Birlikten kuvvet doğar.",
   "Damlaya damlaya göl olur.",
@@ -718,7 +713,6 @@ let lastSkipped = false;
 let statusTimer = null;
 let timeExpired = false;
 
-// Entegre Şerit Bildirim Fonksiyonu (Alert yerine bu çalışır)
 function showStatusMessage(message, type = 'info') {
   if (!statusStrip) return;
   statusStrip.className = ``;
@@ -737,11 +731,10 @@ function softRoundTransition(nextRoundFn) {
   }, 220);
 }
 
-// 🎈 SÜPER YAVAŞ BALONCUK OLUŞTURUCU
 function createBubbles() {
   if (!bubbleLayer) return;
   bubbleLayer.innerHTML = '';
-  const bubbleCount = 18; // Ekranda daha sakin ve yumuşak bir akış için azaltıldı
+  const bubbleCount = 18;  
 
   for (let i = 0; i < bubbleCount; i++) {
     const bubble = document.createElement('span');
@@ -749,7 +742,6 @@ function createBubbles() {
 
     const size = 20 + Math.random() * 60;
     const left = Math.random() * 100;
-  // Süreler uzatıldı, hareket daha yumuşak hale getirildi:
   const duration = 42 + Math.random() * 38; 
   const delay = Math.random() * 18;
     const drift = (Math.random() * 60 - 30).toFixed(1);
@@ -787,7 +779,6 @@ tutorialModal.addEventListener('click', (e) => {
   }
 });
 
-// Atasözlerini sağ panele yaz
 const proverbsList = document.getElementById('proverbs-list');
 proverbs.forEach(p => {
   const li = document.createElement('li');
@@ -1020,7 +1011,6 @@ function startGame() {
   scrambledWords = shuffleArray([...selectedWords, ...extra]);
   displayWords();
 
-  // Timer başlat
   timeRemaining = 75;
   updateTimerDisplay();
   
@@ -1035,51 +1025,35 @@ function startGame() {
       timeExpired = true;
       showStatusMessage('Zaman bitti! Level 3\'e aktarılıyor...', 'warning');
 setTimeout(() => {
-  completeLevelAndGo('/game/lis3M44n', 2); 
+  completeLevelAndGo('/game/lis3M44n', 2);
 }, 260);
       return;
     }
   }, 1000);
 }
-async function completeLevelAndGo(url,level){
+async function completeLevelAndGo(url, level) {
+  await fetch("/save-score", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      score: score,
+      scoreMode: "absolute",
+      scoreScope: "level",
+      correct: correctCount,
+      wrong: wrongCount,
+    }),
+  });
 
+  await fetch("/complete-level", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ level: level }), 
+  });
 
- await fetch("/save-score",{
-
- method:"POST",
-
- headers:{
- "Content-Type":"application/json"
- },
-
- body:JSON.stringify({
-
-  score: score,
- scoreMode: "absolute",
- scoreScope: "level",
-
-  level: level,
-
- correct: correctCount,
-
- wrong: wrongCount
-
- })
-
- });
-
-
- document.body.classList.add(
- "is-transitioning"
- );
-
-
- setTimeout(()=>{
-
- window.location.assign(url);
-
- },420);
-
+  document.body.classList.add("is-transitioning");
+  setTimeout(() => {
+    window.location.assign(url);
+  }, 420);
 }
 function updateTimerDisplay() {
   const mins = Math.floor(timeRemaining / 60);

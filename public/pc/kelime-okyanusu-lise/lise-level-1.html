@@ -586,7 +586,7 @@ button:hover{transform:scale(1.05);}
    
     </div>
   
- <script>
+<script>
 // SES EFEKTLERİ (Web Audio API ile)
 const audioContext = new (window.AudioContext || window.webkitAudioContext)();
 
@@ -607,7 +607,6 @@ function startBackgroundMusic() {
   }
 }
 
-// Sayfadaki ilk tıklamada müziği ve ses motorunu başlat
 document.addEventListener('click', startBackgroundMusic, { once: false });
 
 function playClickSound() {
@@ -726,72 +725,38 @@ function showStatusMessage(message, type = 'info') {
   statusStrip.textContent = message;
 }
 
-async function transitionToLevel(url, scoreToSave) {
-
+async function transitionToLevel(url, scoreToSave, level) {
+  // Puanı kaydet
   try {
-
-    const response = await fetch("/save-score", {
-
+    await fetch("/save-score", {
       method: "POST",
-
-      headers: {
-        "Content-Type": "application/json"
-      },
-
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-
         score: Number(scoreToSave) || 0,
         scoreMode: "absolute",
         scoreScope: "level",
-
-        // bu leveldeki bilgiler
-        dogruSayisi: 0,
-
-        yanlisSayisi: 0,
-
-        toplamSoru: 0
-
-      })
-
+        correct: correctCount,
+        wrong: wrongCount,
+      }),
     });
-
-
-    const data = await response.json();
-
-
-    if (!data.success) {
-
-      console.log(
-        "Puan kaydedilemedi",
-        data.message
-      );
-
-    }
-
-
   } catch(err) {
-
-    console.log(
-      "Server puan hatası:",
-      err
-    );
-
+    console.log("Puan kayıt hatası:", err);
   }
 
+  try {
+    await fetch("/complete-level", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ level: level }),
+    });
+  } catch(err) {
+    console.log("Level tamamlama hatası:", err);
+  }
 
-  document.body.classList.add(
-    "is-transitioning"
-  );
-
-
-  setTimeout(()=>{
-
-    window.location.assign(
-      encodeURI(url)
-    );
-
-  },420);
-
+  document.body.classList.add("is-transitioning");
+  setTimeout(() => {
+    window.location.assign(url);
+  }, 420);
 }
 
 function softRoundTransition(nextRoundFn) {
@@ -1102,50 +1067,35 @@ if (timeRemaining <= 0) {
   timeExpired = true;
   showStatusMessage('Zaman bitti! Puanın kaydedilip Level 2\'ye geçiliyor...', 'warning');
   setTimeout(() => {
-    transitionToLevel('/game/lis2K82v', score); 
+    transitionToLevel('/game/lis2K82v', score, 1); 
   }, 260);
   return;
 }
   }, 1000);
 }
-async function completeLevelAndGo(url,level){
+async function completeLevelAndGo(url, level) {
+  await fetch("/save-score", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      score: score,
+      scoreMode: "absolute",
+      scoreScope: "level",
+      correct: correctCount,
+      wrong: wrongCount,
+    }),
+  });
 
- await fetch("/complete-level",{
+  await fetch("/complete-level", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ level: level }),
+  });
 
- method:"POST",
-
- headers:{
- "Content-Type":"application/json"
- },
-
- body:JSON.stringify({
-
- correct: correctCount,
-
- wrong: wrongCount,
-
- level:level,
-
- score:score,
- scoreMode: "absolute",
- scoreScope: "level"
-
- })
-
- });
-
-
- document.body.classList.add(
- "is-transitioning"
- );
-
-
- setTimeout(()=>{
-
- window.location.assign(url);
-
- },420);
-
+  document.body.classList.add("is-transitioning");
+  setTimeout(() => {
+    window.location.assign(url);
+  }, 420);
 }
 function updateTimerDisplay() {
   const mins = Math.floor(timeRemaining / 60);
